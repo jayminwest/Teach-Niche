@@ -1,25 +1,26 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 export default function Footer() {
   return (
-    <footer className="bg-base-200 text-base-content">
+    <footer className="bottom-0 bg-base-200 text-base-content">
       <div className="container">
         <div className="footer py-10 md:py-16 grid-cols-3 sm:grid-cols-3 lg:grid-cols-auto">
           <nav>
             <h6 className="footer-title">Services</h6>
-            <a className="link link-hover">Teaching</a>
-            <a className="link link-hover">Lessons</a>
+            <Link className="link link-hover">Teaching</Link>
+            <Link className="link link-hover" to="/marketplace">Lessons</Link>
           </nav>
           <nav>
             <h6 className="footer-title">Company</h6>
-            <a className="link link-hover">About us</a>
-            <a className="link link-hover">Contact</a>
+            <Link className="link link-hover" to="/about">About us</Link>
+            <Link className="link link-hover" to="/about">Contact</Link>
           </nav>
           <nav>
             <h6 className="footer-title">Legal</h6>
-            <a className="link link-hover">Terms of use</a>
-            <a className="link link-hover">Privacy policy</a>
-            <a className="link link-hover">Cookie policy</a>
+            <Link className="link link-hover" to="/legal">Terms of use</Link>
+            <Link className="link link-hover" to="/legal">Privacy policy</Link>
+            <Link className="link link-hover" to="/legal">Cookie policy</Link>
           </nav>
           <form className="w-full cols-span-full md:col-auto">
             <h6 className="footer-title">Newsletter</h6>
@@ -44,7 +45,7 @@ export default function Footer() {
             <p>&copy; 2024 Teach Niche. All rights reserved.</p>
           </div>
           <div className="grid grid-flow-col gap-4">
-            <a className="link link-primary" href="#!">Follow Teach Niche On Instagram</a>
+            <Link className="link link-primary" to="https://instagram.com">Follow Teach Niche On Instagram</Link>
             <i className="bi bi-instagram text-xl"></i>
           </div>
         </div>

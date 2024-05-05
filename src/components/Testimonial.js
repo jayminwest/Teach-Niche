@@ -141,7 +141,6 @@ export default function Testimonial() {
                             <div className='card bg-warning h-10'></div>
                         </div>
                     </div>
-                    
                 </div>
             </div>
         </section>

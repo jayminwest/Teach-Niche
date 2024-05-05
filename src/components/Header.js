@@ -1,23 +1,8 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
-const THEMES = [
-    "light",
-    "dark",
-  ]
 
 export default function Header() {
-    
-    const [theme, setTheme] = React.useState('light');
-
-    React.useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme);
-    }, [theme])
-
-    const handleThemeChange = (e) => {
-        var val = e.target.getAttribute('data-set-theme');
-        setTheme(val);
-    }
-
     return (
         <header className='sticky top-0 z-50 py-2 bg-base-100'>
             <div className='container'>
@@ -28,33 +13,25 @@ export default function Header() {
                                 <i className="bi bi-list text-2xl"></i>
                             </label>
                             <ul tabIndex={0} className="menu menu-sm dropdown-content mt-1 z-[1] p-2 shadow bg-base-200 rounded-box w-52">
-                                <li><a href="#!">Home</a></li>
-                                <li><a href="#!">Lessons</a></li>
-                                <li><a href="#!">About</a></li>
-                                <li><a href="#!">Reviews</a></li>
-                                <li><a href="#!">FAQ</a></li>
+                                <li><Link to="/">Home</Link></li>
+                                <li><Link to="/marketplace">Lessons</Link></li>
+                                <li><Link href="/about">About</Link></li>
+                                <li><Link href="/faq">FAQ</Link></li>
                             </ul>
                         </div>
-                        <a className="btn btn-ghost normal-case text-2xl">Teach Niche</a>
+                        <Link to="/" className="btn btn-ghost normal-case text-2xl">Teach Niche</Link>
                     </div>
                     <div className="navbar-center hidden lg:flex">
                         <ul className="menu menu-horizontal p-0 font-medium">
                         <li>
-                            <a href="#!">Home</a></li>
-                            <li><a href="#!">Lessons</a></li>
-                            <li><a href="#!">About</a></li>
-                            <li><a href="#!">Reviews</a></li>
-                            <li><a href="#!">FAQ</a></li>
+                            <Link to="/">Home</Link></li>
+                            <li><Link to="/marketplace">Lessons</Link></li>
+                            <li><Link href="/about">About</Link></li>
+                            <li><Link href="/faq">FAQ</Link></li>
                         </ul>
                     </div>
                     <div className="navbar-end">
-                        <a className="btn">Get Started</a>
-                        <div className='dropdown dropdown-end'>
-                         <label tabIndex={0} className='btn'>{THEMES.length} Themes</label>
-                         <ul tabIndex={0} className="menu menu-compact dropdown-content mt-1 p-2 shadow bg-base-200 rounded-box w-25 max-h-96 overflow-y-auto">
-                            {THEMES.map((theme, i) => <li key={theme+i}><button data-set-theme={theme} onClick={handleThemeChange}>{theme}</button></li>)}
-                         </ul>
-                         </div>
+                        <Link className="btn" to="/sign_in">Get Started</Link>
                     </div>
                 </div>
             </div>
