@@ -2,7 +2,7 @@ import React from "react";
 
 export default function LessonCard({ title, teacher, price, description, imageUrl }) {
   return (
-    <div className="card w-96 h-auto bg-base-100 shadow-xl overflow-hidden">
+    <div className="card w-80 h-auto bg-base-100 shadow-xl overflow-hidden">
       {/* Ensuring the image container has a fixed height */}
       <figure className="h-48 overflow-hidden">
         {/* Image standardized to cover the area of the figure, maintaining aspect ratio */}

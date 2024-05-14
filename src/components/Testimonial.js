@@ -66,6 +66,7 @@ export default function Testimonial() {
                             <div className='card bg-warning h-10'></div>
                         </div>
                     </div>
+
                     <div className='block mb-8 lg:mb-10'>
                         <div className='stack'>
                             <div className='card bg-primary text-secondary-content'>
@@ -91,6 +92,33 @@ export default function Testimonial() {
                             <div className='card bg-warning h-10'></div>
                         </div>
                     </div>
+
+                    <div className='block mb-8 lg:mb-10'>
+                        <div className='stack'>
+                            <div className='card bg-primary text-secondary-content'>
+                                <div className='card-body gap-4'>
+                                    <div className='flex items-center'>
+                                        <div className='avatar flex-shrink-0'>
+                                            <div className='w-16 rounded-full border-2 border-white'>
+                                                <img src='https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=928&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D' alt='avatar' />
+                                            </div>
+                                        </div>
+                                        <div className='ml-3'>
+                                            <p className='text-lg font-medium leading-tight'>Taymin Jest</p>
+                                            <small>Kendama Kendama</small>
+                                        </div>
+                                    </div>
+                                    <p>
+                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className='card bg-secondary h-10'></div>
+                            <div className='card bg-warning h-10'></div>
+                        </div>
+                    </div>
+
                     <div className='block mb-8 lg:mb-10'>
                         <div className='stack'>
                             <div className='card bg-primary text-secondary-content'>

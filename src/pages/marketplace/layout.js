@@ -6,7 +6,7 @@ import LessonsGrid from "./components/LessonsGrid";
 
 export default function MarketplaceLayout() {
     return (
-        <div className="container">
+        <div>
             <Header />
             <LessonsGrid />
             <Footer />

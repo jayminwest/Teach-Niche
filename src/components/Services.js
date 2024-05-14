@@ -36,6 +36,42 @@ export default function Services() {
                                 Natural content. <br className='hidden xl:inline' />
                             </p>
                         </div>   
+                    </div>                    
+
+                    <div className='card bg-base-200 transform-gpu transition-all duration-300 hover:-translate-y-2 hover:shadow-lg'>
+                        <div className='card-body items-center text-center gap-4'>
+                            <i className='bi bi-search text-4xl'></i>
+                            <h2 className='card-title'>Learn from the best</h2>
+                            <p>
+                                Our teachers are the best in the industry. <br className='hidden xl:inline' />
+                                Supporting text as well. <br className='hidden xl:inline' />
+                                Natural content. <br className='hidden xl:inline' />
+                            </p>
+                        </div>   
+                    </div>
+
+                    <div className='card bg-base-200 transform-gpu transition-all duration-300 hover:-translate-y-2 hover:shadow-lg'>
+                        <div className='card-body items-center text-center gap-4'>
+                            <i className='bi bi-search text-4xl'></i>
+                            <h2 className='card-title'>Learn from the best</h2>
+                            <p>
+                                Our teachers are the best in the industry. <br className='hidden xl:inline' />
+                                Supporting text as well. <br className='hidden xl:inline' />
+                                Natural content. <br className='hidden xl:inline' />
+                            </p>
+                        </div>   
+                    </div>
+
+                    <div className='card bg-base-200 transform-gpu transition-all duration-300 hover:-translate-y-2 hover:shadow-lg'>
+                        <div className='card-body items-center text-center gap-4'>
+                            <i className='bi bi-search text-4xl'></i>
+                            <h2 className='card-title'>Learn from the best</h2>
+                            <p>
+                                Our teachers are the best in the industry. <br className='hidden xl:inline' />
+                                Supporting text as well. <br className='hidden xl:inline' />
+                                Natural content. <br className='hidden xl:inline' />
+                            </p>
+                        </div>   
                     </div>
 
                     <div className='card bg-base-200 transform-gpu transition-all duration-300 hover:-translate-y-2 hover:shadow-lg'>

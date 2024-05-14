@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-
 export default function Header() {
     return (
         <header className='sticky top-0 z-50 py-2 bg-base-100'>
@@ -15,8 +14,7 @@ export default function Header() {
                             <ul tabIndex={0} className="menu menu-sm dropdown-content mt-1 z-[1] p-2 shadow bg-base-200 rounded-box w-52">
                                 <li><Link to="/">Home</Link></li>
                                 <li><Link to="/marketplace">Lessons</Link></li>
-                                <li><Link href="/about">About</Link></li>
-                                <li><Link href="/faq">FAQ</Link></li>
+                                <li><Link to="/about">About</Link></li>
                             </ul>
                         </div>
                         <Link to="/" className="btn btn-ghost normal-case text-2xl">Teach Niche</Link>
@@ -26,12 +24,11 @@ export default function Header() {
                         <li>
                             <Link to="/">Home</Link></li>
                             <li><Link to="/marketplace">Lessons</Link></li>
-                            <li><Link href="/about">About</Link></li>
-                            <li><Link href="/faq">FAQ</Link></li>
+                            <li><Link to="/about">About</Link></li>
                         </ul>
                     </div>
                     <div className="navbar-end">
-                        <Link className="btn" to="/sign_in">Get Started</Link>
+                        <Link className="btn" to="/sign-up">Get Started</Link>
                     </div>
                 </div>
             </div>

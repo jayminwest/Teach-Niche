@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 export default function CTA() {
     return (
@@ -9,7 +10,7 @@ export default function CTA() {
                         Become a teacher today <br className="hidden sm:inline" />
                         and start earning money.
                     </span>
-                    <button className="btn btn-warning rounded-full sm:btn-lg">Get Started</button>
+                    <Link to="/sign-in" className="btn btn-warning rounded-full sm:btn-lg">Get Started</Link>
                 </div>
             </div>
         </section>
