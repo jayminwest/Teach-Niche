@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import MarketplaceLayout from './pages/marketplace/layout'; 
 import SignInLayout from './pages/sign-in/layout'; 
 import AboutLayout from './pages/about/layout';
-import DashboardLayout from './pages/dashboard/layout';
+import ProfileLayout from './pages/profile/layout';
 import LegalLayout from './pages/legal/layout';
 import SignUpLayout from './pages/sign-up/layout';
 import ForgotPasswordLayout from './pages/forgot-password/layout';
@@ -21,7 +21,7 @@ root.render(
         <Route path="/sign-up" element={<SignUpLayout />} />
         <Route path="/forgot-password" element={<ForgotPasswordLayout />} />
         <Route path="/about" element={<AboutLayout />} />
-        <Route path="/dashboard" element={<DashboardLayout />} />
+        <Route path="/profile" element={<ProfileLayout />} />
         <Route path="/legal" element={<LegalLayout />} />
       </Routes>
     </BrowserRouter>
