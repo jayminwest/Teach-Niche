@@ -32,7 +32,7 @@ export default function SignUpLayout() {
         await supabase.from('users').insert([
           { id: userId, email, full_name: name }
         ]);
-        navigate("/");  // Redirect to the homepage or dashboard after sign-up
+        navigate("/profile");  // Redirect to the homepage or dashboard after sign-up
       } else {
         setError("User ID is missing from the response.");
       }

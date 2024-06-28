@@ -9,6 +9,7 @@ import ProfileLayout from './pages/profile/layout';
 import LegalLayout from './pages/legal/layout';
 import SignUpLayout from './pages/sign-up/layout';
 import ForgotPasswordLayout from './pages/forgot-password/layout';
+import CreateLesson from './pages/create-lesson/layout';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -23,6 +24,7 @@ root.render(
         <Route path="/about" element={<AboutLayout />} />
         <Route path="/profile" element={<ProfileLayout />} />
         <Route path="/legal" element={<LegalLayout />} />
+        <Route path="/create-lesson" element={<CreateLesson />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>
