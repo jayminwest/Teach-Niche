@@ -8,18 +8,28 @@ function CheckoutButton({ priceId }) {
   const handleClick = async () => {
     const stripe = await stripePromise;
 
-    const response = await fetch('/.netlify/functions/create-checkout-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ priceId }),
+    const response = await fetch('https://wcqpttujocyvueudlcnt.functions.supabase.co/create-checkout-session', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({ priceId }),
     });
 
-    const { sessionId } = await response.json();
+
+
+    const { sessionId, error } = await response.json();
+
+    if (error) {
+      console.error('Error creating checkout session:', error);
+      return;
+    }
 
     const result = await stripe.redirectToCheckout({ sessionId });
 
     if (result.error) {
-      console.error(result.error.message);
+      console.error('Error redirecting to checkout:', result.error.message);
     }
   };
 
