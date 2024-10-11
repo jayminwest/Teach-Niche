@@ -1,3 +1,4 @@
+// src/pages/profile/layout.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
@@ -5,70 +6,107 @@ import Footer from "../../components/Footer";
 import supabase from "../../utils/supabaseClient";
 
 export default function Profile() {
-  const [name, setName] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState(""); // If you want to display email
   const [bio, setBio] = useState("");
   const [profilePicture, setProfilePicture] = useState(null);
   const [socialMediaTag, setSocialMediaTag] = useState("");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (user) {
         const { data, error } = await supabase
-          .from("users")
-          .select("full_name, bio, profile_picture, social_media_tag")
+          .from("profiles")
+          .select("full_name, email, bio, avatar_url, social_media_tag")
           .eq("id", user.id)
           .single();
 
         if (data) {
-          setName(data.full_name);
-          setBio(data.bio);
-          setProfilePicture(data.profile_picture);
-          setSocialMediaTag(data.social_media_tag);
+          setFullName(data.full_name || "");
+          setEmail(data.email || "");
+          setBio(data.bio || "");
+          setProfilePicture(data.avatar_url || "");
+          setSocialMediaTag(data.social_media_tag || "");
         }
 
         if (error) {
           console.error("Error fetching user profile:", error.message);
         }
+      } else {
+        // If no user is logged in, redirect to sign-in page
+        navigate("/sign-in");
       }
       setLoading(false);
     };
 
     fetchUserProfile();
-  }, []);
+  }, [navigate]);
 
-  const handleProfilePictureChange = (e) => {
-    setProfilePicture(URL.createObjectURL(e.target.files[0]));
+  const handleProfilePictureChange = async (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      try {
+        // Upload the image to Supabase Storage
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        const { data, error } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, file);
+
+        if (error) throw error;
+
+        // Get the public URL
+        const { data: publicURL, error: urlError } = supabase
+          .storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+
+        if (urlError) throw urlError;
+
+        setProfilePicture(publicURL.publicURL);
+      } catch (error) {
+        console.error("Error uploading profile picture:", error.message);
+      }
+    }
   };
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    setError(null);
+    setIsUpdating(true);
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (user) {
       const updates = {
         id: user.id,
-        full_name: name,
+        full_name: fullName,
         bio,
-        profile_picture: profilePicture,
+        avatar_url: profilePicture,
         social_media_tag: socialMediaTag,
         updated_at: new Date(),
       };
 
-      const { error } = await supabase.from("users").upsert(updates);
+      const { error } = await supabase.from("profiles").upsert(updates);
 
       if (error) {
         console.error("Error updating profile:", error.message);
+        setError(error.message);
       } else {
         console.log("Profile updated successfully");
       }
+    } else {
+      setError("User not authenticated.");
     }
+
+    setIsUpdating(false);
   };
 
   const handleCreateLessonClick = () => {
@@ -76,8 +114,29 @@ export default function Profile() {
   };
 
   const handleDeleteProfile = async () => {
-    console.log("Delete Button Pressed");
-    // Add logic to delete the user's profile
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (user) {
+      try {
+        // Delete profile from profiles table
+        const { error } = await supabase.from("profiles").delete().eq("id", user.id);
+        if (error) throw error;
+
+        // Delete user from auth.users
+        // Note: Deleting users from auth.users requires using Supabase's Admin API
+        // This operation should be performed securely on the backend
+        // For this example, we'll just sign out the user
+
+        // Sign out the user
+        await supabase.auth.signOut();
+
+        // Redirect to sign-in page
+        navigate("/sign-in");
+      } catch (error) {
+        console.error("Error deleting profile:", error.message);
+        setError(error.message);
+      }
+    }
   };
 
   if (loading) {
@@ -104,7 +163,7 @@ export default function Profile() {
                 )}
                 <label
                   htmlFor="profilePicture"
-                  className="absolute top-0 right-0 btn btn-sm btn-circle"
+                  className="absolute bottom-0 right-0 btn btn-sm btn-circle"
                 >
                   <i className="fas fa-edit"></i>
                 </label>
@@ -117,16 +176,16 @@ export default function Profile() {
               </div>
               <div className="flex-1">
                 <div className="form-control mb-2">
-                  <label className="label" htmlFor="name">
-                    <span className="label-text">Name</span>
+                  <label className="label" htmlFor="fullName">
+                    <span className="label-text">Full Name</span>
                   </label>
                   <input
                     type="text"
-                    id="name"
-                    placeholder="Name"
+                    id="fullName"
+                    placeholder="Full Name"
                     className="input input-bordered"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
                   />
                 </div>
                 <div className="form-control">
@@ -172,12 +231,13 @@ export default function Profile() {
                 >
                   Create Lesson
                 </button>
-                <button className="btn btn-primary" type="submit">
-                  Save Profile
+                <button className="btn btn-primary" type="submit" disabled={isUpdating}>
+                  {isUpdating ? 'Saving...' : 'Save Profile'}
                 </button>
               </div>
             </div>
           </form>
+          {error && <p className="text-red-500 mt-4">{error}</p>}
         </div>
       </div>
       <Footer />

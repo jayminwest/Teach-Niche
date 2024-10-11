@@ -1,17 +1,15 @@
-// functions/create-checkout-session/index.ts
-
-// curl -X POST 'https://wcqpttujocyvueudlcnt.functions.supabase.co/create-checkout-session' \
-  // -H 'Content-Type: application/json' \
-  // -H 'Origin: http://localhost:3000' \
-  // -H 'Authorization: Bearer YOUR_SUPABASE_ANON_KEY' \
-  // -d '{"priceId": "price_1Q8OvxK15NpNFIt8ldu3vvod"}' -i
-
 import { serve } from 'https://deno.land/std@0.192.0/http/server.ts';
 import Stripe from 'https://esm.sh/stripe@12.5.0?target=deno';
+import { createClient } from 'https://deno.land/x/supabase@1.0.0/mod.ts';
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'), {
   apiVersion: '2022-11-15',
 });
+
+// Initialize Supabase Client
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 const allowedOrigins = [
   'http://localhost:3000',
@@ -55,18 +53,75 @@ serve(async (req) => {
       });
     }
 
-    try {
-      const { priceId } = await req.json();
+    const supabaseAccessToken = req.headers.get('Authorization')?.replace('Bearer ', '');
 
+    if (!supabaseAccessToken) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders(origin),
+        },
+      });
+    }
+
+    const supabaseClient = createClient(supabaseUrl, supabaseAccessToken);
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders(origin),
+        },
+      });
+    }
+
+    try {
+      const { lessonId } = await req.json();
+
+      // Fetch the lesson details from the database
+      const { data: lesson, error } = await supabase
+        .from('tutorials')
+        .select('*')
+        .eq('id', lessonId)
+        .single();
+
+      if (error || !lesson) {
+        return new Response(JSON.stringify({ error: 'Lesson not found' }), {
+          status: 404,
+          headers: {
+            'Content-Type': 'application/json',
+            ...corsHeaders(origin),
+          },
+        });
+      }
+
+      // Create the checkout session
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
-        line_items: [{ price: priceId, quantity: 1 }],
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: lesson.title,
+            },
+            unit_amount: Math.round(lesson.price * 100), // Stripe expects amount in cents
+          },
+          quantity: 1,
+        }],
         mode: 'payment',
-        success_url: 'https://your-domain.com/success',
-        cancel_url: 'https://your-domain.com/cancel',
+        success_url: 'https://your-domain.com/success', // Update with your domain
+        cancel_url: 'https://your-domain.com/cancel',   // Update with your domain
+        client_reference_id: user.id,
+        metadata: {
+          tutorial_id: lessonId,
+        },
       });
 
-      return new Response(JSON.stringify({ sessionId: session.id }), {
+      return new Response(JSON.stringify({ sessionId: session.id, sessionUrl: session.url }), {
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders(origin),

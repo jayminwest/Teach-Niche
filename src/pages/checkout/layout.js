@@ -1,13 +1,13 @@
  // CheckoutForm.js
-import { loadStripe } from '@stripe/stripe-js';
-import CheckoutButton from './components/CheckoutButton';
+// import { loadStripe } from '@stripe/stripe-js';
 import CheckoutCard from './components/CheckoutCard';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 
-const stripePromise = loadStripe(process.env.STRIPE_SECRET_KEY);
+// const stripePromise = loadStripe(process.env.STRIPE_SECRET_KEY);
 const sampleCard = {
     title: "Lesson 1",
+    teacher: "Teacher 1",
     price: "$10",
     description: "This is the first lesson",
     imageUrl:

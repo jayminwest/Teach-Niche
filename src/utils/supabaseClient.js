@@ -1,8 +1,16 @@
 // src/utils/supabaseClient.js
 import { createClient } from '@supabase/supabase-js';
 
+// Replace these with your actual Supabase project credentials
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-const supabaseKey = process.env.REACT_APP_SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+
+// Initialize Supabase client
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    detectSessionInUrl: true,
+  },
+});
 
 export default supabase;
