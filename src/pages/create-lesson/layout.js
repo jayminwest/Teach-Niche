@@ -1,47 +1,88 @@
 // src/pages/create-lesson/layout.js
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import supabase from "../../utils/supabaseClient";
 import { useNavigate } from "react-router-dom";
+import supabase from "../../utils/supabaseClient";
 
 export default function CreateLesson() {
-  const [lessonTitle, setLessonTitle] = useState('');
-  const [lessonDescription, setLessonDescription] = useState('');
-  const [lessonCost, setLessonCost] = useState('');
-  const [youtubeLink, setYoutubeLink] = useState('');
+  const [lessonTitle, setLessonTitle] = useState("");
+  const [lessonDescription, setLessonDescription] = useState("");
+  const [lessonCost, setLessonCost] = useState("");
+  const [youtubeLink, setYoutubeLink] = useState("");
+  const [categoryIds, setCategoryIds] = useState([]);
   const [error, setError] = useState(null);
+  const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
+
+  // Fetch Categories for Selection (Optional)
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data, error } = await supabase.from("categories").select("*");
+      if (error) {
+        console.error("Error fetching categories:", error.message);
+      } else {
+        setCategories(data);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const handleCategoryChange = (e) => {
+    const { value, checked } = e.target;
+    if (checked) {
+      setCategoryIds([...categoryIds, parseInt(value)]);
+    } else {
+      setCategoryIds(categoryIds.filter((id) => id !== parseInt(value)));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError || !user) {
+    // Retrieve the current session
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const session = sessionData.session;
+
+    if (sessionError || !session) {
       console.error("User not authenticated");
-      navigate('/sign-in');
+      navigate("/sign-in");
       return;
     }
 
-    // Insert the lesson into the tutorials table using upsert to prevent duplicates
-    const { data, error: insertError } = await supabase.from('tutorials').upsert([
-      {
-        title: lessonTitle,
-        description: lessonDescription,
-        price: parseFloat(lessonCost),
-        content_url: youtubeLink,
-        creator_id: user.id,
-        updated_at: new Date(),
-      },
-    ]);
+    try {
+      const functionsUrl = process.env.REACT_APP_SUPABASE_FUNCTIONS_URL;
+      console.log("Function URL:", `${functionsUrl}/create-lesson`); // For debugging
 
-    if (insertError) {
-      console.error("Error inserting lesson:", insertError.message);
-      setError(insertError.message);
-    } else {
-      console.log("Lesson created:", data);
-      navigate('/marketplace');
+      const response = await fetch(`${functionsUrl}/create-lesson`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          title: lessonTitle,
+          description: lessonDescription,
+          price: lessonCost,
+          content_url: youtubeLink,
+          category_ids: categoryIds,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log("Lesson created:", data.lesson);
+        navigate("/marketplace");
+      } else {
+        setError(data.error);
+      }
+    } catch (err) {
+      setError("An unexpected error occurred.");
+      console.error("Error creating lesson:", err);
     }
   };
 
@@ -81,7 +122,7 @@ export default function CreateLesson() {
             </div>
             <div className="form-control mb-4">
               <label className="label" htmlFor="lessonCost">
-                <span className="label-text">Cost</span>
+                <span className="label-text">Cost (USD)</span>
               </label>
               <input
                 type="number"
@@ -108,8 +149,29 @@ export default function CreateLesson() {
                 required
               />
             </div>
+            {/* Optional: Category Selection */}
+            {categories.length > 0 && (
+              <div className="form-control mb-4">
+                <label className="label">Categories</label>
+                <div className="flex flex-wrap">
+                  {categories.map((category) => (
+                    <label key={category.id} className="label cursor-pointer mr-4">
+                      <input
+                        type="checkbox"
+                        value={category.id}
+                        className="checkbox"
+                        onChange={handleCategoryChange}
+                      />
+                      <span className="label-text ml-2">{category.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="form-control mt-6">
-              <button type="submit" className="btn btn-primary">Create Lesson</button>
+              <button type="submit" className="btn btn-primary">
+                Create Lesson
+              </button>
             </div>
           </form>
           {error && <p className="text-red-500 mt-4">{error}</p>}

@@ -9,45 +9,40 @@
 │  │  ├─ Footer.js
 │  │  ├─ Header.js
 │  │  ├─ Hero.js
+│  │  ├─ ProtectedRoute.js
 │  │  ├─ Services.js
 │  │  └─ Testimonial.js
+│  ├─ context
+│  │  └─ AuthContext.js
 │  ├─ index.js
 │  ├─ pages
 │  │  ├─ about
-│  │  │  ├─ layout.js
-│  │  │  └─ page.js
+│  │  │  └─ layout.js
 │  │  ├─ checkout
 │  │  │  ├─ components
 │  │  │  │  ├─ CheckoutButton.js
 │  │  │  │  └─ CheckoutCard.js
-│  │  │  ├─ layout.js
-│  │  │  └─ page.js
+│  │  │  └─ layout.js
 │  │  ├─ create-lesson
-│  │  │  ├─ layout.js
-│  │  │  └─ page.js
+│  │  │  └─ layout.js
 │  │  ├─ forgot-password
 │  │  │  └─ layout.js
 │  │  ├─ legal
-│  │  │  ├─ layout.js
-│  │  │  └─ page.js
+│  │  │  └─ layout.js
 │  │  ├─ marketplace
 │  │  │  ├─ components
 │  │  │  │  ├─ LessonCard.js
 │  │  │  │  ├─ LessonsGrid.js
 │  │  │  │  └─ PurchaseLessonButton.js
-│  │  │  ├─ layout.js
-│  │  │  └─ page.js
+│  │  │  └─ layout.js
 │  │  ├─ profile
-│  │  │  ├─ layout.js
-│  │  │  └─ page.js
+│  │  │  └─ layout.js
 │  │  ├─ sign-in
 │  │  │  ├─ components
-│  │  │  ├─ layout.js
-│  │  │  └─ page.js
+│  │  │  └─ layout.js
 │  │  └─ sign-up
 │  │     ├─ components.js
-│  │     ├─ layout.js
-│  │     └─ page.js
+│  │     └─ layout.js
 │  └─ utils
 │     ├─ server.js
 │     └─ supabaseClient.js

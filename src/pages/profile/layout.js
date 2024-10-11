@@ -6,6 +6,7 @@ import Footer from "../../components/Footer";
 import supabase from "../../utils/supabaseClient";
 
 export default function Profile() {
+  const [user, setUser] = useState(null);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState(""); // If you want to display email
   const [bio, setBio] = useState("");
@@ -15,11 +16,13 @@ export default function Profile() {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (user) {
+        setUser(user);
         const { data, error } = await supabase
           .from("profiles")
           .select("full_name, email, bio, avatar_url, social_media_tag")
@@ -32,10 +35,12 @@ export default function Profile() {
           setBio(data.bio || "");
           setProfilePicture(data.avatar_url || "");
           setSocialMediaTag(data.social_media_tag || "");
+          console.log("Fetched Profile Data:", data);
         }
 
         if (error) {
           console.error("Error fetching user profile:", error.message);
+          setError(error.message);
         }
       } else {
         // If no user is logged in, redirect to sign-in page
@@ -50,6 +55,18 @@ export default function Profile() {
   const handleProfilePictureChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      // Validate file type (optional)
+      if (!file.type.startsWith("image/")) {
+        setError("Please upload a valid image file.");
+        return;
+      }
+      // Validate file size (optional, e.g., max 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        setError("File size exceeds 10MB.");
+        return;
+      }
+
       try {
         // Upload the image to Supabase Storage
         const fileExt = file.name.split('.').pop();
@@ -70,9 +87,28 @@ export default function Profile() {
 
         if (urlError) throw urlError;
 
-        setProfilePicture(publicURL.publicURL);
+        const newAvatarURL = publicURL;
+        console.log("Public URL:", publicURL);
+
+        // Update the profile with the new avatar URL
+        if (user) {
+          const { error: updateError } = await supabase.from("profiles").upsert({
+            id: user.id,
+            avatar_url: newAvatarURL.publicUrl,
+            updated_at: new Date(),
+          });
+
+          if (updateError) throw updateError;
+
+          setProfilePicture(newAvatarURL);
+          setSuccessMessage("Profile picture updated successfully!");
+          console.log("Profile picture updated successfully");
+        } else {
+          setError("User not authenticated.");
+        }
       } catch (error) {
         console.error("Error uploading profile picture:", error.message);
+        setError(error.message);
       }
     }
   };
@@ -80,30 +116,37 @@ export default function Profile() {
   const handleSaveProfile = async (e) => {
     e.preventDefault();
     setError(null);
+    setSuccessMessage("");
     setIsUpdating(true);
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!user) {
+      setError("User not authenticated.");
+      setIsUpdating(false);
+      return;
+    }
 
-    if (user) {
+    try {
       const updates = {
         id: user.id,
         full_name: fullName,
         bio,
-        avatar_url: profilePicture,
         social_media_tag: socialMediaTag,
         updated_at: new Date(),
       };
 
+      // Only include avatar_url if it's been updated
+
+      updates.avatar_url = profilePicture;
+
       const { error } = await supabase.from("profiles").upsert(updates);
 
-      if (error) {
-        console.error("Error updating profile:", error.message);
-        setError(error.message);
-      } else {
-        console.log("Profile updated successfully");
-      }
-    } else {
-      setError("User not authenticated.");
+      if (error) throw error;
+
+      setSuccessMessage("Profile updated successfully!");
+      console.log("Profile updated successfully");
+    } catch (error) {
+      console.error("Error updating profile:", error.message);
+      setError(error.message);
     }
 
     setIsUpdating(false);
@@ -114,28 +157,28 @@ export default function Profile() {
   };
 
   const handleDeleteProfile = async () => {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!user) {
+      setError("User not authenticated.");
+      return;
+    }
 
-    if (user) {
-      try {
-        // Delete profile from profiles table
-        const { error } = await supabase.from("profiles").delete().eq("id", user.id);
-        if (error) throw error;
+    try {
+      // Delete profile from profiles table
+      const { error } = await supabase.from("profiles").delete().eq("id", user.id);
+      if (error) throw error;
 
-        // Delete user from auth.users
-        // Note: Deleting users from auth.users requires using Supabase's Admin API
-        // This operation should be performed securely on the backend
-        // For this example, we'll just sign out the user
+      // Note: Deleting users from auth.users requires using Supabase's Admin API
+      // This operation should be performed securely on the backend
+      // For this example, we'll just sign out the user
 
-        // Sign out the user
-        await supabase.auth.signOut();
+      // Sign out the user
+      await supabase.auth.signOut();
 
-        // Redirect to sign-in page
-        navigate("/sign-in");
-      } catch (error) {
-        console.error("Error deleting profile:", error.message);
-        setError(error.message);
-      }
+      // Redirect to sign-in page
+      navigate("/sign-in");
+    } catch (error) {
+      console.error("Error deleting profile:", error.message);
+      setError(error.message);
     }
   };
 
@@ -172,6 +215,7 @@ export default function Profile() {
                   id="profilePicture"
                   className="hidden"
                   onChange={handleProfilePictureChange}
+                  accept="image/*"
                 />
               </div>
               <div className="flex-1">
@@ -238,6 +282,7 @@ export default function Profile() {
             </div>
           </form>
           {error && <p className="text-red-500 mt-4">{error}</p>}
+          {successMessage && <p className="text-green-500 mt-4">{successMessage}</p>}
         </div>
       </div>
       <Footer />
