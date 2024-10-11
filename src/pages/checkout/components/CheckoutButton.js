@@ -2,13 +2,14 @@
 import React from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 
-const stripePromise = loadStripe('pk_test_51P2FopK15NpNFIt8Eg5lvzMbAGYjLv5YCqMHPzpAEQwoiYIrCq0gI9VJF8dyeTjBtr8jnIHli1KPLy7fSmtb2hIx006NUfr5He');
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+const functionsUrl = process.env.REACT_APP_SUPABASE_FUNCTIONS_URL;
 
 function CheckoutButton({ priceId }) {
   const handleClick = async () => {
     const stripe = await stripePromise;
 
-    const response = await fetch('https://wcqpttujocyvueudlcnt.functions.supabase.co/create-checkout-session', {
+    const response = await fetch(`${functionsUrl}/create-checkout-session`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -16,8 +17,6 @@ function CheckoutButton({ priceId }) {
         },
         body: JSON.stringify({ priceId }),
     });
-
-
 
     const { sessionId, error } = await response.json();
 
@@ -33,7 +32,7 @@ function CheckoutButton({ priceId }) {
     }
   };
 
-  return <button onClick={handleClick}>Buy Tutorial</button>;
+  return <button className="btn btn-primary" onClick={handleClick}>Buy Tutorial</button>;
 }
 
 export default CheckoutButton;
