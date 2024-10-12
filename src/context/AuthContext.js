@@ -1,37 +1,41 @@
 // src/context/AuthContext.js
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import supabase from '../utils/supabaseClient';
 
-export const AuthContext = createContext();
+const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const getSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Error fetching session:', error.message);
-      }
+    // Get initial session
+    const currentSession = supabase.auth.getSession();
+    currentSession.then(({ data: { session } }) => {
       setSession(session);
-      setLoading(false);
-    };
-
-    getSession();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+      setUser(session?.user || null);
     });
 
+    // Listen for auth state changes
+    const { subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user || null);
+    });
+
+    // Cleanup subscription on unmount
     return () => {
-      authListener.subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 
   return (
-    <AuthContext.Provider value={{ session, loading }}>
+    <AuthContext.Provider value={{ session, user }}>
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Custom hook for easy access
+export const useAuth = () => {
+  return useContext(AuthContext);
 };

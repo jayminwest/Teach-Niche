@@ -7,7 +7,6 @@ import Services from "./components/Services";
 import Testimonial from "./components/Testimonial";
 import CTA from "./components/CTA";
 import Footer from "./components/Footer";
-import { ColorModeProvider } from "daisyui";
 
 function App() {
   return (

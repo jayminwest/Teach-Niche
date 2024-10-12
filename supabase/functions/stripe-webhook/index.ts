@@ -2,7 +2,7 @@
 
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
-import { createClient } from "https://deno.land/x/supabase@1.0.0/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@1.35.6?target=deno";
 
 // Initialize Stripe
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
@@ -87,7 +87,7 @@ const handleCheckoutSession = async (session: Stripe.Checkout.Session) => {
   if (error) {
     console.error("Error recording purchase:", error.message);
   } else {
-    console.log("Purchase recorded successfully:", data[0].id);
+    // console.log("Purchase recorded successfully:", data[0].id);
     // Optional: Send a confirmation email or trigger other workflows here
   }
 };

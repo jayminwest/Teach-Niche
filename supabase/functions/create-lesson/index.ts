@@ -2,7 +2,7 @@
 
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
-import { createClient } from "https://deno.land/x/supabase@1.0.0/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@1.35.6?target=deno";
 
 // Initialize Stripe
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
@@ -20,79 +20,65 @@ const allowedOrigins = [
   "https://teach-niche.com", // Replace with your production domain
 ];
 
-// Function to generate CORS headers based on origin
-const getCorsHeaders = (origin: string) => {
-  if (allowedOrigins.includes(origin)) {
-    return {
-      "Access-Control-Allow-Origin": origin,
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Credentials": "true",
-      Vary: "Origin",
-    };
-  } else {
-    return {
-      "Access-Control-Allow-Origin": "null",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Credentials": "true",
-      Vary: "Origin",
-    };
-  }
+const corsHeaders = (origin: string) => ({
+  "Access-Control-Allow-Origin": origin,
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Credentials": "true",
+  Vary: "Origin",
+});
+
+// Helper Function to Create CORS Response
+const createCorsResponse = (status: number, body: any, origin: string) => {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      ...corsHeaders(origin),
+    },
+  });
 };
 
 // Main Handler
 serve(async (req) => {
   const origin = req.headers.get("origin") || "";
 
-  // Handle CORS Preflight (OPTIONS) Request
+  // Handle CORS Preflight
   if (req.method === "OPTIONS") {
     if (allowedOrigins.includes(origin)) {
       return new Response(null, {
         status: 204,
-        headers: getCorsHeaders(origin),
+        headers: corsHeaders(origin),
       });
     } else {
-      return new Response("Forbidden", {
+      return new Response(null, {
         status: 403,
-        headers: getCorsHeaders(origin),
+        statusText: "Forbidden",
       });
     }
   }
 
   // Only allow POST requests
   if (req.method !== "POST") {
-    return new Response("Method Not Allowed", {
-      status: 405,
-      headers: getCorsHeaders(origin),
-    });
+    return new Response("Method Not Allowed", { status: 405 });
   }
 
   // Check if Origin is Allowed
   if (!allowedOrigins.includes(origin)) {
-    return new Response(JSON.stringify({ error: "Origin not allowed" }), {
-      status: 403,
-      headers: getCorsHeaders(origin),
-    });
+    return createCorsResponse(403, { error: "Origin not allowed" }, origin);
   }
 
   // Authenticate User
   const supabaseAccessToken = req.headers.get("Authorization")?.replace("Bearer ", "");
   if (!supabaseAccessToken) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: getCorsHeaders(origin),
-    });
+    return createCorsResponse(401, { error: "Unauthorized token" }, origin);
   }
 
-  const supabaseClient = createClient(supabaseUrl, supabaseAccessToken);
-  const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+  // Get the user from the access token using Supabase v1
+  const { user, error: authError } = await supabase.auth.api.getUser(supabaseAccessToken);
 
   if (authError || !user) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
-      status: 401,
-      headers: getCorsHeaders(origin),
-    });
+    return createCorsResponse(401, { error: "Unauthorized user" }, origin);
   }
 
   try {
@@ -100,10 +86,7 @@ serve(async (req) => {
 
     // Validate Input
     if (!title || !price || !content_url) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
-        status: 400,
-        headers: getCorsHeaders(origin),
-      });
+      return createCorsResponse(400, { error: "Missing required fields" }, origin);
     }
 
     // Create Stripe Product
@@ -136,10 +119,7 @@ serve(async (req) => {
       .select();
 
     if (insertError || !data) {
-      return new Response(JSON.stringify({ error: insertError?.message || "Failed to create lesson" }), {
-        status: 500,
-        headers: getCorsHeaders(origin),
-      });
+      return createCorsResponse(500, { error: insertError?.message || "Failed to create lesson" }, origin);
     }
 
     // If categories are provided, insert into tutorial_categories
@@ -158,15 +138,9 @@ serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ lesson: data[0] }), {
-      status: 201,
-      headers: getCorsHeaders(origin),
-    });
+    return createCorsResponse(201, { lesson: data[0] }, origin);
   } catch (error: any) {
     console.error("Error creating lesson:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: getCorsHeaders(origin),
-    });
+    return createCorsResponse(500, { error: error.message }, origin);
   }
 });

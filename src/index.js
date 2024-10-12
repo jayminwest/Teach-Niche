@@ -11,10 +11,12 @@ import SignUpLayout from './pages/sign-up/layout';
 import ForgotPasswordLayout from './pages/forgot-password/layout';
 import CreateLesson from './pages/create-lesson/layout';
 import Checkout from './pages/checkout/layout';
+import { AuthProvider } from './context/AuthContext';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
+    <AuthProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<App />} />
@@ -29,5 +31,6 @@ root.render(
         <Route path="/checkout" element={<Checkout />} />
       </Routes>
     </BrowserRouter>
+    </AuthProvider>
   </React.StrictMode>
 );
