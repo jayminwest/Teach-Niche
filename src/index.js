@@ -12,6 +12,8 @@ import ForgotPasswordLayout from './pages/forgot-password/layout';
 import CreateLesson from './pages/create-lesson/layout';
 import Checkout from './pages/checkout/layout';
 import { AuthProvider } from './context/AuthContext';
+import Success from './pages/success/layout';
+import Cancel from './pages/cancel/layout';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -29,6 +31,8 @@ root.render(
         <Route path="/legal" element={<LegalLayout />} />
         <Route path="/create-lesson" element={<CreateLesson />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/success" element={<Success />} />
+        <Route path="/cancel" element={<Cancel />} />
       </Routes>
     </BrowserRouter>
     </AuthProvider>

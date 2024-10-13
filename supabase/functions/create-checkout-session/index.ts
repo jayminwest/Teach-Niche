@@ -2,7 +2,7 @@
 
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno"; // Updated to Supabase v2
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno"; // Ensure using Supabase v2
 
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   apiVersion: "2022-11-15",
@@ -104,6 +104,9 @@ serve(async (req) => {
     if (!lesson.stripe_price_id) {
       return createCorsResponse(500, { error: "Stripe Price ID not found" }, origin);
     }
+    
+    const frontend_url = Deno.env.get("FRONTEND_URL");
+    // const frontend_url = "http://localhost:3000";
 
     // Create Checkout Session using the stored Stripe Price ID
     const session = await stripe.checkout.sessions.create({
@@ -115,8 +118,8 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${Deno.env.get("FRONTEND_URL")}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${Deno.env.get("FRONTEND_URL")}/cancel`,
+      success_url: `${frontend_url}/success`,
+      cancel_url: `${frontend_url}/cancel`,
       client_reference_id: user.id,
       metadata: {
         tutorial_id: lesson.id,
@@ -143,9 +146,3 @@ serve(async (req) => {
     );
   }
 });
-
-// Supabase v2 uses a different way to retrieve user
-// Here’s how to correctly use supabase.auth.getUser in v2:
-
-// const { data, error } = await supabase.auth.getUser(supabaseAccessToken);
-// const user = data.user;
