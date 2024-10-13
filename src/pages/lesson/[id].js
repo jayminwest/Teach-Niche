@@ -3,61 +3,105 @@ import React, { useEffect, useState } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import supabase from "../../utils/supabaseClient";
 import { useAuth } from "../../context/AuthContext";
+import LessonDetail from "../../components/LessonDetail";
 
-export default function LessonDetail() {
+export default function LessonPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const [lesson, setLesson] = useState(null);
+  const [creator, setCreator] = useState(null);
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchLesson = async () => {
+    const fetchLessonAndAccess = async () => {
+      console.log(`Fetching lesson with ID: ${id}`);
       try {
         // Fetch lesson details
         const { data: lessonData, error: lessonError } = await supabase
-          .from('tutorials')
-          .select('*')
-          .eq('id', id)
+          .from("tutorials")
+          .select("*")
+          .eq("id", id)
           .single();
 
         if (lessonError) {
+          console.error("Error fetching lesson:", lessonError.message);
           throw lessonError;
         }
 
         setLesson(lessonData);
+        console.log("Lesson data fetched successfully:", lessonData);
+
+        // Fetch creator's profile
+        const { data: creatorData, error: creatorError } = await supabase
+          .from("profiles")
+          .select("full_name, avatar_url")
+          .eq("id", lessonData.creator_id)
+          .single();
+
+        if (creatorError) {
+          console.error("Error fetching creator profile:", creatorError.message);
+          throw creatorError;
+        }
+
+        setCreator(creatorData);
+        console.log("Creator profile fetched successfully:", creatorData);
 
         // If user is logged in, check if they have purchased the lesson
         if (user) {
+          console.log(`Checking purchase for user ID: ${user.id}`);
           const { data: purchaseData, error: purchaseError } = await supabase
-            .from('purchases')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('tutorial_id', id)
+            .from("purchases")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("tutorial_id", id)
             .single();
 
-          if (purchaseError && purchaseError.code !== 'PGRST116') { // 'PGRST116' = no rows found
+          if (purchaseError && purchaseError.code !== "PGRST116") {
+            // PGRST116: No rows found
+            console.error("Error fetching purchase data:", purchaseError.message);
             throw purchaseError;
           }
 
           if (purchaseData) {
             setHasAccess(true);
+            console.log("User has access to the lesson.");
           } else {
             setHasAccess(false);
+            console.log("User does not have access to the lesson.");
           }
         }
-      } catch (error) {
-        console.error("Error fetching lesson or purchase data:", error.message);
+      } catch (err) {
+        console.error("Error in fetchLessonAndAccess:", err);
+        setError(err.message);
       } finally {
         setLoading(false);
+        console.log("Finished fetching lesson and access data.");
       }
     };
 
-    fetchLesson();
+    fetchLessonAndAccess();
   }, [id, user]);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Loading...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center mt-10 text-red-500">
+        {error === "PGRST116: No rows found" ? (
+          "You do not have access to this lesson. Please purchase it first."
+        ) : (
+          `An error occurred: ${error}`
+        )}
+      </div>
+    );
   }
 
   if (!lesson) {
@@ -68,23 +112,14 @@ export default function LessonDetail() {
     return <Navigate to="/sign-in" replace />;
   }
 
-  if (!hasAccess) {
-    return <div className="text-center mt-10">You do not have access to this lesson. Please purchase it first.</div>;
-  }
-
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1>
-      <p className="mb-4">By {lesson.creator_id}</p>
-      <div className="lesson-content">
-        {/* Render the lesson content, e.g., video, text, etc. */}
-        <iframe
-          src={lesson.content_url}
-          title={lesson.title}
-          className="w-full h-96"
-          allowFullScreen
-        ></iframe>
-      </div>
+      <LessonDetail
+        lesson={lesson}
+        creator={creator}
+        hasAccess={hasAccess}
+        lessonId={id}
+      />
     </div>
   );
 }

@@ -14,10 +14,11 @@ import Checkout from './pages/checkout/layout';
 import { AuthProvider } from './context/AuthContext';
 import Success from './pages/success/layout';
 import Cancel from './pages/cancel/layout';
-import LessonDetail from './pages/lesson/[id]';
+import LessonPage from './pages/lesson/[id]';
 import ProtectedRoute from './components/ProtectedRoute';
 import MyPurchasesLayout from './pages/my-purchases/layout';
 import Logout from './pages/logout/layout';
+import NotFound from './pages/not-found/layout';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -48,7 +49,7 @@ root.render(
             path="/lesson/:id"
             element={
               <ProtectedRoute>
-                <LessonDetail />
+                <LessonPage />
               </ProtectedRoute>
             }
           />
@@ -61,6 +62,7 @@ root.render(
           } 
         />
         <Route path="/logout" element={<Logout />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
     </AuthProvider>

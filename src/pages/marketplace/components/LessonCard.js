@@ -13,6 +13,7 @@ export default function LessonCard({ id, title, creator_id, price, description, 
 
   useEffect(() => {
     const fetchCreatorName = async () => {
+      console.log(`Fetching creator name for creator ID: ${creator_id}`);
       const { data, error } = await supabase
         .from("profiles")
         .select("full_name")
@@ -23,6 +24,7 @@ export default function LessonCard({ id, title, creator_id, price, description, 
         console.error("Error fetching creator name:", error.message);
       } else {
         setCreatorName(data.full_name || "Unknown");
+        console.log("Creator name fetched successfully:", data.full_name);
       }
     };
 
@@ -31,12 +33,14 @@ export default function LessonCard({ id, title, creator_id, price, description, 
 
   const handlePurchase = async () => {
     if (!user) {
+      console.warn("User not authenticated. Redirecting to sign-in.");
       navigate("/sign-in");
       return;
     }
 
     setLoading(true);
     setError(null);
+    console.log(`Initiating purchase for lesson ID: ${id}`);
 
     try {
       const functionsUrl = process.env.REACT_APP_SUPABASE_FUNCTIONS_URL;
@@ -44,6 +48,7 @@ export default function LessonCard({ id, title, creator_id, price, description, 
         throw new Error("Functions URL not set in environment variables.");
       }
 
+      console.log(`Creating checkout session at: ${functionsUrl}/create-checkout-session`);
       const response = await fetch(`${functionsUrl}/create-checkout-session`, {
         method: 'POST',
         headers: {
@@ -59,12 +64,15 @@ export default function LessonCard({ id, title, creator_id, price, description, 
 
       if (response.ok) {
         if (data.sessionUrl) {
+          console.log("Checkout session created successfully. Redirecting to Stripe.");
           // Redirect to Stripe Checkout
           window.location.href = data.sessionUrl;
         } else {
+          console.error("Checkout session URL not returned.");
           throw new Error("Checkout session URL not returned.");
         }
       } else {
+        console.error("Failed to create checkout session:", data.error);
         throw new Error(data.error || "Failed to create checkout session.");
       }
     } catch (error) {
@@ -72,10 +80,12 @@ export default function LessonCard({ id, title, creator_id, price, description, 
       setError(error.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
+      console.log("Finished purchase process for lesson ID:", id);
     }
   };
 
   const handleAccess = () => {
+    console.log(`Accessing lesson ID: ${id}`);
     navigate(`/lesson/${id}`);
   };
 
