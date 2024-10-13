@@ -82,10 +82,10 @@ serve(async (req) => {
   }
 
   try {
-    const { title, description, price, content_url, category_ids } = await req.json();
+    const { title, description, price, content_url, content, category_ids } = await req.json();
 
     // Validate Input
-    if (!title || !price || !content_url) {
+    if (!title || !price || !content_url || !content) {  // Include content in validation
       return createCorsResponse(400, { error: "Missing required fields" }, origin);
     }
 
@@ -111,6 +111,7 @@ serve(async (req) => {
           description,
           price: parseFloat(price),
           content_url,
+          content,  // Store the content
           creator_id: user.id,
           stripe_product_id: product.id,
           stripe_price_id: stripePrice.id,

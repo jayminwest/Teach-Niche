@@ -10,6 +10,7 @@ export default function LessonCard({ id, title, creator_id, price, description, 
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const fetchCreatorName = async () => {
@@ -89,11 +90,25 @@ export default function LessonCard({ id, title, creator_id, price, description, 
     navigate(`/lesson/${id}`);
   };
 
+  // Add this function to handle image loading errors
+  const handleImageError = () => {
+    console.log(`Error loading image for lesson ID: ${id}`);
+    setImageError(true);
+  };
+
+  // Placeholder image URL
+  const placeholderImage = "https://via.placeholder.com/400x300?text=Lesson+Image";
+
   return (
     <div className="card w-80 h-auto bg-base-100 shadow-xl overflow-hidden">
       {/* Image Container */}
       <figure className="h-48 overflow-hidden">
-        <img src={content_url} alt="Lesson" className="w-full h-full object-cover"/>
+        <img 
+          src={imageError ? placeholderImage : (content_url || placeholderImage)} 
+          alt={`Lesson: ${title}`}
+          className="w-full h-full object-cover"
+          onError={handleImageError}
+        />
       </figure>
       <div className="card-body">
         <h2 className="card-title">{title}</h2>

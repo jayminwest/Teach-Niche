@@ -54,52 +54,24 @@ export default function LessonsGrid({showPurchasedOnly = false}) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
+  const displayLessons = showPurchasedOnly
+    ? lessons.filter(lesson => purchasedLessons.includes(lesson.id))
+    : lessons;
+
   return (
     <div className="container p-4 mx-auto">
-      {showPurchasedOnly ? (
-        <div>
-          {purchasedLessons.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {lessons
-                .filter(lesson => purchasedLessons.includes(lesson.id))
-                .map((lesson) => (
-                  <LessonCard key={lesson.id} {...lesson} isPurchased />
-                ))}
-            </div>
-          ) : (
-            <p>You haven't purchased any lessons yet.</p>
-          )}
-        </div>
+      {showPurchasedOnly && displayLessons.length === 0 ? (
+        <p>You haven't purchased any lessons yet.</p>
       ) : (
-        <>
-          {user && (
-            <div className="mb-10">
-              <h2 className="text-2xl font-bold mb-4">Purchased Lessons</h2>
-              {purchasedLessons.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {lessons
-                    .filter(lesson => purchasedLessons.includes(lesson.id))
-                    .map((lesson) => (
-                      <LessonCard key={lesson.id} {...lesson} isPurchased />
-                    ))}
-                </div>
-              ) : (
-                <p>You haven't purchased any lessons yet.</p>
-              )}
-            </div>
-          )}
-
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Available Lessons</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {lessons
-                .filter(lesson => !user || !purchasedLessons.includes(lesson.id))
-                .map((lesson) => (
-                  <LessonCard key={lesson.id} {...lesson} isPurchased={purchasedLessons.includes(lesson.id)} />
-                ))}
-            </div>
-          </div>
-        </>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {displayLessons.map((lesson) => (
+            <LessonCard 
+              key={lesson.id} 
+              {...lesson} 
+              isPurchased={purchasedLessons.includes(lesson.id)} 
+            />
+          ))}
+        </div>
       )}
     </div>
   );

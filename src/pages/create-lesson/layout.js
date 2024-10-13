@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+import TextEditor from "../../components/TextEditor";
 import { useNavigate } from "react-router-dom";
 import supabase from "../../utils/supabaseClient";
 
@@ -11,6 +12,7 @@ export default function CreateLesson() {
   const [lessonDescription, setLessonDescription] = useState("");
   const [lessonCost, setLessonCost] = useState("");
   const [youtubeLink, setYoutubeLink] = useState("");
+  const [lessonContent, setLessonContent] = useState(""); // New state for lesson content
   const [categoryIds, setCategoryIds] = useState([]);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -68,6 +70,7 @@ export default function CreateLesson() {
           description: lessonDescription,
           price: lessonCost,
           content_url: youtubeLink,
+          content: lessonContent, // Include the lesson content from Quill
           category_ids: categoryIds,
         }),
       });
@@ -119,6 +122,12 @@ export default function CreateLesson() {
                 onChange={(e) => setLessonDescription(e.target.value)}
                 required
               ></textarea>
+            </div>
+            <div className="form-control mb-4">
+              <label className="label" htmlFor="lessonContent">
+                <span className="label-text">Content</span>
+              </label>
+              <TextEditor value={lessonContent} onChange={setLessonContent} /> {/* Integrate TextEditor */}
             </div>
             <div className="form-control mb-4">
               <label className="label" htmlFor="lessonCost">

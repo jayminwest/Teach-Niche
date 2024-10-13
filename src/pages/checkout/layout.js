@@ -17,7 +17,7 @@ const sampleCard = {
 
 export default function CheckoutForm() {
     return (
-        <div className="container mx-auto">
+        <div>
             <Header />
                 <CheckoutCard {...sampleCard} />
             <Footer />

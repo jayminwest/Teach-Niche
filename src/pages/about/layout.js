@@ -20,7 +20,7 @@ export default function AboutUs() {
     };
 
     return (
-        <div className="container mx-auto">
+        <div>
             <Header />
             <div className="flex justify-center items-center min-h-screen py-10">
                 <div className="card w-full max-w-2xl shadow-2xl bg-base-100 p-6">
