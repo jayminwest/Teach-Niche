@@ -4,6 +4,8 @@ import { useParams, Navigate } from "react-router-dom";
 import supabase from "../../utils/supabaseClient";
 import { useAuth } from "../../context/AuthContext";
 import LessonDetail from "../../components/LessonDetail";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
 
 export default function LessonPage() {
   const { id } = useParams();
@@ -114,12 +116,14 @@ export default function LessonPage() {
 
   return (
     <div className="container mx-auto p-4">
+      <Header />
       <LessonDetail
         lesson={lesson}
         creator={creator}
         hasAccess={hasAccess}
         lessonId={id}
       />
+      <Footer />
     </div>
   );
 }

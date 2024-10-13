@@ -113,7 +113,8 @@ export default function LessonDetail({ lesson, creator, hasAccess, lessonId }) {
         <div className="lesson-content">
           {/* Render the lesson content, e.g., video, text, etc. */}
           <iframe
-            src={lesson.content_url}
+            // src={lesson.content_url}
+            src={""}
             title={lesson.title}
             className="w-full h-96"
             allowFullScreen
