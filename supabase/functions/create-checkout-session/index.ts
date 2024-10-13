@@ -106,7 +106,6 @@ serve(async (req) => {
     }
     
     const frontend_url = Deno.env.get("FRONTEND_URL");
-    // const frontend_url = "http://localhost:3000";
 
     // Create Checkout Session using the stored Stripe Price ID
     const session = await stripe.checkout.sessions.create({
@@ -118,7 +117,7 @@ serve(async (req) => {
         },
       ],
       mode: "payment",
-      success_url: `${frontend_url}/success`,
+      success_url: `${frontend_url}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${frontend_url}/cancel`,
       client_reference_id: user.id,
       metadata: {
