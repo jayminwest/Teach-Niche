@@ -1,118 +1,90 @@
 // src/pages/lesson/[id].js
-
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, Navigate } from "react-router-dom";
 import supabase from "../../utils/supabaseClient";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
+import { useAuth } from "../../context/AuthContext";
 
-const LessonPage = () => {
+export default function LessonDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [lesson, setLesson] = useState(null);
-  const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [hasAccess, setHasAccess] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
-
     const fetchLesson = async () => {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      try {
+        // Fetch lesson details
+        const { data: lessonData, error: lessonError } = await supabase
+          .from('tutorials')
+          .select('*')
+          .eq('id', id)
+          .single();
 
-      if (userError || !user) {
-        console.error("User not authenticated");
-        navigate("/sign-in");
-        return;
-      }
+        if (lessonError) {
+          throw lessonError;
+        }
 
-      // Fetch lesson details
-      const { data: lessonData, error: lessonError } = await supabase
-        .from("tutorials")
-        .select("*")
-        .eq("id", id)
-        .single();
+        setLesson(lessonData);
 
-      if (lessonError || !lessonData) {
-        console.error("Error fetching lesson:", lessonError);
-        setError("Lesson not found.");
+        // If user is logged in, check if they have purchased the lesson
+        if (user) {
+          const { data: purchaseData, error: purchaseError } = await supabase
+            .from('purchases')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('tutorial_id', id)
+            .single();
+
+          if (purchaseError && purchaseError.code !== 'PGRST116') { // 'PGRST116' = no rows found
+            throw purchaseError;
+          }
+
+          if (purchaseData) {
+            setHasAccess(true);
+          } else {
+            setHasAccess(false);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching lesson or purchase data:", error.message);
+      } finally {
         setLoading(false);
-        return;
       }
-
-      setLesson(lessonData);
-
-      // Check if user has purchased the lesson
-      const { data: purchaseData, error: purchaseError } = await supabase
-        .from("purchases")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("tutorial_id", id)
-        .single();
-
-      if (purchaseError && purchaseError.code !== "PGRST116") { // PGRST116: No rows found
-        console.error("Error checking purchase:", purchaseError.message);
-      }
-
-      if (purchaseData) {
-        setHasAccess(true);
-      } else {
-        setHasAccess(false);
-      }
-
-      setLoading(false);
     };
 
     fetchLesson();
-  }, [id, navigate]);
+  }, [id, user]);
 
-  if (loading) return <p>Loading lesson...</p>;
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
 
-  if (error) return <p className="text-red-500">{error}</p>;
+  if (!lesson) {
+    return <div className="text-center mt-10">Lesson not found.</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/sign-in" replace />;
+  }
 
   if (!hasAccess) {
-    return (
-      <div>
-        <Header />
-        <div className="container mx-auto text-center mt-10">
-          <h2 className="text-2xl font-bold">Access Denied</h2>
-          <p className="mt-4">
-            You do not have access to this lesson. Please purchase it from the{" "}
-            <a href="/marketplace" className="text-blue-500 underline">
-              Marketplace
-            </a>
-            .
-          </p>
-        </div>
-        <Footer />
-      </div>
-    );
+    return <div className="text-center mt-10">You do not have access to this lesson. Please purchase it first.</div>;
   }
 
   return (
-    <div className="container mx-auto">
-      <Header />
-      <div className="flex flex-col justify-center items-center min-h-screen py-10">
-        <div className="card w-full max-w-3xl shadow-2xl bg-base-100 p-6">
-          <h1 className="card-title text-3xl mb-4">{lesson.title}</h1>
-          <p className="mb-4">{lesson.description}</p>
-          <div className="embed-responsive">
-            <iframe
-              width="100%"
-              height="500px"
-              src={lesson.content_url}
-              title={lesson.title}
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
-          </div>
-          {/* Additional Lesson Content */}
-        </div>
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1>
+      <p className="mb-4">By {lesson.creator_id}</p>
+      <div className="lesson-content">
+        {/* Render the lesson content, e.g., video, text, etc. */}
+        <iframe
+          src={lesson.content_url}
+          title={lesson.title}
+          className="w-full h-96"
+          allowFullScreen
+        ></iframe>
       </div>
-      <Footer />
     </div>
   );
-};
-
-export default LessonPage;
+}

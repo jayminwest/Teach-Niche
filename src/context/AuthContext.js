@@ -9,14 +9,20 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    // Get initial session
-    const currentSession = supabase.auth.getSession();
-    currentSession.then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user || null);
-    });
+    // Fetch the initial session
+    const fetchSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error fetching session:', error.message);
+      } else {
+        setSession(session);
+        setUser(session?.user || null);
+      }
+    };
 
-    // Listen for auth state changes
+    fetchSession();
+
+    // Listen for authentication state changes
     const { subscription } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user || null);
@@ -28,8 +34,17 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  // Add a signOut function to the context
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Error signing out:', error.message);
+    }
+    // Auth state change listener will handle state updates
+  };
+
   return (
-    <AuthContext.Provider value={{ session, user }}>
+    <AuthContext.Provider value={{ session, user, signOut }}>
       {children}
     </AuthContext.Provider>
   );

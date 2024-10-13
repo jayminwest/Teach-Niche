@@ -14,6 +14,10 @@ import Checkout from './pages/checkout/layout';
 import { AuthProvider } from './context/AuthContext';
 import Success from './pages/success/layout';
 import Cancel from './pages/cancel/layout';
+import LessonDetail from './pages/lesson/[id]';
+import ProtectedRoute from './components/ProtectedRoute';
+import MyPurchasesLayout from './pages/my-purchases/layout';
+import Logout from './pages/logout/layout';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -27,12 +31,36 @@ root.render(
         <Route path="/sign-up" element={<SignUpLayout />} />
         <Route path="/forgot-password" element={<ForgotPasswordLayout />} />
         <Route path="/about" element={<AboutLayout />} />
-        <Route path="/profile" element={<ProfileLayout />} />
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute>
+              <ProfileLayout />
+            </ProtectedRoute>
+          } 
+        />
         <Route path="/legal" element={<LegalLayout />} />
         <Route path="/create-lesson" element={<CreateLesson />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/success" element={<Success />} />
         <Route path="/cancel" element={<Cancel />} />
+        <Route
+            path="/lesson/:id"
+            element={
+              <ProtectedRoute>
+                <LessonDetail />
+              </ProtectedRoute>
+            }
+          />
+        <Route 
+          path="my-purchases" 
+          element={
+            <ProtectedRoute>
+              <MyPurchasesLayout/>
+            </ProtectedRoute>
+          } 
+        />
+        <Route path="/logout" element={<Logout />} />
       </Routes>
     </BrowserRouter>
     </AuthProvider>

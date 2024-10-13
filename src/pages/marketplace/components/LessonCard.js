@@ -1,12 +1,12 @@
 // src/pages/marketplace/components/LessonCard.js
 import React, { useEffect, useState } from "react";
 import supabase from "../../../utils/supabaseClient";
-import { useAuth } from "../../../context/AuthContext"; // Import AuthContext
+import { useAuth } from "../../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-export default function LessonCard({ id, title, creator_id, price, description, content_url }) {
+export default function LessonCard({ id, title, creator_id, price, description, content_url, isPurchased }) {
   const [creatorName, setCreatorName] = useState("");
-  const { user, session } = useAuth(); // Access user and session from AuthContext
+  const { user, session } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -39,7 +39,6 @@ export default function LessonCard({ id, title, creator_id, price, description, 
     setError(null);
 
     try {
-      // Ensure the REACT_APP_SUPABASE_FUNCTIONS_URL is set correctly
       const functionsUrl = process.env.REACT_APP_SUPABASE_FUNCTIONS_URL;
       if (!functionsUrl) {
         throw new Error("Functions URL not set in environment variables.");
@@ -49,7 +48,6 @@ export default function LessonCard({ id, title, creator_id, price, description, 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Include the Authorization header with the user's access token
           'Authorization': `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify({
@@ -77,6 +75,10 @@ export default function LessonCard({ id, title, creator_id, price, description, 
     }
   };
 
+  const handleAccess = () => {
+    navigate(`/lesson/${id}`);
+  };
+
   return (
     <div className="card w-80 h-auto bg-base-100 shadow-xl overflow-hidden">
       {/* Image Container */}
@@ -89,13 +91,22 @@ export default function LessonCard({ id, title, creator_id, price, description, 
         <p>Price: ${price}</p>
         <p>{description}</p>
         {error && <p className="text-red-500">{error}</p>}
-        <button
-          className={`btn btn-primary ${loading ? "loading" : ""}`}
-          onClick={handlePurchase}
-          disabled={loading}
-        >
-          {loading ? "Processing..." : "Purchase Lesson"}
-        </button>
+        {isPurchased ? (
+          <button
+            className="btn btn-success"
+            onClick={handleAccess}
+          >
+            Access Lesson
+          </button>
+        ) : (
+          <button
+            className={`btn btn-primary ${loading ? "loading" : ""}`}
+            onClick={handlePurchase}
+            disabled={loading}
+          >
+            {loading ? "Processing..." : "Purchase Lesson"}
+          </button>
+        )}
       </div>
     </div>
   );

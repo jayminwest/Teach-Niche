@@ -1,34 +1,10 @@
 // src/components/Header.js
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import supabase from '../utils/supabaseClient'; // Adjust the path if necessary
+import { useAuth } from "../context/AuthContext";
 
 export default function Header() {
-  const [session, setSession] = useState(null);
-
-  useEffect(() => {
-    // Fetch the current session
-    const fetchSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('Error fetching session:', error.message);
-      } else {
-        setSession(session);
-      }
-    };
-
-    fetchSession();
-
-    // Listen for authentication state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    // Cleanup the listener on unmount
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+  const { user } = useAuth();
 
   return (
     <header className='sticky top-0 z-50 py-2 bg-base-100'>
@@ -43,6 +19,9 @@ export default function Header() {
                 <li><Link to="/">Home</Link></li>
                 <li><Link to="/marketplace">Lessons</Link></li>
                 <li><Link to="/about">About</Link></li>
+                {user && (
+                  <li><Link to="/my-purchases">My Purchased Lessons</Link></li>
+                )}
               </ul>
             </div>
             <Link to="/" className="btn btn-ghost normal-case text-2xl">Teach Niche</Link>
@@ -52,11 +31,17 @@ export default function Header() {
               <li><Link to="/">Home</Link></li>
               <li><Link to="/marketplace">Lessons</Link></li>
               <li><Link to="/about">About</Link></li>
+              {user && (
+                <li><Link to="/my-purchases">My Purchased Lessons</Link></li>
+              )}
             </ul>
           </div>
           <div className="navbar-end">
-            {session ? (
-              <Link className="btn" to="/profile">View Profile</Link>
+            {user ? (
+              <>
+                <Link className="btn mr-2" to="/profile">View Profile</Link>
+                <Link className="btn btn-secondary" to="/logout">Logout</Link>
+              </>
             ) : (
               <Link className="btn" to="/sign-up">Get Started</Link>
             )}
