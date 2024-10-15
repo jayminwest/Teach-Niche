@@ -4,8 +4,9 @@ import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno"; // Ensure using Supabase v2
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
-  apiVersion: "2022-11-15",
+const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || '', {
+  apiVersion: "2023-10-16",
+  // This should match the API version listed on the Stripe website
 });
 
 // Initialize Supabase Client
@@ -74,7 +75,7 @@ serve(async (req) => {
     return createCorsResponse(401, { error: "Unauthorized token" }, origin);
   }
 
-  // Use Supabase v2 method to get user
+  // Get the user from the access token using Supabase v2
   const { data: { user }, error: authError } = await supabase.auth.getUser(supabaseAccessToken);
 
   if (authError || !user) {
@@ -82,66 +83,57 @@ serve(async (req) => {
   }
 
   try {
-    const { lessonId } = await req.json();
-
-    // Validate Input
-    if (!lessonId) {
-      return createCorsResponse(400, { error: "Missing lessonId" }, origin);
+    console.log('Request received');
+    const { tutorialId } = await req.json(); // Ensure the parameter matches the frontend
+    if (!tutorialId) {
+      return createCorsResponse(400, { error: "tutorialId is required" }, origin);
     }
+    console.log(`Attempting to fetch tutorial with ID: ${tutorialId}`);
 
-    // Fetch the lesson details from the database
-    const { data: lesson, error } = await supabase
-      .from("tutorials")
-      .select("*")
-      .eq("id", lessonId)
+    // Fetch the tutorial details using tutorialId
+    const { data: tutorial, error: tutorialError } = await supabase
+      .from('tutorials')
+      .select('*, profiles:creator_id(stripe_account_id)')
+      .eq('id', tutorialId) // Ensure this matches the parameter name
       .single();
 
-    if (error || !lesson) {
-      return createCorsResponse(404, { error: "Lesson not found" }, origin);
+    if (tutorialError) {
+      console.error('Error fetching tutorial:', JSON.stringify(tutorialError, null, 2));
+      return createCorsResponse(500, { error: 'Error fetching tutorial details', details: tutorialError }, origin);
     }
 
-    // Ensure Stripe Price ID exists
-    if (!lesson.stripe_price_id) {
-      return createCorsResponse(500, { error: "Stripe Price ID not found" }, origin);
+    if (!tutorial) {
+      console.error(`Tutorial with ID ${tutorialId} not found`);
+      return createCorsResponse(404, { error: 'Tutorial not found' }, origin);
     }
-    
-    const frontend_url = Deno.env.get("FRONTEND_URL");
 
-    // Create Checkout Session using the stored Stripe Price ID
+    console.log('Tutorial found:', JSON.stringify(tutorial, null, 2));
+
+    if (!tutorial.profiles || !tutorial.profiles.stripe_account_id) {
+      console.error('Stripe account ID not found for tutorial creator');
+      return createCorsResponse(500, { error: 'Stripe account not set up for this tutorial' }, origin);
+    }
+
+    console.log('Creating Stripe checkout session');
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
+      payment_method_types: ['card'],
       line_items: [
         {
-          price: lesson.stripe_price_id,
+          price: tutorial.stripe_price_id,
           quantity: 1,
         },
       ],
-      mode: "payment",
-      success_url: `${frontend_url}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${frontend_url}/cancel`,
-      client_reference_id: user.id,
-      metadata: {
-        tutorial_id: lesson.id,
-      },
+      mode: 'payment',
+      success_url: `${Deno.env.get('FRONTEND_URL')}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${Deno.env.get('FRONTEND_URL')}/cancel`,
+    }, {
+      stripeAccount: tutorial.profiles.stripe_account_id,
     });
 
-    return new Response(JSON.stringify({ sessionId: session.id, sessionUrl: session.url }), {
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders(origin),
-      },
-    });
-  } catch (error: any) {
-    console.error("Error creating checkout session:", error);
-    return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders(origin),
-        },
-      }
-    );
+    console.log('Checkout session created:', session.id);
+    return createCorsResponse(200, { sessionId: session.id }, origin);
+  } catch (error) {
+    console.error('Error in create-checkout-session:', error);
+    return createCorsResponse(500, { error: 'Internal server error', details: JSON.stringify(error) }, origin);
   }
 });

@@ -10,7 +10,7 @@ import LegalLayout from './pages/legal/layout';
 import SignUpLayout from './pages/sign-up/layout';
 import ForgotPasswordLayout from './pages/forgot-password/layout';
 import CreateLesson from './pages/create-lesson/layout';
-import Checkout from './pages/checkout/layout';
+import EditLesson from './pages/edit-lesson/[id]'; // Import the new EditLesson component
 import { AuthProvider } from './context/AuthContext';
 import Success from './pages/success/layout';
 import Cancel from './pages/cancel/layout';
@@ -42,7 +42,14 @@ root.render(
         />
         <Route path="/legal" element={<LegalLayout />} />
         <Route path="/create-lesson" element={<CreateLesson />} />
-        <Route path="/checkout" element={<Checkout />} />
+        <Route 
+          path="/edit-lesson/:id" 
+          element={
+            <ProtectedRoute>
+              <EditLesson />
+            </ProtectedRoute>
+          } 
+        />
         <Route path="/success" element={<Success />} />
         <Route path="/cancel" element={<Cancel />} />
         <Route

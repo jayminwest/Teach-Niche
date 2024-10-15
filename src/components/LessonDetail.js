@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from "react";
 import supabase from "../utils/supabaseClient";
 import { useAuth } from "../context/AuthContext";
+import ReactQuill from 'react-quill'; // Import ReactQuill for rendering rich text
+import 'react-quill/dist/quill.snow.css'; // Import Quill styles
 
 export default function LessonDetail({ lesson, creator, hasAccess, lessonId }) {
   const { user, session } = useAuth();
@@ -60,7 +62,7 @@ export default function LessonDetail({ lesson, creator, hasAccess, lessonId }) {
           Authorization: `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify({
-          lessonId: lessonId,
+          tutorialId: lessonId, // Changed from lessonId to tutorialId for consistency
         }),
       });
 
@@ -111,14 +113,19 @@ export default function LessonDetail({ lesson, creator, hasAccess, lessonId }) {
 
       {hasAccess ? (
         <div className="lesson-content">
-          {/* Render the lesson content, e.g., video, text, etc. */}
-          <iframe
-            // src={lesson.content_url}
-            src={""}
-            title={lesson.title}
-            className="w-full h-96"
-            allowFullScreen
-          ></iframe>
+          {lesson.video_url && (
+            <iframe
+              src={lesson.video_url}
+              title={lesson.title}
+              className="w-full h-96 mb-4"
+              allowFullScreen
+            ></iframe>
+          )}
+          <ReactQuill
+            value={lesson.content}
+            readOnly={true}
+            theme={"bubble"}
+          />
         </div>
       ) : (
         <div>

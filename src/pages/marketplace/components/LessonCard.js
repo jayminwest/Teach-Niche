@@ -4,7 +4,7 @@ import supabase from "../../../utils/supabaseClient";
 import { useAuth } from "../../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-export default function LessonCard({ id, title, creator_id, price, description, content_url, isPurchased }) {
+export default function LessonCard({ id, title, creator_id, price, description, content_url, isPurchased, isCreated }) {
   const [creatorName, setCreatorName] = useState("");
   const { user, session } = useAuth();
   const navigate = useNavigate();
@@ -57,7 +57,7 @@ export default function LessonCard({ id, title, creator_id, price, description, 
           'Authorization': `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify({
-          lessonId: id,
+          tutorialId: id, // Changed from lessonId to tutorialId for consistency
         }),
       });
 
@@ -90,18 +90,20 @@ export default function LessonCard({ id, title, creator_id, price, description, 
     navigate(`/lesson/${id}`);
   };
 
-  // Add this function to handle image loading errors
+  const handleEdit = () => {
+    console.log(`Editing lesson ID: ${id}`);
+    navigate(`/edit-lesson/${id}`);
+  };
+
   const handleImageError = () => {
     console.log(`Error loading image for lesson ID: ${id}`);
     setImageError(true);
   };
 
-  // Placeholder image URL
   const placeholderImage = "https://via.placeholder.com/400x300?text=Lesson+Image";
 
   return (
     <div className="card w-80 h-auto bg-base-100 shadow-xl overflow-hidden">
-      {/* Image Container */}
       <figure className="h-48 overflow-hidden">
         <img 
           src={imageError ? placeholderImage : (content_url || placeholderImage)} 
@@ -116,7 +118,14 @@ export default function LessonCard({ id, title, creator_id, price, description, 
         <p>Price: ${price}</p>
         <p>{description}</p>
         {error && <p className="text-red-500">{error}</p>}
-        {isPurchased ? (
+        {isCreated ? (
+          <button
+            className="btn btn-primary"
+            onClick={handleEdit}
+          >
+            Edit Lesson
+          </button>
+        ) : isPurchased ? (
           <button
             className="btn btn-success"
             onClick={handleAccess}

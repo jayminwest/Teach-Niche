@@ -115,14 +115,16 @@ export default function LessonPage() {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div>
       <Header />
-      <LessonDetail
-        lesson={lesson}
-        creator={creator}
-        hasAccess={hasAccess}
-        lessonId={id}
-      />
+      <div className="container mx-auto p-4">
+        <LessonDetail 
+          lesson={lesson}
+          creator={creator}
+          hasAccess={hasAccess}
+          lessonId={id}
+        />
+      </div>
       <Footer />
     </div>
   );

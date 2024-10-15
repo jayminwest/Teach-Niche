@@ -26,9 +26,11 @@ export default function Profile() {
   const [createdLessons, setCreatedLessons] = useState([]);
   const [purchasedLessons, setPurchasedLessons] = useState([]);
   const [activeTab, setActiveTab] = useState("profile");
+  const [stripeConnected, setStripeConnected] = useState(false);
 
   useEffect(() => {
     fetchUserProfile();
+    checkStripeConnectionStatus();
   }, [navigate]);
 
   const fetchUserProfile = async () => {
@@ -37,7 +39,7 @@ export default function Profile() {
       setUser(user);
       const { data, error } = await supabase
         .from("profiles")
-        .select("full_name, email, bio, avatar_url, social_media_tag")
+        .select("full_name, email, bio, avatar_url, social_media_tag, stripe_account_id, stripe_onboarding_complete")
         .eq("id", user.id)
         .single();
 
@@ -48,7 +50,10 @@ export default function Profile() {
           bio: data.bio || "",
           profilePicture: data.avatar_url || "",
           socialMediaTag: data.social_media_tag || "",
+          stripe_account_id: data.stripe_account_id,
+          stripe_onboarding_complete: data.stripe_onboarding_complete,
         });
+        setStripeConnected(data.stripe_onboarding_complete);
       }
 
       if (error) {
@@ -62,6 +67,17 @@ export default function Profile() {
       navigate("/sign-in");
     }
     setLoading(false);
+  };
+
+  const checkStripeConnectionStatus = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const stripeConnected = urlParams.get('stripe_connected');
+    if (stripeConnected === 'true') {
+      setStripeConnected(true);
+      setSuccessMessage("Stripe account connected successfully!");
+      // Remove the query parameter from the URL
+      window.history.replaceState({}, document.title, "/profile");
+    }
   };
 
   const fetchCreatedLessons = async (userId) => {
@@ -147,6 +163,29 @@ export default function Profile() {
     }
   };
 
+  const initiateStripeConnect = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('create-stripe-connect', {
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      if (error) {
+        console.error("Supabase function error:", error);
+        throw new Error(error.message || "Failed to initiate Stripe Connect");
+      }
+
+      if (data && data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error("Unexpected response:", data);
+        throw new Error("Failed to initiate Stripe Connect: No URL returned");
+      }
+    } catch (err) {
+      console.error("Error initiating Stripe Connect:", err);
+      setError(err.message || "An unexpected error occurred");
+    }
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center h-screen">
       <span className="loading loading-spinner loading-lg"></span>
@@ -178,6 +217,14 @@ export default function Profile() {
               >
                 Purchased Lessons
               </a>
+              {!profileData.stripe_onboarding_complete && (
+                <a 
+                  className={`tab ${activeTab === 'connect-stripe' ? 'tab-active' : ''}`}
+                  onClick={() => setActiveTab('connect-stripe')}
+                >
+                  Connect Stripe
+                </a>
+              )}
             </div>
 
             {activeTab === 'profile' && (
@@ -199,9 +246,43 @@ export default function Profile() {
                 </div>
                 <div className="divider my-6"></div>
                 <ActionButtons
-                  onCreateLesson={() => navigate("/create-lesson")}
+                  onCreateLesson={() => {
+                    if (profileData.stripe_onboarding_complete) {
+                      navigate("/create-lesson");
+                    } else {
+                      setActiveTab('connect-stripe');
+                      setError("Please connect your Stripe account before creating lessons.");
+                    }
+                  }}
                   onDeleteProfile={handleDeleteProfile}
                 />
+              </>
+            )}
+
+            {activeTab === 'connect-stripe' && (
+              <>
+                {stripeConnected ? (
+                  <div>
+                    <p className="text-green-500 mb-4">Your Stripe account is connected.</p>
+                    <button
+                      className="btn btn-secondary"
+                      onClick={() => {/* Optionally, implement disconnect logic */}}
+                    >
+                      Disconnect Stripe
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <h2 className="card-title text-3xl mb-6">Connect Stripe Account</h2>
+                    <p className="mb-4">To receive payments from lesson sales, please connect your Stripe account.</p>
+                    <button
+                      className="btn btn-primary"
+                      onClick={initiateStripeConnect}
+                    >
+                      Connect Stripe
+                    </button>
+                  </>
+                )}
               </>
             )}
 
@@ -216,6 +297,7 @@ export default function Profile() {
                         {...lesson} 
                         creator_id={user.id}
                         isCreated={true}
+                        isPurchased={false}
                       />
                     ))}
                   </div>

@@ -1,36 +1,66 @@
-// src/pages/create-lesson/layout.js
-
 import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import TextEditor from "../../components/TextEditor";
-import { useNavigate } from "react-router-dom";
 import supabase from "../../utils/supabaseClient";
 
-export default function CreateLesson() {
+export default function EditLesson() {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [lessonTitle, setLessonTitle] = useState("");
   const [lessonDescription, setLessonDescription] = useState("");
   const [lessonCost, setLessonCost] = useState("");
   const [youtubeLink, setYoutubeLink] = useState("");
-  const [lessonContent, setLessonContent] = useState(""); // New state for lesson content
+  const [lessonContent, setLessonContent] = useState("");
   const [categoryIds, setCategoryIds] = useState([]);
-  const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
-  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch Categories for Selection (Optional)
   useEffect(() => {
-    const fetchCategories = async () => {
-      const { data, error } = await supabase.from("categories").select("*");
-      if (error) {
-        console.error("Error fetching categories:", error.message);
-      } else {
-        setCategories(data);
-      }
-    };
-
+    fetchLessonData();
     fetchCategories();
-  }, []);
+  }, [id]);
+
+  const fetchLessonData = async () => {
+    const { data, error } = await supabase
+      .from("tutorials")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching lesson:", error.message);
+      setError("Failed to load lesson data.");
+    } else if (data) {
+      setLessonTitle(data.title);
+      setLessonDescription(data.description);
+      setLessonCost(data.price);
+      setYoutubeLink(data.video_url || "");
+      setLessonContent(data.content);
+
+      // Fetch category IDs for this lesson
+      const { data: categoryData, error: categoryError } = await supabase
+        .from("tutorial_categories")
+        .select("category_id")
+        .eq("tutorial_id", id);
+
+      if (!categoryError) {
+        setCategoryIds(categoryData.map(item => item.category_id));
+      }
+    }
+    setLoading(false);
+  };
+
+  const fetchCategories = async () => {
+    const { data, error } = await supabase.from("categories").select("*");
+    if (error) {
+      console.error("Error fetching categories:", error.message);
+    } else {
+      setCategories(data);
+    }
+  };
 
   const handleCategoryChange = (e) => {
     const { value, checked } = e.target;
@@ -45,13 +75,11 @@ export default function CreateLesson() {
     e.preventDefault();
     setError(null);
 
-    // Validate required fields
     if (!lessonTitle || !lessonDescription || !lessonCost || !lessonContent) {
       setError("Please fill in all required fields.");
       return;
     }
 
-    // Retrieve the current session
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     const session = sessionData.session;
 
@@ -62,45 +90,58 @@ export default function CreateLesson() {
     }
 
     try {
-      const functionsUrl = process.env.REACT_APP_SUPABASE_FUNCTIONS_URL;
-      console.log("Function URL:", `${functionsUrl}/create-lesson`); // For debugging
-
-      const response = await fetch(`${functionsUrl}/create-lesson`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase
+        .from("tutorials")
+        .update({
           title: lessonTitle,
           description: lessonDescription,
           price: parseFloat(lessonCost), // Ensure price is sent as a number
           video_url: youtubeLink || null,
           content: lessonContent,
-          category_ids: categoryIds,
-        }),
-      });
+        })
+        .eq("id", id);
 
-      const data = await response.json();
+      if (error) throw error;
 
-      if (response.ok) {
-        console.log("Lesson created:", data.lesson);
-        navigate("/marketplace");
-      } else {
-        setError(data.error || "Failed to create lesson");
+      // Update categories
+      await supabase
+        .from("tutorial_categories")
+        .delete()
+        .eq("tutorial_id", id);
+
+      if (categoryIds.length > 0) {
+        const categoryInserts = categoryIds.map(categoryId => ({
+          tutorial_id: id,
+          category_id: categoryId,
+        }));
+
+        const { error: categoryError } = await supabase
+          .from("tutorial_categories")
+          .insert(categoryInserts);
+
+        if (categoryError) throw categoryError;
       }
+
+      console.log("Lesson updated successfully");
+      navigate("/profile");
     } catch (err) {
       setError("An unexpected error occurred.");
-      console.error("Error creating lesson:", err);
+      console.error("Error updating lesson:", err);
     }
   };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-screen">
+      <span className="loading loading-spinner loading-lg"></span>
+    </div>;
+  }
 
   return (
     <div className="container mx-auto">
       <Header />
       <div className="flex flex-col justify-center items-center min-h-screen py-10">
         <div className="card w-full max-w-2xl shadow-2xl bg-base-100 p-6">
-          <h2 className="card-title text-3xl mb-4">Create New Lesson</h2>
+          <h2 className="card-title text-3xl mb-4">Edit Lesson</h2>
           <form onSubmit={handleSubmit}>
             <div className="form-control mb-4">
               <label className="label" htmlFor="lessonTitle">
@@ -167,7 +208,6 @@ export default function CreateLesson() {
                 onChange={(e) => setYoutubeLink(e.target.value)}
               />
             </div>
-            {/* Optional: Category Selection */}
             {categories.length > 0 && (
               <div className="form-control mb-4">
                 <label className="label">Categories</label>
@@ -178,6 +218,7 @@ export default function CreateLesson() {
                         type="checkbox"
                         value={category.id}
                         className="checkbox"
+                        checked={categoryIds.includes(category.id)}
                         onChange={handleCategoryChange}
                       />
                       <span className="label-text ml-2">{category.name}</span>
@@ -188,7 +229,7 @@ export default function CreateLesson() {
             )}
             <div className="form-control mt-6">
               <button type="submit" className="btn btn-primary">
-                Create Lesson
+                Update Lesson
               </button>
             </div>
           </form>

@@ -2,11 +2,10 @@
 
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@1.35.6?target=deno";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno";
 
-// Initialize Stripe
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
-  apiVersion: "2022-11-15",
+  apiVersion: "2023-10-16",
 });
 
 // Initialize Supabase Client with Service Role Key
@@ -74,32 +73,47 @@ serve(async (req) => {
     return createCorsResponse(401, { error: "Unauthorized token" }, origin);
   }
 
-  // Get the user from the access token using Supabase v1
-  const { user, error: authError } = await supabase.auth.api.getUser(supabaseAccessToken);
+  // Get the user from the access token using Supabase v2
+  const { data: { user }, error: authError } = await supabase.auth.getUser(supabaseAccessToken);
 
   if (authError || !user) {
     return createCorsResponse(401, { error: "Unauthorized user" }, origin);
   }
 
   try {
-    const { title, description, price, content_url, content, category_ids } = await req.json();
+    const { title, description, price, video_url, content, category_ids } = await req.json();
 
     // Validate Input
-    if (!title || !price || !content_url || !content) {  // Include content in validation
+    if (!title || !price || !content) {
       return createCorsResponse(400, { error: "Missing required fields" }, origin);
     }
 
-    // Create Stripe Product
+    // Retrieve user's Stripe Account ID
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("stripe_account_id, stripe_onboarding_complete")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || !profile.stripe_account_id || !profile.stripe_onboarding_complete) {
+      return createCorsResponse(403, { error: "Please connect your Stripe account before creating lessons." }, origin);
+    }
+
+    // Create Stripe Product on behalf of the connected account
     const product = await stripe.products.create({
       name: title,
       description: description || "",
+    }, {
+      stripeAccount: profile.stripe_account_id,
     });
 
-    // Create Stripe Price
+    // Create Stripe Price on behalf of the connected account
     const stripePrice = await stripe.prices.create({
       unit_amount: Math.round(parseFloat(price) * 100), // Convert to cents
       currency: "usd",
       product: product.id,
+    }, {
+      stripeAccount: profile.stripe_account_id,
     });
 
     // Insert Lesson into Supabase
@@ -110,8 +124,8 @@ serve(async (req) => {
           title,
           description,
           price: parseFloat(price),
-          content_url,
-          content,  // Store the content
+          video_url: video_url || null,
+          content, // This will be stored as JSONB
           creator_id: user.id,
           stripe_product_id: product.id,
           stripe_price_id: stripePrice.id,
