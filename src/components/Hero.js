@@ -10,12 +10,12 @@ export default function Hero() {
                 <div className="hero-content text-center text-secondary-content">
                     <div className="max-w-lg">
                         <h1 className="mb-5 sm:mb-7 text-4xl sm:text-5xl font-bold">
-                            Welcome to Teach Niche
+                            About Teach Niche
                         </h1>
                         <p className="mb-5 sm:mb-7 sm:text-lg">
-                            Provident cupiditate voluptatem et in. Quaerat fugiat ut assumenda excepturi exercitationem quasi. In deleniti eaque aut repudiandae et a id nisi.
+                            Empowering the kendama community by providing a platform for players to share knowledge, hone their skills, and earn income doing what they love.
                         </p>
-                        <Link to="/marketplace" className="btn btn-warning sm:btn-wide" >View Lessons</Link>
+                        <Link to="/marketplace" className="btn btn-warning sm:btn-wide">View Lessons</Link>
                     </div>
                 </div>
             </div>

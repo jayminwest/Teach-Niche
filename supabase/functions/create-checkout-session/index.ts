@@ -84,17 +84,18 @@ serve(async (req) => {
 
   try {
     console.log('Request received');
-    const { tutorialId } = await req.json(); // Ensure the parameter matches the frontend
+    const { tutorialId } = await req.json();
+    console.log(`Received tutorialId: ${tutorialId}`);
+
     if (!tutorialId) {
       return createCorsResponse(400, { error: "tutorialId is required" }, origin);
     }
-    console.log(`Attempting to fetch tutorial with ID: ${tutorialId}`);
 
     // Fetch the tutorial details using tutorialId
     const { data: tutorial, error: tutorialError } = await supabase
       .from('tutorials')
       .select('*, profiles:creator_id(stripe_account_id)')
-      .eq('id', tutorialId) // Ensure this matches the parameter name
+      .eq('id', tutorialId)
       .single();
 
     if (tutorialError) {

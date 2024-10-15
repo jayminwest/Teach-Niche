@@ -1,12 +1,16 @@
 import React, { useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 
 export default function AboutUs() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
     const [formSubmitted, setFormSubmitted] = useState(false);
+    const navigate = useNavigate();
+    const { user } = useAuth();
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -16,6 +20,14 @@ export default function AboutUs() {
         setEmail('');
         setMessage('');
         setFormSubmitted(true);
+    };
+
+    const handleTeachersClick = () => {
+        if (user) {
+            navigate('/profile');
+        } else {
+            navigate('/sign-up');
+        }
     };
 
     return (
@@ -104,24 +116,34 @@ export default function AboutUs() {
                             <h2 className="card-title">For Learners</h2>
                             <p>Access tutorials from some of the best kendama players in the world and take your skills to new heights.</p>
                             <div className="card-actions justify-end">
-                                <button className="btn btn-primary">Start Learning</button>
+                                <button 
+                                    onClick={() => navigate('/marketplace')} 
+                                    className="btn btn-primary"
+                                >
+                                    View Lessons
+                                </button>
                             </div>
                         </div>
                     </div>
                     <div className="card w-96 bg-base-100 shadow-xl">
                         <div className="card-body">
-                            <h2 className="card-title">For Creators</h2>
+                            <h2 className="card-title">For Teachers</h2>
                             <p>Share your expertise, connect with a global audience, and earn income doing what you love.</p>
                             <div className="card-actions justify-end">
-                                <button className="btn btn-secondary">Become a Creator</button>
+                                <button 
+                                    onClick={handleTeachersClick} 
+                                    className="btn btn-secondary"
+                                >
+                                    Become a Teacher
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="divider my-12">Get Involved</div>
+                {/* <div className="divider my-12">Get Involved</div> */}
 
-                <div className="text-center mb-8">
+                {/* <div className="text-center mb-8">
                     <h2 className="text-2xl font-bold mb-4">Contact Us</h2>
                     <p className="text-lg mb-4">
                         We're always looking to grow and evolve with the needs of the community. Your feedback, suggestions, and involvement are invaluable to us.
@@ -152,14 +174,14 @@ export default function AboutUs() {
                             <button className={formSubmitted ? "btn btn-success" : "btn btn-primary"}>{formSubmitted ? "Success! Thanks for reaching out!" : "Send Message"}</button>
                         </div>
                     </div>
-                </form>
+                </form> */}
 
-                <div className="alert alert-info shadow-lg mt-12">
+                {/* <div className="alert alert-info shadow-lg mt-12">
                     <div>
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current flex-shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <span>Stay updated by following our Instagram <a href="#" className="link link-hover font-bold">@TeachNiche</a> and join the conversation!</span>
                     </div>
-                </div>
+                </div> */}
             </div>
             <Footer />
         </div>

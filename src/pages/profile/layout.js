@@ -9,6 +9,7 @@ import ProfileForm from "./components/ProfileForm";
 import ActionButtons from "./components/ActionButtons";
 import AlertMessage from "../../components/AlertMessage";
 import LessonCard from "../marketplace/components/LessonCard";
+import LessonCreationGuide from "./components/LessonCreationGuide";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -186,6 +187,18 @@ export default function Profile() {
     }
   };
 
+  const handleCreateLesson = () => {
+    if (stripeConnected) { // Ensure Stripe is connected
+      setActiveTab('create-lesson'); // Update activeTab to 'create-lesson'
+    } else {
+      setError("Please connect your Stripe account before creating lessons.");
+    }
+  };
+
+  const proceedToCreateLesson = () => {
+    navigate("/create-lesson");
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center h-screen">
       <span className="loading loading-spinner loading-lg"></span>
@@ -225,6 +238,14 @@ export default function Profile() {
                   Connect Stripe
                 </a>
               )}
+              {stripeConnected && (
+                <a 
+                  className={`tab ${activeTab === 'create-lesson' ? 'tab-active' : ''}`}
+                  onClick={() => setActiveTab('create-lesson')}
+                >
+                  Create Lesson
+                </a>
+              )}
             </div>
 
             {activeTab === 'profile' && (
@@ -246,17 +267,14 @@ export default function Profile() {
                 </div>
                 <div className="divider my-6"></div>
                 <ActionButtons
-                  onCreateLesson={() => {
-                    if (profileData.stripe_onboarding_complete) {
-                      navigate("/create-lesson");
-                    } else {
-                      setActiveTab('connect-stripe');
-                      setError("Please connect your Stripe account before creating lessons.");
-                    }
-                  }}
+                  onCreateLesson={handleCreateLesson}
                   onDeleteProfile={handleDeleteProfile}
                 />
               </>
+            )}
+
+            {activeTab === 'create-lesson' && (
+              <LessonCreationGuide />
             )}
 
             {activeTab === 'connect-stripe' && (

@@ -7,10 +7,10 @@ export default function CTA() {
             <div className="container">
                 <div className="flex flex-col md:flex-row justify-center items-center gap-6 text-center md:text-left">
                     <span className="flex-grow text-4xl md:text-5xl 2xl:text-6xl font-bold text-primary">
-                        Become a teacher today <br className="hidden sm:inline" />
-                        and start earning money.
+                        Share Your Expertise <br className="hidden sm:inline" />
+                        and Grow with Teach Niche.
                     </span>
-                    <Link to="/sign-in" className="btn btn-warning rounded-full sm:btn-lg">Get Started</Link>
+                    <Link to="/sign-up" className="btn btn-warning rounded-full sm:btn-lg">Join Us</Link>
                 </div>
             </div>
         </section>

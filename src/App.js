@@ -4,7 +4,7 @@ import "./App.css";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
 import Services from "./components/Services";
-import Testimonial from "./components/Testimonial";
+import FeaturedLessons from "./components/FeaturedLessons";
 import CTA from "./components/CTA";
 import Footer from "./components/Footer";
 
@@ -14,7 +14,7 @@ function App() {
       <Header />
       <Hero />
       <Services />
-      <Testimonial />
+      <FeaturedLessons />
       <CTA />
       <Footer />
     </div>
