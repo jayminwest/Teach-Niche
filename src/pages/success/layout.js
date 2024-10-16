@@ -47,24 +47,6 @@ const SuccessPage = () => {
         <div className="card w-full max-w-md shadow-2xl bg-base-100 p-6 text-center">
           <h2 className="text-3xl font-bold mb-4">Purchase Successful!</h2>
           <p>Thank you for your purchase. Your lesson has been added to your profile.</p>
-          
-          {/* Display purchase details for debugging */}
-          {purchaseDetails && (
-            <div className="mt-4 text-left">
-              <h3 className="text-xl font-semibold">Purchase Details:</h3>
-              <pre className="bg-gray-100 p-2 rounded mt-2">
-                {JSON.stringify(purchaseDetails, null, 2)}
-              </pre>
-            </div>
-          )}
-
-          {/* Display errors if any */}
-          {error && (
-            <div className="mt-4 text-red-500">
-              <h3 className="text-xl font-semibold">Error:</h3>
-              <p>{error}</p>
-            </div>
-          )}
         </div>
       </div>
       <Footer />
