@@ -57,7 +57,7 @@ export default function LessonCard({ id, title, creator_id, price, description, 
           'Authorization': `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify({
-          tutorialId: id, // Changed from lessonId to tutorialId for consistency
+          tutorialId: id, // Changed to tutorialId as backend expects
         }),
       });
 

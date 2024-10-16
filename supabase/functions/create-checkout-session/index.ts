@@ -91,7 +91,7 @@ serve(async (req) => {
       return createCorsResponse(400, { error: "tutorialId is required" }, origin);
     }
 
-    // Fetch the tutorial details using tutorialId
+    // Fetch the tutorial details using tutorialId, including the stripe_account_id from profiles
     const { data: tutorial, error: tutorialError } = await supabase
       .from('tutorials')
       .select('*, profiles:creator_id(stripe_account_id)')
@@ -132,7 +132,7 @@ serve(async (req) => {
     });
 
     console.log('Checkout session created:', session.id);
-    return createCorsResponse(200, { sessionId: session.id }, origin);
+    return createCorsResponse(200, { sessionUrl: session.url }, origin);
   } catch (error) {
     console.error('Error in create-checkout-session:', error);
     return createCorsResponse(500, { error: 'Internal server error', details: JSON.stringify(error) }, origin);

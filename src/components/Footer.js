@@ -1,14 +1,19 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Footer() {
+  const { user } = useAuth();
+
   return (
     <footer className="bottom-0 bg-base-200 text-base-content">
       <div className="container">
         <div className="footer py-10 md:py-16 grid-cols-3 sm:grid-cols-3 lg:grid-cols-auto">
           <nav>
             <h6 className="footer-title">Services</h6>
-            <Link className="link link-hover">Teaching</Link>
+            <Link className="link link-hover" to={user ? "/profile" : "/sign-up"}>
+              Teaching
+            </Link>
             <Link className="link link-hover" to="/marketplace">Lessons</Link>
           </nav>
           <nav>
