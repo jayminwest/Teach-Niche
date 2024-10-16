@@ -2,7 +2,6 @@
 
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@1.35.6?target=deno";
-import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 
 // Initialize Supabase Client
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -96,11 +95,6 @@ async function verifyStripeSignature(
   return JSON.parse(payload);
 }
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-  apiVersion: "2023-10-16",
-  // This should match the API version listed on the Stripe website
-});
-
 serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method Not Allowed", { status: 405 });
@@ -109,22 +103,21 @@ serve(async (req) => {
   const payload = await req.text();
   const sig = req.headers.get("stripe-signature");
 
+  // Enhanced Logging: Log the raw signature and payload for debugging
   console.log("Received Stripe signature header:", sig);
-  console.log("Stripe API Version:", stripe.getApiField('version'));
+  console.log("Received payload:", payload);
 
   if (!sig) {
     console.error("Missing Stripe signature.");
     return new Response("Missing Stripe signature.", { status: 400 });
   }
 
-  let event: Stripe.Event;
+  let event: any;
 
   try {
-    event = stripe.webhooks.constructEvent(payload, sig, webhookSecret);
+    event = await verifyStripeSignature(payload, sig, webhookSecret);
   } catch (err: any) {
     console.error("⚠️  Webhook signature verification failed.", err.message);
-    console.error("Error details:", err);
-    console.error("Stripe API Version:", stripe.getApiField('version'));
     return new Response(`Webhook Error: ${err.message}`, { status: 400 });
   }
 
@@ -132,8 +125,7 @@ serve(async (req) => {
   switch (event.type) {
     case "checkout.session.completed":
       const session = event.data.object;
-      console.log("Received checkout.session.completed event:", event.id);
-      
+
       // Fulfill the purchase
       await handleCheckoutSession(session);
       break;
@@ -146,12 +138,10 @@ serve(async (req) => {
 });
 
 const handleCheckoutSession = async (session: any) => {
-  console.log("Handling checkout session:", session.id);
-  console.log("Full session object:", JSON.stringify(session, null, 2));
-
   const tutorialId = session.metadata?.tutorial_id;
   const userId = session.client_reference_id;
 
+  console.log("Handling checkout session:", session.id);
   console.log("Extracted tutorial_id:", tutorialId);
   console.log("Extracted user_id:", userId);
 
@@ -160,47 +150,39 @@ const handleCheckoutSession = async (session: any) => {
     return;
   }
 
-  try {
-    // Check if the purchase already exists to prevent duplicates
-    const { data: existingPurchase, error: existingError } = await supabase
-      .from("purchases")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("tutorial_id", tutorialId)
-      .single();
+  // Check if the purchase already exists to prevent duplicates
+  const { data: existingPurchase, error: existingError } = await supabase
+    .from("purchases")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("tutorial_id", tutorialId)
+    .single();
 
-    if (existingError) {
-      console.error("Error checking existing purchase:", existingError);
-      if (existingError.code !== "PGRST116") { // PGRST116: No rows found
-        return;
-      }
-    }
+  if (existingError && existingError.code !== "PGRST116") { // PGRST116: No rows found
+    console.error("Error checking existing purchase:", existingError.message);
+    return;
+  }
 
-    if (existingPurchase) {
-      console.log("Purchase already exists:", existingPurchase.id);
-      return;
-    }
+  if (existingPurchase) {
+    console.log("Purchase already exists:", existingPurchase.id);
+    return;
+  }
 
-    // Insert the purchase into the purchases table
-    const { data, error } = await supabase
-      .from("purchases")
-      .insert([
-        {
-          user_id: userId,
-          tutorial_id: tutorialId,
-          purchase_date: new Date(),
-          stripe_session_id: session.id, // Add this line to store the Stripe session ID
-        },
-      ])
-      .select();
+  // Insert the purchase into the purchases table
+  const { data, error } = await supabase
+    .from("purchases")
+    .insert([
+      {
+        user_id: userId,
+        tutorial_id: tutorialId,
+        purchase_date: new Date(),
+      },
+    ]);
 
-    if (error) {
-      console.error("Error recording purchase:", error);
-      throw error;
-    } else {
-      console.log("Purchase recorded successfully:", data[0]);
-    }
-  } catch (error) {
-    console.error("Unexpected error in handleCheckoutSession:", error);
+  if (error) {
+    console.error("Error recording purchase:", error.message);
+  } else {
+    console.log("Purchase recorded successfully:", data[0].id);
+    // Optional: Send a confirmation email or trigger other workflows here
   }
 };

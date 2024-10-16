@@ -127,6 +127,12 @@ serve(async (req) => {
       mode: 'payment',
       success_url: `${Deno.env.get('FRONTEND_URL')}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${Deno.env.get('FRONTEND_URL')}/cancel`,
+      
+      // Add the following lines
+      metadata: {
+        tutorial_id: tutorialId,
+      },
+      client_reference_id: user.id,
     }, {
       stripeAccount: tutorial.profiles.stripe_account_id,
     });

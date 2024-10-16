@@ -4,88 +4,68 @@ import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno";
 
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
+// Initialize Stripe
+const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || '', {
   apiVersion: "2023-10-16",
 });
 
-// Initialize Supabase Client with Service Role Key
+// Initialize Supabase Client
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-// CORS Configuration
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://teach-niche.com", // Replace with your production domain
-];
-
-const corsHeaders = (origin: string) => ({
-  "Access-Control-Allow-Origin": origin,
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Credentials": "true",
-  Vary: "Origin",
-});
-
-// Helper Function to Create CORS Response
-const createCorsResponse = (status: number, body: any, origin: string) => {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      ...corsHeaders(origin),
-    },
-  });
-};
-
-// Main Handler
 serve(async (req) => {
-  const origin = req.headers.get("origin") || "";
+  console.log("[create-lesson] Function invoked.");
 
   // Handle CORS Preflight
   if (req.method === "OPTIONS") {
-    if (allowedOrigins.includes(origin)) {
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders(origin),
-      });
-    } else {
-      return new Response(null, {
-        status: 403,
-        statusText: "Forbidden",
-      });
-    }
+    return new Response('ok', {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+      },
+    });
   }
 
   // Only allow POST requests
   if (req.method !== "POST") {
+    console.error(`Method ${req.method} not allowed.`);
     return new Response("Method Not Allowed", { status: 405 });
-  }
-
-  // Check if Origin is Allowed
-  if (!allowedOrigins.includes(origin)) {
-    return createCorsResponse(403, { error: "Origin not allowed" }, origin);
   }
 
   // Authenticate User
   const supabaseAccessToken = req.headers.get("Authorization")?.replace("Bearer ", "");
   if (!supabaseAccessToken) {
-    return createCorsResponse(401, { error: "Unauthorized token" }, origin);
+    console.error("No Authorization header found.");
+    return new Response(JSON.stringify({ error: "Unauthorized token" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
-  // Get the user from the access token using Supabase v2
   const { data: { user }, error: authError } = await supabase.auth.getUser(supabaseAccessToken);
-
   if (authError || !user) {
-    return createCorsResponse(401, { error: "Unauthorized user" }, origin);
+    console.error("Authentication failed:", authError);
+    return new Response(JSON.stringify({ error: "Unauthorized user" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   try {
+    console.log(`[create-lesson] Authenticated user: ${user.id}`);
     const { title, description, price, video_url, content, category_ids } = await req.json();
+    console.log(`[create-lesson] Received data: ${JSON.stringify({ title, description, price, video_url, content, category_ids })}`);
 
     // Validate Input
     if (!title || !price || !content) {
-      return createCorsResponse(400, { error: "Missing required fields" }, origin);
+      console.error("Missing required fields.");
+      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // Retrieve user's Stripe Account ID
@@ -96,8 +76,14 @@ serve(async (req) => {
       .single();
 
     if (profileError || !profile.stripe_account_id || !profile.stripe_onboarding_complete) {
-      return createCorsResponse(403, { error: "Please connect your Stripe account before creating lessons." }, origin);
+      console.error("Stripe account not set up:", profileError);
+      return new Response(JSON.stringify({ error: "Please connect your Stripe account before creating lessons." }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
     }
+
+    console.log(`[create-lesson] Retrieved stripe_account_id: ${profile.stripe_account_id}`);
 
     // Create Stripe Product on behalf of the connected account
     const product = await stripe.products.create({
@@ -106,6 +92,7 @@ serve(async (req) => {
     }, {
       stripeAccount: profile.stripe_account_id,
     });
+    console.log(`[create-lesson] Created Stripe Product: ${product.id}`);
 
     // Create Stripe Price on behalf of the connected account
     const stripePrice = await stripe.prices.create({
@@ -115,6 +102,7 @@ serve(async (req) => {
     }, {
       stripeAccount: profile.stripe_account_id,
     });
+    console.log(`[create-lesson] Created Stripe Price: ${stripePrice.id}`);
 
     // Insert Lesson into Supabase
     const { data, error: insertError } = await supabase
@@ -134,8 +122,14 @@ serve(async (req) => {
       .select();
 
     if (insertError || !data) {
-      return createCorsResponse(500, { error: insertError?.message || "Failed to create lesson" }, origin);
+      console.error(`[create-lesson] Error inserting lesson: ${insertError}`);
+      return new Response(JSON.stringify({ error: insertError?.message || "Failed to create lesson" }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
     }
+
+    console.log(`[create-lesson] Inserted lesson: ${JSON.stringify(data[0])}`);
 
     // If categories are provided, insert into tutorial_categories
     if (Array.isArray(category_ids) && category_ids.length > 0) {
@@ -150,12 +144,21 @@ serve(async (req) => {
 
       if (categoryError) {
         console.error("Error inserting tutorial categories:", categoryError.message);
+      } else {
+        console.log("Inserted tutorial categories successfully.");
       }
     }
 
-    return createCorsResponse(201, { lesson: data[0] }, origin);
+    return new Response(JSON.stringify({ lesson: data[0] }), {
+      status: 201,
+      headers: { "Content-Type": "application/json" },
+    });
+
   } catch (error: any) {
-    console.error("Error creating lesson:", error);
-    return createCorsResponse(500, { error: error.message }, origin);
+    console.error(`[create-lesson] Unexpected error: ${error}`);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 });
