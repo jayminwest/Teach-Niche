@@ -17,6 +17,8 @@ const PurchaseLessonButton = ({ lessonId }) => {
       return;
     }
 
+    console.log("Initiating purchase for lessonId:", lessonId); // Added logging
+
     setLoading(true);
     setError(null);
 

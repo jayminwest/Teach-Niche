@@ -356,6 +356,8 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@cloudinary/react@^1.13.0",
+        "npm:@cloudinary/url-gen@^1.21.0",
         "npm:@stripe/stripe-js@^4.8.0",
         "npm:@supabase/supabase-js@^2.43.1",
         "npm:@testing-library/jest-dom@^5.17.0",
@@ -364,12 +366,15 @@
         "npm:autoprefixer@^10.4.19",
         "npm:bootstrap-icons@^1.11.3",
         "npm:daisyui@^4.10.5",
+        "npm:dompurify@^3.1.7",
         "npm:dotenv@^16.4.5",
         "npm:express@^4.19.2",
         "npm:link@^2.1.0",
         "npm:postcss@^8.4.38",
         "npm:react-dom@^18.3.1",
         "npm:react-icons@^5.2.1",
+        "npm:react-markdown@^9.0.1",
+        "npm:react-quill@2",
         "npm:react-router-dom@^6.23.0",
         "npm:react-scripts@^5.0.1",
         "npm:react@^18.3.1",
