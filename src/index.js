@@ -19,6 +19,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import MyPurchasesLayout from './pages/my-purchases/layout';
 import Logout from './pages/logout/layout';
 import NotFound from './pages/not-found/layout';
+import { Analytics } from "@vercel/analytics/react"
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -71,6 +72,7 @@ root.render(
         <Route path="/logout" element={<Logout />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      <Analytics />
     </BrowserRouter>
     </AuthProvider>
   </React.StrictMode>
