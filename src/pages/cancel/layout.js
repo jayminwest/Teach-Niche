@@ -4,6 +4,13 @@ import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 
+/**
+ * CancelPage Component
+ *
+ * Renders the page displayed when a purchase is canceled.
+ *
+ * @returns {JSX.Element} The Cancel Page.
+ */
 const CancelPage = () => {
   const navigate = useNavigate();
 

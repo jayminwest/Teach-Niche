@@ -2,6 +2,13 @@ import React from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 
+/**
+ * Legal Component
+ *
+ * Renders the Legal page with terms of use, privacy policy, and cookie policy.
+ *
+ * @returns {JSX.Element} The Legal page.
+ */
 export default function Legal() {
   return (
     <div>

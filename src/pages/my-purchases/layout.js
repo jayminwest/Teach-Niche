@@ -5,6 +5,13 @@ import Footer from "../../components/Footer";
 import LessonsGrid from "../marketplace/components/LessonsGrid";
 import { useAuth } from "../../context/AuthContext";
 
+/**
+ * MyPurchasesLayout Component
+ *
+ * Renders the page displaying the user's purchased lessons.
+ *
+ * @returns {JSX.Element} The My Purchases page.
+ */
 export default function MyPurchasesLayout() {
   const { user } = useAuth();
 

@@ -1,9 +1,17 @@
 // src/pages/marketplace/components/PurchaseLessonButton.js
 
 import React, { useState } from "react";
-import { useAuth } from "../../../context/AuthContext"; // Ensure correct path
+import { useAuth } from "../../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
+/**
+ * PurchaseLessonButton Component
+ *
+ * Renders a button to purchase a lesson.
+ *
+ * @param {Object} props - The component props.
+ * @returns {JSX.Element} The Purchase Lesson Button.
+ */
 const PurchaseLessonButton = ({ lessonId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -11,13 +19,16 @@ const PurchaseLessonButton = ({ lessonId }) => {
   const { user, session } = useAuth();
   const navigate = useNavigate();
 
+  /**
+   * Handles the purchase of a lesson.
+   */
   const handlePurchase = async () => {
     if (!user) {
       navigate("/sign-in");
       return;
     }
 
-    console.log("Initiating purchase for lessonId:", lessonId); // Added logging
+    console.log("Initiating purchase for lessonId:", lessonId);
 
     setLoading(true);
     setError(null);

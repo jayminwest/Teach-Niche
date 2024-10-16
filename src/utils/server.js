@@ -8,6 +8,9 @@ const supabase = require("@supabase/supabase-js").createClient(
 const app = express();
 app.use(express.json());
 
+/**
+ * Registers a new user with email and password.
+ */
 app.post("/register", async (req, res) => {
   const { email, password } = req.body;
   const { user, error } = await supabase.auth.signUp({ email, password });
@@ -15,6 +18,9 @@ app.post("/register", async (req, res) => {
   res.status(200).json({ user });
 });
 
+/**
+ * Logs in a user with email and password.
+ */
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
   const { user, error } = await supabase.auth.signIn({ email, password });

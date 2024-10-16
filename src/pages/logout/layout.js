@@ -3,6 +3,13 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
+/**
+ * Logout Component
+ *
+ * Handles user logout and redirects to the home page.
+ *
+ * @returns {JSX.Element} The Logout page.
+ */
 export default function Logout() {
   const navigate = useNavigate();
   const { signOut } = useAuth();

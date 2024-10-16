@@ -3,11 +3,23 @@ import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import supabase from "../utils/supabaseClient";
 
+/**
+ * ProtectedRoute Component
+ *
+ * Restricts access to routes based on user authentication status.
+ *
+ * @param {Object} props
+ * @param {JSX.Element} props.children - The child components to render if authenticated.
+ * @returns {JSX.Element} The protected route or a redirect to sign-in.
+ */
 const ProtectedRoute = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState(null);
 
   useEffect(() => {
+    /**
+     * Fetches the current user session from Supabase.
+     */
     const fetchSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
@@ -19,6 +31,7 @@ const ProtectedRoute = ({ children }) => {
 
     fetchSession();
 
+    // Listen for authentication state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session);
@@ -26,12 +39,14 @@ const ProtectedRoute = ({ children }) => {
       },
     );
 
+    // Cleanup listener on unmount
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
 
   if (loading) {
+    // Display a loading indicator while fetching the session
     return (
       <div className="flex justify-center items-center h-screen">
         Loading...
@@ -40,6 +55,7 @@ const ProtectedRoute = ({ children }) => {
   }
 
   if (!session) {
+    // Redirect unauthenticated users to the sign-in page
     return <Navigate to="/sign-in" replace />;
   }
 

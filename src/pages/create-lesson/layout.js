@@ -7,18 +7,25 @@ import TextEditor from "../../components/TextEditor";
 import { useNavigate } from "react-router-dom";
 import supabase from "../../utils/supabaseClient";
 
+/**
+ * CreateLesson Component
+ *
+ * Renders the form for creating a new lesson.
+ *
+ * @returns {JSX.Element} The Create Lesson page.
+ */
 export default function CreateLesson() {
   const [lessonTitle, setLessonTitle] = useState("");
   const [lessonDescription, setLessonDescription] = useState("");
   const [lessonCost, setLessonCost] = useState("");
   const [youtubeLink, setYoutubeLink] = useState("");
-  const [lessonContent, setLessonContent] = useState(""); // New state for lesson content
+  const [lessonContent, setLessonContent] = useState("");
   const [categoryIds, setCategoryIds] = useState([]);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
 
-  // Fetch Categories for Selection (Optional)
+  // Fetch Categories for Selection
   useEffect(() => {
     const fetchCategories = async () => {
       const { data, error } = await supabase.from("categories").select("*");
@@ -32,6 +39,11 @@ export default function CreateLesson() {
     fetchCategories();
   }, []);
 
+  /**
+   * Handles category selection changes.
+   *
+   * @param {Event} e - The change event.
+   */
   const handleCategoryChange = (e) => {
     const { value, checked } = e.target;
     if (checked) {
@@ -41,6 +53,11 @@ export default function CreateLesson() {
     }
   };
 
+  /**
+   * Handles form submission for creating a lesson.
+   *
+   * @param {Event} e - The form submission event.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -64,7 +81,7 @@ export default function CreateLesson() {
 
     try {
       const functionsUrl = process.env.REACT_APP_SUPABASE_FUNCTIONS_URL;
-      console.log("Function URL:", `${functionsUrl}/create-lesson`); // For debugging
+      console.log("Function URL:", `${functionsUrl}/create-lesson`);
 
       const response = await fetch(`${functionsUrl}/create-lesson`, {
         method: "POST",
@@ -75,7 +92,7 @@ export default function CreateLesson() {
         body: JSON.stringify({
           title: lessonTitle,
           description: lessonDescription,
-          price: parseFloat(lessonCost), // Ensure price is sent as a number
+          price: parseFloat(lessonCost),
           video_url: youtubeLink || null,
           content: lessonContent,
           category_ids: categoryIds,

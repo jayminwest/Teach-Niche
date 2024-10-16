@@ -4,6 +4,14 @@ import LessonCard from "./LessonCard";
 import supabase from "../../../utils/supabaseClient";
 import { useAuth } from "../../../context/AuthContext";
 
+/**
+ * LessonsGrid Component
+ *
+ * Renders a grid of lessons, optionally filtering to show only purchased lessons.
+ *
+ * @param {Object} props - The component props.
+ * @returns {JSX.Element} The Lessons Grid.
+ */
 export default function LessonsGrid({ showPurchasedOnly = false }) {
   const [lessons, setLessons] = useState([]);
   const [purchasedLessons, setPurchasedLessons] = useState([]);

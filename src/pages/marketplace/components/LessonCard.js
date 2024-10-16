@@ -4,6 +4,14 @@ import supabase from "../../../utils/supabaseClient";
 import { useAuth } from "../../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
+/**
+ * LessonCard Component
+ *
+ * Renders a card for a lesson with options to purchase, access, or edit.
+ *
+ * @param {Object} props - The component props.
+ * @returns {JSX.Element} The Lesson Card.
+ */
 export default function LessonCard(
   {
     id,
@@ -43,6 +51,9 @@ export default function LessonCard(
     fetchCreatorName();
   }, [creator_id]);
 
+  /**
+   * Handles the purchase of a lesson.
+   */
   const handlePurchase = async () => {
     if (!user) {
       console.warn("User not authenticated. Redirecting to sign-in.");
@@ -70,7 +81,7 @@ export default function LessonCard(
           "Authorization": `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify({
-          tutorialId: id, // Changed to tutorialId as backend expects
+          tutorialId: id,
         }),
       });
 
@@ -100,16 +111,25 @@ export default function LessonCard(
     }
   };
 
+  /**
+   * Handles accessing a purchased lesson.
+   */
   const handleAccess = () => {
     console.log(`Accessing lesson ID: ${id}`);
     navigate(`/lesson/${id}`);
   };
 
+  /**
+   * Handles editing a created lesson.
+   */
   const handleEdit = () => {
     console.log(`Editing lesson ID: ${id}`);
     navigate(`/edit-lesson/${id}`);
   };
 
+  /**
+   * Handles image loading error.
+   */
   const handleImageError = () => {
     console.log(`Error loading image for lesson ID: ${id}`);
     setImageError(true);

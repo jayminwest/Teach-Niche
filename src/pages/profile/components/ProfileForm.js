@@ -1,12 +1,30 @@
 import React, { useState } from "react";
 
+/**
+ * ProfileForm Component
+ *
+ * Renders a form for updating user profile information.
+ *
+ * @param {Object} props - The component props.
+ * @returns {JSX.Element} The Profile Form.
+ */
 export default function ProfileForm({ profileData, onUpdate }) {
   const [formData, setFormData] = useState(profileData);
 
+  /**
+   * Handles input changes in the form.
+   *
+   * @param {Event} e - The change event.
+   */
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  /**
+   * Handles form submission for updating profile.
+   *
+   * @param {Event} e - The form submission event.
+   */
   const handleSubmit = (e) => {
     e.preventDefault();
     onUpdate(formData);

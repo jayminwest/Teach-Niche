@@ -4,9 +4,9 @@ import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno"; // Ensure using Supabase v2
 
+// Initialize Stripe
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2023-10-16",
-  // This should match the API version listed on the Stripe website
 });
 
 // Initialize Supabase Client
@@ -14,10 +14,10 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-// Allowed Origins
+// Allowed Origins for CORS
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://teach-niche.com", // Replace with your production domain
+  "https://teach-niche.com",
 ];
 
 // CORS Headers

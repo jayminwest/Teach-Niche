@@ -6,6 +6,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import supabase from "../../utils/supabaseClient";
 
+/**
+ * SignInLayout Component
+ *
+ * Renders the sign-in page with options for email/password and Google authentication.
+ *
+ * @returns {JSX.Element} The Sign In page.
+ */
 export default function SignInLayout() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -13,6 +20,11 @@ export default function SignInLayout() {
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  /**
+   * Handles sign-in with email and password.
+   *
+   * @param {Event} event - The form submission event.
+   */
   const handleSignIn = async (event) => {
     event.preventDefault();
     setError(null);
@@ -35,6 +47,9 @@ export default function SignInLayout() {
     }
   };
 
+  /**
+   * Handles sign-in with Google OAuth.
+   */
   const handleGoogleSignIn = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",

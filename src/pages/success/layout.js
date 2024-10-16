@@ -4,6 +4,13 @@ import { useLocation } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 
+/**
+ * SuccessPage Component
+ *
+ * Renders the page displayed after a successful purchase.
+ *
+ * @returns {JSX.Element} The Success Page.
+ */
 const SuccessPage = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);

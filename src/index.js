@@ -10,7 +10,7 @@ import LegalLayout from "./pages/legal/layout";
 import SignUpLayout from "./pages/sign-up/layout";
 import ForgotPasswordLayout from "./pages/forgot-password/layout";
 import CreateLesson from "./pages/create-lesson/layout";
-import EditLesson from "./pages/edit-lesson/[id]"; // Import the new EditLesson component
+import EditLesson from "./pages/edit-lesson/[id]";
 import { AuthProvider } from "./context/AuthContext";
 import Success from "./pages/success/layout";
 import Cancel from "./pages/cancel/layout";
@@ -21,6 +21,10 @@ import Logout from "./pages/logout/layout";
 import NotFound from "./pages/not-found/layout";
 import { Analytics } from "@vercel/analytics/react";
 
+/**
+ * Main entry point for the React application.
+ * Sets up routing and authentication context.
+ */
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>

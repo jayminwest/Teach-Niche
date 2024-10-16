@@ -1,7 +1,20 @@
 import React from "react";
 import supabase from "../../../utils/supabaseClient";
 
+/**
+ * ProfilePicture Component
+ *
+ * Renders a profile picture with an option to upload a new one.
+ *
+ * @param {Object} props - The component props.
+ * @returns {JSX.Element} The Profile Picture component.
+ */
 export default function ProfilePicture({ profilePicture, onUpdate }) {
+  /**
+   * Handles profile picture change and upload.
+   *
+   * @param {Event} e - The change event.
+   */
   const handleProfilePictureChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];

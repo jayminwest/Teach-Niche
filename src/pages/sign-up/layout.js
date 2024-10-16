@@ -6,6 +6,13 @@ import Footer from "../../components/Footer";
 import { FcGoogle } from "react-icons/fc";
 import supabase from "../../utils/supabaseClient";
 
+/**
+ * SignUpLayout Component
+ *
+ * Renders the sign-up page with options for email/password and Google authentication.
+ *
+ * @returns {JSX.Element} The Sign Up page.
+ */
 export default function SignUpLayout() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
@@ -14,10 +21,18 @@ export default function SignUpLayout() {
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  /**
+   * Navigates to the sign-in page.
+   */
   const handleSignInClick = () => {
     navigate("/sign-in");
   };
 
+  /**
+   * Handles sign-up with email and password.
+   *
+   * @param {Event} event - The form submission event.
+   */
   const handleSignUp = async (event) => {
     event.preventDefault();
     setError(null);
@@ -66,6 +81,9 @@ export default function SignUpLayout() {
     }
   };
 
+  /**
+   * Handles sign-up with Google OAuth.
+   */
   const handleGoogleSignUp = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",

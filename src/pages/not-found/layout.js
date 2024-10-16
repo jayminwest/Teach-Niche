@@ -2,6 +2,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+/**
+ * NotFound Component
+ *
+ * Renders a 404 page for when a route is not found.
+ *
+ * @returns {JSX.Element} The 404 Not Found page.
+ */
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center h-full p-4">

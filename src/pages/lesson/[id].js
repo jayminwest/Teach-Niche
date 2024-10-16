@@ -7,6 +7,13 @@ import LessonDetail from "../../components/LessonDetail";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 
+/**
+ * LessonPage Component
+ *
+ * Renders the lesson detail page for a specific lesson.
+ *
+ * @returns {JSX.Element} The Lesson Detail page.
+ */
 export default function LessonPage() {
   const { id } = useParams();
   const { user } = useAuth();

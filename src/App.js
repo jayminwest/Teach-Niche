@@ -8,6 +8,13 @@ import FeaturedLessons from "./components/FeaturedLessons";
 import CTA from "./components/CTA";
 import Footer from "./components/Footer";
 
+/**
+ * App Component
+ *
+ * Renders the main application layout with header, hero section, services, featured lessons, call-to-action, and footer.
+ *
+ * @returns {JSX.Element} The main application layout.
+ */
 function App() {
   return (
     <div>

@@ -2,6 +2,13 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
+/**
+ * Footer Component
+ *
+ * Renders the footer section with navigation links and newsletter subscription.
+ *
+ * @returns {JSX.Element} The footer element.
+ */
 export default function Footer() {
   const { user } = useAuth();
 
@@ -9,6 +16,7 @@ export default function Footer() {
     <footer className="bottom-0 bg-base-200 text-base-content">
       <div className="container">
         <div className="footer py-10 md:py-16 grid-cols-3 sm:grid-cols-3 lg:grid-cols-auto">
+          {/* Services Navigation */}
           <nav>
             <h6 className="footer-title">Services</h6>
             <Link
@@ -19,17 +27,20 @@ export default function Footer() {
             </Link>
             <Link className="link link-hover" to="/marketplace">Lessons</Link>
           </nav>
+          {/* Company Navigation */}
           <nav>
             <h6 className="footer-title">Company</h6>
             <Link className="link link-hover" to="/about">About us</Link>
             <Link className="link link-hover" to="/about">Contact</Link>
           </nav>
+          {/* Legal Navigation */}
           <nav>
             <h6 className="footer-title">Legal</h6>
             <Link className="link link-hover" to="/legal">Terms of use</Link>
             <Link className="link link-hover" to="/legal">Privacy policy</Link>
             <Link className="link link-hover" to="/legal">Cookie policy</Link>
           </nav>
+          {/* Newsletter Subscription Form */}
           <form className="w-full cols-span-full md:col-auto">
             <h6 className="footer-title">Newsletter</h6>
             <fieldset className="form-control w-full">
@@ -38,7 +49,7 @@ export default function Footer() {
               </label>
               <div className="join">
                 <input
-                  type="text"
+                  type="email" // Changed type to email for validation
                   placeholder="username@site.com"
                   className="input input-bordered join-item"
                 />
@@ -48,6 +59,7 @@ export default function Footer() {
           </form>
         </div>
 
+        {/* Footer Bottom Section */}
         <div className="flex flex-col sm:flex-row items-center border-t border-base-300 py-4 gap-2">
           <div className="flex-grow text-center sm:text-start">
             <p>&copy; 2024 Teach Niche. All rights reserved.</p>

@@ -3,6 +3,13 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
+/**
+ * Header Component
+ *
+ * Renders the navigation bar with links based on user authentication status.
+ *
+ * @returns {JSX.Element} The header element.
+ */
 export default function Header() {
   const { user } = useAuth();
 
@@ -11,6 +18,7 @@ export default function Header() {
       <div className="container">
         <div className="navbar px-0">
           <div className="navbar-start">
+            {/* Mobile Dropdown Menu */}
             <div className="dropdown">
               <label
                 tabIndex={0}
@@ -39,10 +47,12 @@ export default function Header() {
                 )}
               </ul>
             </div>
+            {/* Brand Logo */}
             <Link to="/" className="btn btn-ghost normal-case text-2xl">
               Teach Niche
             </Link>
           </div>
+          {/* Desktop Navigation Links */}
           <div className="navbar-center hidden lg:flex">
             <ul className="menu menu-horizontal p-0 font-medium">
               <li>
@@ -61,6 +71,7 @@ export default function Header() {
               )}
             </ul>
           </div>
+          {/* Authentication Buttons */}
           <div className="navbar-end">
             {user
               ? (

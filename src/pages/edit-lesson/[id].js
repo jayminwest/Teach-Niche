@@ -5,6 +5,13 @@ import Footer from "../../components/Footer";
 import TextEditor from "../../components/TextEditor";
 import supabase from "../../utils/supabaseClient";
 
+/**
+ * EditLesson Component
+ *
+ * Renders the form for editing an existing lesson.
+ *
+ * @returns {JSX.Element} The Edit Lesson page.
+ */
 export default function EditLesson() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -23,6 +30,9 @@ export default function EditLesson() {
     fetchCategories();
   }, [id]);
 
+  /**
+   * Fetches lesson data for editing.
+   */
   const fetchLessonData = async () => {
     const { data, error } = await supabase
       .from("tutorials")
@@ -53,6 +63,9 @@ export default function EditLesson() {
     setLoading(false);
   };
 
+  /**
+   * Fetches available categories.
+   */
   const fetchCategories = async () => {
     const { data, error } = await supabase.from("categories").select("*");
     if (error) {
@@ -62,6 +75,11 @@ export default function EditLesson() {
     }
   };
 
+  /**
+   * Handles category selection changes.
+   *
+   * @param {Event} e - The change event.
+   */
   const handleCategoryChange = (e) => {
     const { value, checked } = e.target;
     if (checked) {
@@ -71,6 +89,11 @@ export default function EditLesson() {
     }
   };
 
+  /**
+   * Handles form submission for updating a lesson.
+   *
+   * @param {Event} e - The form submission event.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -96,7 +119,7 @@ export default function EditLesson() {
         .update({
           title: lessonTitle,
           description: lessonDescription,
-          price: parseFloat(lessonCost), // Ensure price is sent as a number
+          price: parseFloat(lessonCost),
           video_url: youtubeLink || null,
           content: lessonContent,
         })

@@ -1,6 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+/**
+ * Hero Component
+ *
+ * Displays the hero section with a background image and a call-to-action.
+ *
+ * @returns {JSX.Element} The hero section.
+ */
 export default function Hero() {
   return (
     <section>

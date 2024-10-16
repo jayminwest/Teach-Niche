@@ -2,9 +2,19 @@ import React from "react";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
 
+/**
+ * LessonCreationGuide Component
+ *
+ * Renders a guide for instructors on how to create a lesson.
+ *
+ * @returns {JSX.Element} The Lesson Creation Guide.
+ */
 export default function LessonCreationGuide() {
   const navigate = useNavigate();
 
+  /**
+   * Navigates to the create lesson page.
+   */
   const handleCreateLesson = () => {
     navigate("/create-lesson");
   };

@@ -4,6 +4,13 @@ import Footer from "../../components/Footer";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
+/**
+ * AboutUs Component
+ *
+ * Renders the About Us page with information about Teach Niche.
+ *
+ * @returns {JSX.Element} The About Us page.
+ */
 export default function AboutUs() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -12,6 +19,11 @@ export default function AboutUs() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  /**
+   * Handles form submission.
+   *
+   * @param {Event} event - The form submission event.
+   */
   const handleSubmit = (event) => {
     event.preventDefault();
     const formData = { name, email, message };
@@ -22,6 +34,9 @@ export default function AboutUs() {
     setFormSubmitted(true);
   };
 
+  /**
+   * Navigates to the appropriate page based on user authentication.
+   */
   const handleTeachersClick = () => {
     if (user) {
       navigate("/profile");
@@ -49,8 +64,7 @@ export default function AboutUs() {
             <div className="card-body">
               <h2 className="card-title text-2xl mb-4">Our Mission</h2>
               <p className="text-lg">
-                At{" "}
-                <strong>Teach Niche</strong>, our mission is to empower the
+                At <strong>Teach Niche</strong>, our mission is to empower the
                 kendama community by providing a platform where players of all
                 levels can share knowledge, hone their skills, and support one
                 another. We are dedicated to fostering growth, connection, and
@@ -62,11 +76,10 @@ export default function AboutUs() {
             <div className="card-body">
               <h2 className="card-title text-2xl mb-4">Our Story</h2>
               <p className="text-lg mb-4">
-                Hello! I'm{" "}
-                <strong>Jaymin West</strong>, the founder of Teach Niche. I've
-                been passionately playing kendama for over seven years.
-                Throughout my journey, I've witnessed the incredible talent and
-                dedication within our community.
+                Hello! I'm <strong>Jaymin West</strong>, the founder of Teach
+                Niche. I've been passionately playing kendama for over seven
+                years. Throughout my journey, I've witnessed the incredible
+                talent and dedication within our community.
               </p>
               <p className="text-lg">
                 Teach Niche was born from a simple idea: to help kendama players
@@ -177,52 +190,6 @@ export default function AboutUs() {
             </div>
           </div>
         </div>
-
-        {/* <div className="divider my-12">Get Involved</div> */}
-
-        {
-          /* <div className="text-center mb-8">
-                    <h2 className="text-2xl font-bold mb-4">Contact Us</h2>
-                    <p className="text-lg mb-4">
-                        We're always looking to grow and evolve with the needs of the community. Your feedback, suggestions, and involvement are invaluable to us.
-                    </p>
-                </div>
-
-                <form onSubmit={handleSubmit} className="card bg-base-100 shadow-xl max-w-2xl mx-auto">
-                    <div className="card-body">
-                        <div className="form-control">
-                            <label className="label" htmlFor="name">
-                                <span className="label-text">Name</span>
-                            </label>
-                            <input type="text" id="name" placeholder="Name" className="input input-bordered" value={name} onChange={(e) => setName(e.target.value)} />
-                        </div>
-                        <div className="form-control">
-                            <label className="label" htmlFor="email">
-                                <span className="label-text">Email</span>
-                            </label>
-                            <input type="email" id="email" placeholder="Email" className="input input-bordered" value={email} onChange={(e) => setEmail(e.target.value)} />
-                        </div>
-                        <div className="form-control">
-                            <label className="label" htmlFor="message">
-                                <span className="label-text">Message</span>
-                            </label>
-                            <textarea id="message" placeholder="Your message" className="textarea textarea-bordered" value={message} onChange={(e) => setMessage(e.target.value)}></textarea>
-                        </div>
-                        <div className="form-control mt-6">
-                            <button className={formSubmitted ? "btn btn-success" : "btn btn-primary"}>{formSubmitted ? "Success! Thanks for reaching out!" : "Send Message"}</button>
-                        </div>
-                    </div>
-                </form> */
-        }
-
-        {
-          /* <div className="alert alert-info shadow-lg mt-12">
-                    <div>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current flex-shrink-0 w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <span>Stay updated by following our Instagram <a href="#" className="link link-hover font-bold">@TeachNiche</a> and join the conversation!</span>
-                    </div>
-                </div> */
-        }
       </div>
       <Footer />
     </div>

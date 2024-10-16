@@ -1,13 +1,25 @@
 import React, { useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import supabase from "../../utils/supabaseClient"; // Ensure you have the Supabase client properly set up and imported
+import supabase from "../../utils/supabaseClient";
 
+/**
+ * ForgotPasswordLayout Component
+ *
+ * Renders the Forgot Password page for users to reset their password.
+ *
+ * @returns {JSX.Element} The Forgot Password page.
+ */
 export default function ForgotPasswordLayout() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
 
+  /**
+   * Handles password reset request.
+   *
+   * @param {Event} event - The form submission event.
+   */
   const handlePasswordReset = async (event) => {
     event.preventDefault();
     const { error } = await supabase.auth.resetPasswordForEmail(email);

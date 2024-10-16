@@ -1,6 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
+/**
+ * CTA Component
+ *
+ * Renders a call-to-action section encouraging users to join Teach Niche.
+ *
+ * @returns {JSX.Element} The CTA section.
+ */
 export default function CTA() {
   return (
     <section className="py-12 md:py-24">

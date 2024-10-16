@@ -5,6 +5,18 @@ import { useAuth } from "../context/AuthContext";
 import ReactQuill from "react-quill"; // Import ReactQuill for rendering rich text
 import "react-quill/dist/quill.snow.css"; // Import Quill styles
 
+/**
+ * LessonDetail Component
+ *
+ * Displays detailed information about a specific lesson, including purchase options.
+ *
+ * @param {Object} props
+ * @param {Object} props.lesson - The lesson data.
+ * @param {Object} props.creator - The creator's data.
+ * @param {boolean} props.hasAccess - Whether the user has access to the lesson content.
+ * @param {string} props.lessonId - The ID of the lesson.
+ * @returns {JSX.Element} The lesson detail component.
+ */
 export default function LessonDetail({ lesson, creator, hasAccess, lessonId }) {
   const { user, session } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -12,6 +24,9 @@ export default function LessonDetail({ lesson, creator, hasAccess, lessonId }) {
   const [categoryIds, setCategoryIds] = useState([]);
 
   useEffect(() => {
+    /**
+     * Fetches categories associated with the lesson.
+     */
     const fetchCategories = async () => {
       console.log(`Fetching categories for lesson ID: ${lessonId}`);
       try {
@@ -36,6 +51,9 @@ export default function LessonDetail({ lesson, creator, hasAccess, lessonId }) {
     fetchCategories();
   }, [lessonId]);
 
+  /**
+   * Handles the purchase process for the lesson.
+   */
   const handlePurchase = async () => {
     if (!user) {
       console.warn("User is not authenticated. Redirecting to sign-in.");
@@ -64,7 +82,7 @@ export default function LessonDetail({ lesson, creator, hasAccess, lessonId }) {
           Authorization: `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify({
-          tutorialId: lessonId, // Changed from lessonId to tutorialId for consistency
+          tutorialId: lessonId,
         }),
       });
 
