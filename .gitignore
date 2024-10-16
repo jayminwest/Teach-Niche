@@ -55,3 +55,6 @@ temp/
 
 # pnpm
 pnpm-lock.yaml
+
+# Cursor
+.cursorrules
