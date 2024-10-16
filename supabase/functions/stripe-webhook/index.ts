@@ -24,7 +24,7 @@ function arrayBufferToHex(buffer: ArrayBuffer): string {
 async function verifyStripeSignature(
   payload: string,
   sigHeader: string,
-  secret: string
+  secret: string,
 ): Promise<any> {
   // Ensure 'crypto' is available
   if (!crypto || !crypto.subtle) {
@@ -32,12 +32,12 @@ async function verifyStripeSignature(
   }
 
   // Split the signature header into parts
-  const parts = sigHeader.split(',');
+  const parts = sigHeader.split(",");
 
-  const timestampPart = parts.find(part => part.startsWith('t='));
+  const timestampPart = parts.find((part) => part.startsWith("t="));
   const signatureParts = parts
-    .filter(part => part.startsWith('v1='))
-    .map(part => part.slice(3));
+    .filter((part) => part.startsWith("v1="))
+    .map((part) => part.slice(3));
 
   if (!timestampPart) {
     throw new Error("Timestamp missing in Stripe signature.");
@@ -62,21 +62,21 @@ async function verifyStripeSignature(
     encoder.encode(secret),
     { name: "HMAC", hash: { name: "SHA-256" } },
     false,
-    ["sign"]
+    ["sign"],
   );
 
   // Sign the payload
   const signatureBuffer = await crypto.subtle.sign(
     "HMAC",
     key,
-    encoder.encode(signedPayload)
+    encoder.encode(signedPayload),
   );
 
   const computedSignature = arrayBufferToHex(signatureBuffer);
 
   // Compare the computed signature with the signatures from Stripe
   const isValid = signatureParts.some(
-    (sig) => sig === computedSignature
+    (sig) => sig === computedSignature,
   );
 
   if (!isValid) {

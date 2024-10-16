@@ -1,10 +1,10 @@
 // src/pages/marketplace/components/LessonsGrid.js
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import LessonCard from "./LessonCard";
 import supabase from "../../../utils/supabaseClient";
 import { useAuth } from "../../../context/AuthContext";
 
-export default function LessonsGrid({showPurchasedOnly = false}) {
+export default function LessonsGrid({ showPurchasedOnly = false }) {
   const [lessons, setLessons] = useState([]);
   const [purchasedLessons, setPurchasedLessons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,8 +15,8 @@ export default function LessonsGrid({showPurchasedOnly = false}) {
       try {
         // Fetch all lessons
         const { data: allLessons, error: lessonsError } = await supabase
-          .from('tutorials')
-          .select('*');
+          .from("tutorials")
+          .select("*");
 
         if (lessonsError) {
           throw lessonsError;
@@ -27,15 +27,17 @@ export default function LessonsGrid({showPurchasedOnly = false}) {
         // If user is authenticated, fetch purchased lessons
         if (user) {
           const { data: purchases, error: purchasesError } = await supabase
-            .from('purchases')
-            .select('tutorial_id')
-            .eq('user_id', user.id);
+            .from("purchases")
+            .select("tutorial_id")
+            .eq("user_id", user.id);
 
           if (purchasesError) {
             throw purchasesError;
           }
 
-          const purchasedIds = purchases.map(purchase => purchase.tutorial_id);
+          const purchasedIds = purchases.map((purchase) =>
+            purchase.tutorial_id
+          );
           setPurchasedLessons(purchasedIds);
         } else {
           setPurchasedLessons([]);
@@ -51,28 +53,32 @@ export default function LessonsGrid({showPurchasedOnly = false}) {
   }, [user]);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Loading...
+      </div>
+    );
   }
 
   const displayLessons = showPurchasedOnly
-    ? lessons.filter(lesson => purchasedLessons.includes(lesson.id))
+    ? lessons.filter((lesson) => purchasedLessons.includes(lesson.id))
     : lessons;
 
   return (
     <div className="container p-4 mx-auto">
-      {showPurchasedOnly && displayLessons.length === 0 ? (
-        <p>You haven't purchased any lessons yet.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {displayLessons.map((lesson) => (
-            <LessonCard 
-              key={lesson.id} 
-              {...lesson} 
-              isPurchased={purchasedLessons.includes(lesson.id)} 
-            />
-          ))}
-        </div>
-      )}
+      {showPurchasedOnly && displayLessons.length === 0
+        ? <p>You haven't purchased any lessons yet.</p>
+        : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {displayLessons.map((lesson) => (
+              <LessonCard
+                key={lesson.id}
+                {...lesson}
+                isPurchased={purchasedLessons.includes(lesson.id)}
+              />
+            ))}
+          </div>
+        )}
     </div>
   );
 }

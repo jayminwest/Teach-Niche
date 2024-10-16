@@ -4,7 +4,18 @@ import supabase from "../../../utils/supabaseClient";
 import { useAuth } from "../../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
-export default function LessonCard({ id, title, creator_id, price, description, content_url, isPurchased, isCreated }) {
+export default function LessonCard(
+  {
+    id,
+    title,
+    creator_id,
+    price,
+    description,
+    content_url,
+    isPurchased,
+    isCreated,
+  },
+) {
   const [creatorName, setCreatorName] = useState("");
   const { user, session } = useAuth();
   const navigate = useNavigate();
@@ -49,12 +60,14 @@ export default function LessonCard({ id, title, creator_id, price, description, 
         throw new Error("Functions URL not set in environment variables.");
       }
 
-      console.log(`Creating checkout session at: ${functionsUrl}/create-checkout-session`);
+      console.log(
+        `Creating checkout session at: ${functionsUrl}/create-checkout-session`,
+      );
       const response = await fetch(`${functionsUrl}/create-checkout-session`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session?.access_token}`,
         },
         body: JSON.stringify({
           tutorialId: id, // Changed to tutorialId as backend expects
@@ -65,7 +78,9 @@ export default function LessonCard({ id, title, creator_id, price, description, 
 
       if (response.ok) {
         if (data.sessionUrl) {
-          console.log("Checkout session created successfully. Redirecting to Stripe.");
+          console.log(
+            "Checkout session created successfully. Redirecting to Stripe.",
+          );
           // Redirect to Stripe Checkout
           window.location.href = data.sessionUrl;
         } else {
@@ -100,13 +115,16 @@ export default function LessonCard({ id, title, creator_id, price, description, 
     setImageError(true);
   };
 
-  const placeholderImage = "https://via.placeholder.com/400x300?text=Lesson+Image";
+  const placeholderImage =
+    "https://via.placeholder.com/400x300?text=Lesson+Image";
 
   return (
     <div className="card w-80 h-auto bg-base-100 shadow-xl overflow-hidden">
       <figure className="h-48 overflow-hidden">
-        <img 
-          src={imageError ? placeholderImage : (content_url || placeholderImage)} 
+        <img
+          src={imageError
+            ? placeholderImage
+            : (content_url || placeholderImage)}
           alt={`Lesson: ${title}`}
           className="w-full h-full object-cover"
           onError={handleImageError}
@@ -118,29 +136,33 @@ export default function LessonCard({ id, title, creator_id, price, description, 
         <p>Price: ${price}</p>
         <p>{description}</p>
         {error && <p className="text-red-500">{error}</p>}
-        {isCreated ? (
-          <button
-            className="btn btn-primary"
-            onClick={handleEdit}
-          >
-            Edit Lesson
-          </button>
-        ) : isPurchased ? (
-          <button
-            className="btn btn-success"
-            onClick={handleAccess}
-          >
-            Access Lesson
-          </button>
-        ) : (
-          <button
-            className={`btn btn-primary ${loading ? "loading" : ""}`}
-            onClick={handlePurchase}
-            disabled={loading}
-          >
-            {loading ? "Processing..." : "Purchase Lesson"}
-          </button>
-        )}
+        {isCreated
+          ? (
+            <button
+              className="btn btn-primary"
+              onClick={handleEdit}
+            >
+              Edit Lesson
+            </button>
+          )
+          : isPurchased
+          ? (
+            <button
+              className="btn btn-success"
+              onClick={handleAccess}
+            >
+              Access Lesson
+            </button>
+          )
+          : (
+            <button
+              className={`btn btn-primary ${loading ? "loading" : ""}`}
+              onClick={handlePurchase}
+              disabled={loading}
+            >
+              {loading ? "Processing..." : "Purchase Lesson"}
+            </button>
+          )}
       </div>
     </div>
   );

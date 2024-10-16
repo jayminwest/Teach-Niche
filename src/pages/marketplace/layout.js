@@ -5,11 +5,11 @@ import Footer from "../../components/Footer";
 import LessonsGrid from "./components/LessonsGrid";
 
 export default function MarketplaceLayout() {
-    return (
-        <div>
-            <Header />
-            <LessonsGrid />
-            <Footer />
-        </div>
-    );
+  return (
+    <div>
+      <Header />
+      <LessonsGrid />
+      <Footer />
+    </div>
+  );
 }

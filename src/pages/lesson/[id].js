@@ -1,6 +1,6 @@
 // src/pages/lesson/[id].js
 import React, { useEffect, useState } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import supabase from "../../utils/supabaseClient";
 import { useAuth } from "../../context/AuthContext";
 import LessonDetail from "../../components/LessonDetail";
@@ -43,7 +43,10 @@ export default function LessonPage() {
           .single();
 
         if (creatorError) {
-          console.error("Error fetching creator profile:", creatorError.message);
+          console.error(
+            "Error fetching creator profile:",
+            creatorError.message,
+          );
           throw creatorError;
         }
 
@@ -62,7 +65,10 @@ export default function LessonPage() {
 
           if (purchaseError && purchaseError.code !== "PGRST116") {
             // PGRST116: No rows found
-            console.error("Error fetching purchase data:", purchaseError.message);
+            console.error(
+              "Error fetching purchase data:",
+              purchaseError.message,
+            );
             throw purchaseError;
           }
 
@@ -97,11 +103,13 @@ export default function LessonPage() {
   if (error) {
     return (
       <div className="text-center mt-10 text-red-500">
-        {error === "PGRST116: No rows found" ? (
-          "You do not have access to this lesson. Please purchase it first."
-        ) : (
-          `An error occurred: ${error}`
-        )}
+        {error === "PGRST116: No rows found"
+          ? (
+            "You do not have access to this lesson. Please purchase it first."
+          )
+          : (
+            `An error occurred: ${error}`
+          )}
       </div>
     );
   }
@@ -118,7 +126,7 @@ export default function LessonPage() {
     <div>
       <Header />
       <div className="container mx-auto p-4">
-        <LessonDetail 
+        <LessonDetail
           lesson={lesson}
           creator={creator}
           hasAccess={hasAccess}

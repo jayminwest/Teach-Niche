@@ -1,8 +1,8 @@
 // src/pages/cancel.js
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
 
 const CancelPage = () => {
   const navigate = useNavigate();
@@ -13,10 +13,13 @@ const CancelPage = () => {
       <div className="flex flex-col justify-center items-center min-h-screen py-10">
         <div className="card w-full max-w-md shadow-2xl bg-base-100 p-6 text-center">
           <h2 className="text-3xl font-bold mb-4">Purchase Canceled</h2>
-          <p>Your purchase was canceled. You can try purchasing again from the marketplace.</p>
+          <p>
+            Your purchase was canceled. You can try purchasing again from the
+            marketplace.
+          </p>
           <button
             className="btn btn-primary mt-4"
-            onClick={() => navigate('/marketplace')}
+            onClick={() => navigate("/marketplace")}
           >
             Return to Marketplace
           </button>

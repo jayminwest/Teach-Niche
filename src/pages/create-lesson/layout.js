@@ -1,6 +1,6 @@
 // src/pages/create-lesson/layout.js
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import TextEditor from "../../components/TextEditor";
@@ -52,7 +52,8 @@ export default function CreateLesson() {
     }
 
     // Retrieve the current session
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const { data: sessionData, error: sessionError } = await supabase.auth
+      .getSession();
     const session = sessionData.session;
 
     if (sessionError || !session) {
@@ -127,15 +128,16 @@ export default function CreateLesson() {
                 value={lessonDescription}
                 onChange={(e) => setLessonDescription(e.target.value)}
                 required
-              ></textarea>
+              >
+              </textarea>
             </div>
             <div className="form-control mb-4">
               <label className="label" htmlFor="lessonContent">
                 <span className="label-text">Content (required)</span>
               </label>
-              <TextEditor 
-                value={lessonContent} 
-                onChange={setLessonContent} 
+              <TextEditor
+                value={lessonContent}
+                onChange={setLessonContent}
                 required={true}
               />
             </div>
@@ -156,7 +158,9 @@ export default function CreateLesson() {
             </div>
             <div className="form-control mb-4">
               <label className="label" htmlFor="youtubeLink">
-                <span className="label-text">Private YouTube Link (optional)</span>
+                <span className="label-text">
+                  Private YouTube Link (optional)
+                </span>
               </label>
               <input
                 type="url"
@@ -173,7 +177,10 @@ export default function CreateLesson() {
                 <label className="label">Categories</label>
                 <div className="flex flex-wrap">
                   {categories.map((category) => (
-                    <label key={category.id} className="label cursor-pointer mr-4">
+                    <label
+                      key={category.id}
+                      className="label cursor-pointer mr-4"
+                    >
                       <input
                         type="checkbox"
                         value={category.id}

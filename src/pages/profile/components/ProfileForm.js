@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 export default function ProfileForm({ profileData, onUpdate }) {
   const [formData, setFormData] = useState(profileData);
@@ -53,7 +53,8 @@ export default function ProfileForm({ profileData, onUpdate }) {
           className="textarea textarea-bordered h-24"
           value={formData.bio}
           onChange={handleChange}
-        ></textarea>
+        >
+        </textarea>
       </div>
       <div className="form-control mt-6">
         <button className="btn btn-primary" type="submit">

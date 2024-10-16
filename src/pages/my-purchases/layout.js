@@ -11,7 +11,10 @@ export default function MyPurchasesLayout() {
   if (!user) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <p>Please <a href="/sign-in" className="text-blue-500">sign in</a> to view your purchased lessons.</p>
+        <p>
+          Please <a href="/sign-in" className="text-blue-500">sign in</a>{" "}
+          to view your purchased lessons.
+        </p>
       </div>
     );
   }

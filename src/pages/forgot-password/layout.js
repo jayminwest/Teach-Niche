@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import supabase from "../../utils/supabaseClient";  // Ensure you have the Supabase client properly set up and imported
+import supabase from "../../utils/supabaseClient"; // Ensure you have the Supabase client properly set up and imported
 
 export default function ForgotPasswordLayout() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
 
@@ -15,7 +15,7 @@ export default function ForgotPasswordLayout() {
     if (error) {
       setError(error.message);
     } else {
-      setMessage('Password reset link has been sent to your email.');
+      setMessage("Password reset link has been sent to your email.");
     }
   };
 

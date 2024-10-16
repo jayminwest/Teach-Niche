@@ -29,14 +29,17 @@ const PurchaseLessonButton = ({ lessonId }) => {
         return;
       }
 
-      const response = await fetch(`${process.env.REACT_APP_FUNCTIONS_BASE_URL}/create-checkout-session`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+      const response = await fetch(
+        `${process.env.REACT_APP_FUNCTIONS_BASE_URL}/create-checkout-session`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ lessonId }),
         },
-        body: JSON.stringify({ lessonId }),
-      });
+      );
 
       const contentType = response.headers.get("content-type");
 
@@ -59,7 +62,10 @@ const PurchaseLessonButton = ({ lessonId }) => {
         // Redirect to Stripe Checkout
         window.location.href = data.sessionUrl;
       } else {
-        console.error("Expected JSON response but received:", await response.text());
+        console.error(
+          "Expected JSON response but received:",
+          await response.text(),
+        );
         setError("An unexpected error occurred.");
       }
     } catch (err) {

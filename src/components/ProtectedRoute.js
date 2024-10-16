@@ -19,10 +19,12 @@ const ProtectedRoute = ({ children }) => {
 
     fetchSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setLoading(false);
-    });
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+        setLoading(false);
+      },
+    );
 
     return () => {
       authListener.subscription.unsubscribe();
@@ -30,7 +32,11 @@ const ProtectedRoute = ({ children }) => {
   }, []);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        Loading...
+      </div>
+    );
   }
 
   if (!session) {

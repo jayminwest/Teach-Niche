@@ -4,12 +4,12 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
-import supabase from "../../utils/supabaseClient";  
+import supabase from "../../utils/supabaseClient";
 
 export default function SignInLayout() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -37,10 +37,10 @@ export default function SignInLayout() {
 
   const handleGoogleSignIn = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: "google",
       options: {
         // Redirect URL after successful sign-in
-        redirectTo: 'https://your-domain.com/profile',
+        redirectTo: "https://your-domain.com/profile",
       },
     });
 
@@ -87,14 +87,18 @@ export default function SignInLayout() {
                 />
               </div>
               <div className="form-control mt-6">
-                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? 'Signing In...' : 'Sign In'}
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Signing In..." : "Sign In"}
                 </button>
               </div>
             </form>
             {error && <p className="text-red-500 mt-4">{error}</p>}
             <div className="divider">OR</div>
-            <button 
+            <button
               className="btn btn-warning flex items-center justify-center mb-4"
               onClick={handleGoogleSignIn}
               disabled={isSubmitting}

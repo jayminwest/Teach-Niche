@@ -1,6 +1,6 @@
 // src/context/AuthContext.js
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import supabase from '../utils/supabaseClient';
+import React, { createContext, useContext, useEffect, useState } from "react";
+import supabase from "../utils/supabaseClient";
 
 const AuthContext = createContext();
 
@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
     const fetchSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error) {
-        console.error('Error fetching session:', error.message);
+        console.error("Error fetching session:", error.message);
       } else {
         setSession(session);
         setUser(session?.user || null);
@@ -23,10 +23,12 @@ export const AuthProvider = ({ children }) => {
     fetchSession();
 
     // Listen for authentication state changes
-    const { subscription } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user || null);
-    });
+    const { subscription } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+        setUser(session?.user || null);
+      },
+    );
 
     // Cleanup subscription on unmount
     return () => {
@@ -38,7 +40,7 @@ export const AuthProvider = ({ children }) => {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error('Error signing out:', error.message);
+      console.error("Error signing out:", error.message);
     }
     // Auth state change listener will handle state updates
   };

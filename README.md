@@ -1,4 +1,7 @@
-Deploying your **Teach Niche** website involves several steps to ensure that both the frontend and backend are properly configured and accessible in a production environment. Below is a comprehensive guide to help you prepare and deploy your application successfully.
+Deploying your **Teach Niche** website involves several steps to ensure that
+both the frontend and backend are properly configured and accessible in a
+production environment. Below is a comprehensive guide to help you prepare and
+deploy your application successfully.
 
 ## Table of Contents
 
@@ -21,17 +24,21 @@ Before proceeding, ensure you have the following:
 
 - **Supabase Account**: To host your database and serverless functions.
 - **Stripe Account**: For handling payments.
-- **Hosting Service Account**: Such as Vercel, Netlify, or another preferred platform for deploying your frontend.
+- **Hosting Service Account**: Such as Vercel, Netlify, or another preferred
+  platform for deploying your frontend.
 - **Domain Name**: If you plan to use a custom domain.
 - **Git Repository**: Your project should be version-controlled using Git.
 
 ## 1. Configure Environment Variables
 
-Environment variables are crucial for storing sensitive information like API keys. Ensure that all necessary environment variables are correctly set for both development and production environments.
+Environment variables are crucial for storing sensitive information like API
+keys. Ensure that all necessary environment variables are correctly set for both
+development and production environments.
 
 ### Frontend Environment Variables
 
-Create a `.env.production` file in your frontend project directory with the following variables:
+Create a `.env.production` file in your frontend project directory with the
+following variables:
 
 ```env
 REACT_APP_SUPABASE_URL=your_supabase_url
@@ -54,9 +61,10 @@ Set the following environment variables in your Supabase project settings:
 - `S3_REGION`
 - `S3_ACCESS_KEY`
 - `S3_SECRET_KEY`
-- `OPENAI_API_KEY` *(if used)*
+- `OPENAI_API_KEY` _(if used)_
 
-**Note:** Ensure that these variables are kept secret and are **not** exposed in your frontend code.
+**Note:** Ensure that these variables are kept secret and are **not** exposed in
+your frontend code.
 
 ## 2. Prepare the Frontend for Deployment
 
@@ -86,11 +94,13 @@ If you haven't already, initialize a new Supabase project:
 
 1. Log in to your [Supabase Dashboard](https://supabase.com/dashboard).
 2. Create a new project.
-3. Note down the `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` from the project settings.
+3. Note down the `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` from the project
+   settings.
 
 ### Configure Database Schema
 
-Ensure that your database schema matches the requirements of your application. You can use Supabase's SQL editor to run migrations or scripts.
+Ensure that your database schema matches the requirements of your application.
+You can use Supabase's SQL editor to run migrations or scripts.
 
 For example, to create necessary tables:
 
@@ -148,12 +158,14 @@ create table tutorial_categories (
 Ensure that Supabase Authentication is enabled and configured correctly:
 
 1. In your Supabase project, navigate to the **Authentication** section.
-2. Configure allowed redirect URLs (e.g., `https://your-frontend-domain.com/profile`).
+2. Configure allowed redirect URLs (e.g.,
+   `https://your-frontend-domain.com/profile`).
 3. Set up email templates and providers as needed.
 
 ## 4. Deploy Supabase Functions
 
-Supabase provides a serverless environment to deploy your backend functions. Follow these steps to deploy your Deno functions.
+Supabase provides a serverless environment to deploy your backend functions.
+Follow these steps to deploy your Deno functions.
 
 ### Install Supabase CLI
 
@@ -188,11 +200,14 @@ Repeat the deployment step for each of your functions:
 - `stripe-webhook`
 - `stripe-oauth-callback`
 
-**Note:** Ensure that your function code is correctly placed in the `supabase/functions/` directory and that all necessary environment variables are set.
+**Note:** Ensure that your function code is correctly placed in the
+`supabase/functions/` directory and that all necessary environment variables are
+set.
 
 ### Set Environment Variables for Functions
 
-Use the Supabase CLI or dashboard to set environment variables for your functions.
+Use the Supabase CLI or dashboard to set environment variables for your
+functions.
 
 ```bash
 supabase secrets set STRIPE_SECRET_KEY=your_stripe_secret_key
@@ -214,9 +229,12 @@ supabase secrets set SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
 1. In the Stripe Dashboard, go to **Developers > Webhooks**.
 2. Add a new endpoint for your `stripe-webhook` function.
-   - URL: `https://your-supabase-project.supabase.co/functions/v1/stripe-webhook`
-3. Select the events you want to listen to, such as `checkout.session.completed`.
-4. Obtain the **Webhook Signing Secret** and set it as an environment variable in Supabase:
+   - URL:
+     `https://your-supabase-project.supabase.co/functions/v1/stripe-webhook`
+3. Select the events you want to listen to, such as
+   `checkout.session.completed`.
+4. Obtain the **Webhook Signing Secret** and set it as an environment variable
+   in Supabase:
 
 ```bash
 supabase secrets set STRIPE_WEBHOOK_SECRET=your_webhook_secret
@@ -224,7 +242,9 @@ supabase secrets set STRIPE_WEBHOOK_SECRET=your_webhook_secret
 
 ## 6. Deploy the Frontend
 
-You can deploy your React frontend using various hosting services. Below is an example using **Vercel**, but similar steps apply to **Netlify**, **Firebase Hosting**, etc.
+You can deploy your React frontend using various hosting services. Below is an
+example using **Vercel**, but similar steps apply to **Netlify**, **Firebase
+Hosting**, etc.
 
 ### Deploying with Vercel
 
@@ -256,7 +276,8 @@ You can deploy your React frontend using various hosting services. Below is an e
    vercel --prod
    ```
 
-   Alternatively, Vercel will automatically deploy when you push to your connected Git repository's main branch.
+   Alternatively, Vercel will automatically deploy when you push to your
+   connected Git repository's main branch.
 
 ### Alternative: Deploying with Netlify
 
@@ -264,7 +285,8 @@ You can deploy your React frontend using various hosting services. Below is an e
 2. **Set Up Build Settings**:
    - Build command: `npm run build`
    - Publish directory: `build`
-3. **Set Environment Variables** in Netlify under **Site Settings > Build & Deploy > Environment**.
+3. **Set Environment Variables** in Netlify under **Site Settings > Build &
+   Deploy > Environment**.
 4. **Deploy** the site.
 
 ## 7. Set Up Custom Domain and SSL
@@ -280,7 +302,8 @@ You can deploy your React frontend using various hosting services. Below is an e
 2. **Configure DNS Settings**:
 
    - Update your domain's DNS records as instructed by Vercel.
-   - This typically involves adding `CNAME` or `A` records pointing to Vercel's servers.
+   - This typically involves adding `CNAME` or `A` records pointing to Vercel's
+     servers.
 
 3. **Enable SSL**:
 
@@ -310,25 +333,35 @@ Before going live, perform the following checks:
 ### Functionality Testing
 
 - **Authentication**: Test sign-up, login, and protected routes.
-- **Stripe Integration**: Perform test transactions to ensure payments are processed correctly.
-- **CRUD Operations**: Verify that creating, reading, updating, and deleting lessons work as expected.
-- **User Profiles**: Ensure user profile updates and Stripe connections function properly.
+- **Stripe Integration**: Perform test transactions to ensure payments are
+  processed correctly.
+- **CRUD Operations**: Verify that creating, reading, updating, and deleting
+  lessons work as expected.
+- **User Profiles**: Ensure user profile updates and Stripe connections function
+  properly.
 
 ### Security
 
-- **Environment Variables**: Confirm that sensitive data is not exposed in the frontend.
-- **CORS Configuration**: Ensure that your CORS settings allow only trusted origins.
-- **HTTPS**: Ensure all requests are served over HTTPS to secure data in transit.
+- **Environment Variables**: Confirm that sensitive data is not exposed in the
+  frontend.
+- **CORS Configuration**: Ensure that your CORS settings allow only trusted
+  origins.
+- **HTTPS**: Ensure all requests are served over HTTPS to secure data in
+  transit.
 
 ### Performance
 
-- **Optimize Assets**: Ensure images and other assets are optimized for faster loading times.
-- **Lazy Loading**: Implement lazy loading for components and images where applicable.
+- **Optimize Assets**: Ensure images and other assets are optimized for faster
+  loading times.
+- **Lazy Loading**: Implement lazy loading for components and images where
+  applicable.
 
 ### Monitoring
 
-- **Error Tracking**: Set up error tracking tools like Sentry to monitor and log errors.
-- **Analytics**: Integrate analytics tools to monitor user interactions and site performance.
+- **Error Tracking**: Set up error tracking tools like Sentry to monitor and log
+  errors.
+- **Analytics**: Integrate analytics tools to monitor user interactions and site
+  performance.
 
 ## 9. Useful Resources
 
@@ -340,4 +373,8 @@ Before going live, perform the following checks:
 
 ---
 
-By following this guide, you should be able to successfully deploy your **Teach Niche** website, ensuring that both frontend and backend components are properly configured and operational in a production environment. Remember to continuously monitor your application post-deployment to address any issues promptly and ensure a smooth user experience.
+By following this guide, you should be able to successfully deploy your **Teach
+Niche** website, ensuring that both frontend and backend components are properly
+configured and operational in a production environment. Remember to continuously
+monitor your application post-deployment to address any issues promptly and
+ensure a smooth user experience.

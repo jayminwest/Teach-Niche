@@ -11,7 +11,10 @@ export default function Footer() {
         <div className="footer py-10 md:py-16 grid-cols-3 sm:grid-cols-3 lg:grid-cols-auto">
           <nav>
             <h6 className="footer-title">Services</h6>
-            <Link className="link link-hover" to={user ? "/profile" : "/sign-up"}>
+            <Link
+              className="link link-hover"
+              to={user ? "/profile" : "/sign-up"}
+            >
               Teaching
             </Link>
             <Link className="link link-hover" to="/marketplace">Lessons</Link>
@@ -50,7 +53,9 @@ export default function Footer() {
             <p>&copy; 2024 Teach Niche. All rights reserved.</p>
           </div>
           <div className="grid grid-flow-col gap-4">
-            <Link className="link link-primary" to="https://instagram.com">Follow Teach Niche On Instagram</Link>
+            <Link className="link link-primary" to="https://instagram.com">
+              Follow Teach Niche On Instagram
+            </Link>
             <i className="bi bi-instagram text-xl"></i>
           </div>
         </div>

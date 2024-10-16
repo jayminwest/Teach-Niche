@@ -4,13 +4,13 @@ import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { FcGoogle } from "react-icons/fc";
-import supabase from "../../utils/supabaseClient";  
+import supabase from "../../utils/supabaseClient";
 
 export default function SignUpLayout() {
   const navigate = useNavigate();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -41,11 +41,11 @@ export default function SignUpLayout() {
 
       if (user) {
         // Use upsert to insert or update the profile
-        const { error: profileError } = await supabase.from('profiles').upsert([
+        const { error: profileError } = await supabase.from("profiles").upsert([
           {
             id: user.id,
             full_name: name || null, // Allow name to be optional
-            email: email,            // Store email if needed
+            email: email, // Store email if needed
             updated_at: new Date(),
           },
         ]);
@@ -68,10 +68,10 @@ export default function SignUpLayout() {
 
   const handleGoogleSignUp = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: "google",
       options: {
         // Redirect URL after successful sign-up
-        redirectTo: 'https://your-domain.com/profile',
+        redirectTo: "https://your-domain.com/profile",
       },
     });
 
@@ -94,7 +94,7 @@ export default function SignUpLayout() {
             >
               Have an account? Sign In
             </button>
-            <button 
+            <button
               className="btn btn-warning flex items-center justify-center mb-4"
               onClick={handleGoogleSignUp}
               disabled={isSubmitting}
@@ -148,8 +148,12 @@ export default function SignUpLayout() {
                 />
               </div>
               <div className="form-control mt-6">
-                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-                  {isSubmitting ? 'Signing Up...' : 'Sign Up'}
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Signing Up..." : "Sign Up"}
                 </button>
               </div>
             </form>

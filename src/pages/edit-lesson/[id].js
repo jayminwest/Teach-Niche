@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import TextEditor from "../../components/TextEditor";
@@ -47,7 +47,7 @@ export default function EditLesson() {
         .eq("tutorial_id", id);
 
       if (!categoryError) {
-        setCategoryIds(categoryData.map(item => item.category_id));
+        setCategoryIds(categoryData.map((item) => item.category_id));
       }
     }
     setLoading(false);
@@ -80,7 +80,8 @@ export default function EditLesson() {
       return;
     }
 
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    const { data: sessionData, error: sessionError } = await supabase.auth
+      .getSession();
     const session = sessionData.session;
 
     if (sessionError || !session) {
@@ -110,7 +111,7 @@ export default function EditLesson() {
         .eq("tutorial_id", id);
 
       if (categoryIds.length > 0) {
-        const categoryInserts = categoryIds.map(categoryId => ({
+        const categoryInserts = categoryIds.map((categoryId) => ({
           tutorial_id: id,
           category_id: categoryId,
         }));
@@ -131,9 +132,11 @@ export default function EditLesson() {
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">
-      <span className="loading loading-spinner loading-lg"></span>
-    </div>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
   }
 
   return (
@@ -168,15 +171,16 @@ export default function EditLesson() {
                 value={lessonDescription}
                 onChange={(e) => setLessonDescription(e.target.value)}
                 required
-              ></textarea>
+              >
+              </textarea>
             </div>
             <div className="form-control mb-4">
               <label className="label" htmlFor="lessonContent">
                 <span className="label-text">Content (required)</span>
               </label>
-              <TextEditor 
-                value={lessonContent} 
-                onChange={setLessonContent} 
+              <TextEditor
+                value={lessonContent}
+                onChange={setLessonContent}
                 required={true}
               />
             </div>
@@ -197,7 +201,9 @@ export default function EditLesson() {
             </div>
             <div className="form-control mb-4">
               <label className="label" htmlFor="youtubeLink">
-                <span className="label-text">Private YouTube Link (optional)</span>
+                <span className="label-text">
+                  Private YouTube Link (optional)
+                </span>
               </label>
               <input
                 type="url"
@@ -213,7 +219,10 @@ export default function EditLesson() {
                 <label className="label">Categories</label>
                 <div className="flex flex-wrap">
                   {categories.map((category) => (
-                    <label key={category.id} className="label cursor-pointer mr-4">
+                    <label
+                      key={category.id}
+                      className="label cursor-pointer mr-4"
+                    >
                       <input
                         type="checkbox"
                         value={category.id}

@@ -1,5 +1,5 @@
 import React from "react";
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
 
 export default function LessonCreationGuide() {
@@ -179,7 +179,7 @@ Your contributions help grow and strengthen the kendama community. We're excited
     <div className="prose max-w-3xl mx-auto">
       <ReactMarkdown>{guidelinesContent}</ReactMarkdown>
       <div className="text-center mt-8">
-        <button 
+        <button
           className="btn btn-primary text-xl px-6 py-3"
           onClick={handleCreateLesson}
         >

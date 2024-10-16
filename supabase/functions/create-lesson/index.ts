@@ -5,7 +5,7 @@ import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno";
 
 // Initialize Stripe
-const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || '', {
+const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2023-10-16",
 });
 
@@ -19,7 +19,7 @@ serve(async (req) => {
 
   // Handle CORS Preflight
   if (req.method === "OPTIONS") {
-    return new Response('ok', {
+    return new Response("ok", {
       status: 200,
       headers: {
         "Access-Control-Allow-Origin": "*",
@@ -36,7 +36,10 @@ serve(async (req) => {
   }
 
   // Authenticate User
-  const supabaseAccessToken = req.headers.get("Authorization")?.replace("Bearer ", "");
+  const supabaseAccessToken = req.headers.get("Authorization")?.replace(
+    "Bearer ",
+    "",
+  );
   if (!supabaseAccessToken) {
     console.error("No Authorization header found.");
     return new Response(JSON.stringify({ error: "Unauthorized token" }), {
@@ -45,7 +48,9 @@ serve(async (req) => {
     });
   }
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser(supabaseAccessToken);
+  const { data: { user }, error: authError } = await supabase.auth.getUser(
+    supabaseAccessToken,
+  );
   if (authError || !user) {
     console.error("Authentication failed:", authError);
     return new Response(JSON.stringify({ error: "Unauthorized user" }), {
@@ -56,16 +61,31 @@ serve(async (req) => {
 
   try {
     console.log(`[create-lesson] Authenticated user: ${user.id}`);
-    const { title, description, price, video_url, content, category_ids } = await req.json();
-    console.log(`[create-lesson] Received data: ${JSON.stringify({ title, description, price, video_url, content, category_ids })}`);
+    const { title, description, price, video_url, content, category_ids } =
+      await req.json();
+    console.log(
+      `[create-lesson] Received data: ${
+        JSON.stringify({
+          title,
+          description,
+          price,
+          video_url,
+          content,
+          category_ids,
+        })
+      }`,
+    );
 
     // Validate Input
     if (!title || !price || !content) {
       console.error("Missing required fields.");
-      return new Response(JSON.stringify({ error: "Missing required fields" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({ error: "Missing required fields" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     // Retrieve user's Stripe Account ID
@@ -75,15 +95,25 @@ serve(async (req) => {
       .eq("id", user.id)
       .single();
 
-    if (profileError || !profile.stripe_account_id || !profile.stripe_onboarding_complete) {
+    if (
+      profileError || !profile.stripe_account_id ||
+      !profile.stripe_onboarding_complete
+    ) {
       console.error("Stripe account not set up:", profileError);
-      return new Response(JSON.stringify({ error: "Please connect your Stripe account before creating lessons." }), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          error: "Please connect your Stripe account before creating lessons.",
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
-    console.log(`[create-lesson] Retrieved stripe_account_id: ${profile.stripe_account_id}`);
+    console.log(
+      `[create-lesson] Retrieved stripe_account_id: ${profile.stripe_account_id}`,
+    );
 
     // Create Stripe Product on behalf of the connected account
     const product = await stripe.products.create({
@@ -123,10 +153,15 @@ serve(async (req) => {
 
     if (insertError || !data) {
       console.error(`[create-lesson] Error inserting lesson: ${insertError}`);
-      return new Response(JSON.stringify({ error: insertError?.message || "Failed to create lesson" }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          error: insertError?.message || "Failed to create lesson",
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
     }
 
     console.log(`[create-lesson] Inserted lesson: ${JSON.stringify(data[0])}`);
@@ -143,7 +178,10 @@ serve(async (req) => {
         .insert(tutorialCategories);
 
       if (categoryError) {
-        console.error("Error inserting tutorial categories:", categoryError.message);
+        console.error(
+          "Error inserting tutorial categories:",
+          categoryError.message,
+        );
       } else {
         console.log("Inserted tutorial categories successfully.");
       }
@@ -153,7 +191,6 @@ serve(async (req) => {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });
-
   } catch (error: any) {
     console.error(`[create-lesson] Unexpected error: ${error}`);
     return new Response(JSON.stringify({ error: "Internal server error" }), {

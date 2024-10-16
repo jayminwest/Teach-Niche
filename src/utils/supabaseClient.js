@@ -1,5 +1,5 @@
 // src/utils/supabaseClient.js
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
 // Environment variables
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;

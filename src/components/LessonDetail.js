@@ -1,9 +1,9 @@
 // src/components/LessonDetail.js
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import supabase from "../utils/supabaseClient";
 import { useAuth } from "../context/AuthContext";
-import ReactQuill from 'react-quill'; // Import ReactQuill for rendering rich text
-import 'react-quill/dist/quill.snow.css'; // Import Quill styles
+import ReactQuill from "react-quill"; // Import ReactQuill for rendering rich text
+import "react-quill/dist/quill.snow.css"; // Import Quill styles
 
 export default function LessonDetail({ lesson, creator, hasAccess, lessonId }) {
   const { user, session } = useAuth();
@@ -54,7 +54,9 @@ export default function LessonDetail({ lesson, creator, hasAccess, lessonId }) {
         throw new Error("Functions URL not set in environment variables.");
       }
 
-      console.log(`Creating checkout session at: ${functionsUrl}/create-checkout-session`);
+      console.log(
+        `Creating checkout session at: ${functionsUrl}/create-checkout-session`,
+      );
       const response = await fetch(`${functionsUrl}/create-checkout-session`, {
         method: "POST",
         headers: {
@@ -70,7 +72,9 @@ export default function LessonDetail({ lesson, creator, hasAccess, lessonId }) {
 
       if (response.ok) {
         if (data.sessionUrl) {
-          console.log("Checkout session created successfully. Redirecting to Stripe.");
+          console.log(
+            "Checkout session created successfully. Redirecting to Stripe.",
+          );
           // Redirect to Stripe Checkout
           window.location.href = data.sessionUrl;
         } else {
@@ -94,15 +98,15 @@ export default function LessonDetail({ lesson, creator, hasAccess, lessonId }) {
     <div className="bg-white shadow-md rounded p-6">
       <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1>
       <div className="flex items-center mb-4">
-        {creator.avatar_url ? (
-          <img
-            src={creator.avatar_url}
-            alt={`${creator.full_name}'s avatar`}
-            className="w-12 h-12 rounded-full mr-4"
-          />
-        ) : (
-          <div className="w-12 h-12 rounded-full bg-gray-300 mr-4"></div>
-        )}
+        {creator.avatar_url
+          ? (
+            <img
+              src={creator.avatar_url}
+              alt={`${creator.full_name}'s avatar`}
+              className="w-12 h-12 rounded-full mr-4"
+            />
+          )
+          : <div className="w-12 h-12 rounded-full bg-gray-300 mr-4"></div>}
         <div>
           <p className="text-lg font-semibold">{creator.full_name}</p>
           {/* Add more creator info if needed */}
@@ -111,34 +115,37 @@ export default function LessonDetail({ lesson, creator, hasAccess, lessonId }) {
       <p className="mb-4">{lesson.description}</p>
       <p className="mb-4 font-semibold">Price: ${lesson.price}</p>
 
-      {hasAccess ? (
-        <div className="lesson-content">
-          {lesson.video_url && (
-            <iframe
-              src={lesson.video_url}
-              title={lesson.title}
-              className="w-full h-96 mb-4"
-              allowFullScreen
-            ></iframe>
-          )}
-          <ReactQuill
-            value={lesson.content}
-            readOnly={true}
-            theme={"bubble"}
-          />
-        </div>
-      ) : (
-        <div>
-          {error && <p className="text-red-500 mb-2">Error: {error}</p>}
-          <button
-            className={`btn btn-primary ${loading ? "loading" : ""}`}
-            onClick={handlePurchase}
-            disabled={loading}
-          >
-            {loading ? "Processing..." : "Purchase Lesson"}
-          </button>
-        </div>
-      )}
+      {hasAccess
+        ? (
+          <div className="lesson-content">
+            {lesson.video_url && (
+              <iframe
+                src={lesson.video_url}
+                title={lesson.title}
+                className="w-full h-96 mb-4"
+                allowFullScreen
+              >
+              </iframe>
+            )}
+            <ReactQuill
+              value={lesson.content}
+              readOnly={true}
+              theme={"bubble"}
+            />
+          </div>
+        )
+        : (
+          <div>
+            {error && <p className="text-red-500 mb-2">Error: {error}</p>}
+            <button
+              className={`btn btn-primary ${loading ? "loading" : ""}`}
+              onClick={handlePurchase}
+              disabled={loading}
+            >
+              {loading ? "Processing..." : "Purchase Lesson"}
+            </button>
+          </div>
+        )}
     </div>
   );
 }
