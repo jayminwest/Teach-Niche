@@ -147,7 +147,7 @@ serve(async (req) => {
       }/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${Deno.env.get("FRONTEND_URL")}/cancel`,
 
-      // Add the following lines
+      // Add metadata and client reference ID
       metadata: {
         tutorial_id: tutorialId,
       },

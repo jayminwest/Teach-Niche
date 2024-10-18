@@ -14,6 +14,14 @@ module.exports = {
     fontFamily: {
       "sans": ["Montserrat", "sans-serif"],
     },
+    extend: {
+      colors: {
+        accent: '#ffffff', // Replace with your desired accent color
+      },
+    },
   },
   plugins: [require("daisyui")],
+  daisyui: {
+    themes: ["light"],
+  },
 };

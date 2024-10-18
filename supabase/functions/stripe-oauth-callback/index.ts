@@ -3,20 +3,24 @@ import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno";
 
+// Initialize Stripe with the secret key from environment variables
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2023-10-16",
 });
 
+// Initialize Supabase client with URL and service role key from environment variables
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
+// CORS Headers for handling cross-origin requests
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
 
+// Main handler function to serve requests
 serve(async (req) => {
   console.log("Stripe OAuth callback invoked.");
   if (req.method === "OPTIONS") {
@@ -59,7 +63,7 @@ serve(async (req) => {
       `Updating profile for userId: ${userId} with Stripe Account ID: ${connectedAccountId}`,
     );
 
-    // Update the user's profile
+    // Update the user's profile in Supabase
     const { data: updateData, error: updateError, count } = await supabase
       .from("profiles")
       .update({
@@ -77,7 +81,7 @@ serve(async (req) => {
     console.log(`Number of profiles updated: ${count}`);
     console.log("Profile updated successfully:", updateData);
 
-    // Redirect to success
+    // Redirect to success page
     const successUrl = `${
       Deno.env.get("FRONTEND_URL")
     }/profile?stripe_connected=true`;

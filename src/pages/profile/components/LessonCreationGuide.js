@@ -43,7 +43,7 @@ Each lesson should consist of the following elements:
 
 - **Recording Requirements:**
   - **Setting:** Film indoors with a blank or non-distracting background to keep the focus on your instruction.
-  - **Orientation:** Record in **portrait mode** to ensure consistency across all tutorials on the platform.
+  - **Orientation:** Record in **portrait orientation** to ensure consistency across all tutorials on the platform.
   - **Lighting:** Use ample lighting to make sure all movements and details are clearly visible.
   - **Audio Quality:** Ensure clear audio. Use a quality microphone if possible to capture your voice without background noise.
   - **Attire:** Wear clothing that contrasts with your kendama to highlight movements.

@@ -3,12 +3,12 @@
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@1.35.6?target=deno";
 
-// Initialize Supabase Client
+// Initialize Supabase client with URL and service role key from environment variables
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-// Webhook Secret
+// Webhook secret for verifying Stripe signatures
 const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
 
 // Helper function to convert ArrayBuffer to Hex string
@@ -95,6 +95,7 @@ async function verifyStripeSignature(
   return JSON.parse(payload);
 }
 
+// Main handler function to serve requests
 serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method Not Allowed", { status: 405 });
@@ -137,6 +138,7 @@ serve(async (req) => {
   return new Response(JSON.stringify({ received: true }), { status: 200 });
 });
 
+// Function to handle checkout session completion
 const handleCheckoutSession = async (session: any) => {
   const tutorialId = session.metadata?.tutorial_id;
   const userId = session.client_reference_id;

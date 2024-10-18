@@ -1,9 +1,12 @@
 // server.js
 require("dotenv").config();
 const express = require("express");
-const supabase = require("@supabase/supabase-js").createClient(
+const { createClient } = require("@supabase/supabase-js"); // Updated import
+
+// Use service role key for server-side operations
+const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY,
+  process.env.SUPABASE_SERVICE_ROLE_KEY, // Ensure this is the service role key
 );
 const app = express();
 app.use(express.json());

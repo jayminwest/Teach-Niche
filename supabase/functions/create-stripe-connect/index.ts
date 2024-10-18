@@ -1,25 +1,15 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
-
-// Setup type definitions for built-in Supabase Runtime APIs
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-
-console.log("Hello from Functions!");
-
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno";
 
-// CORS Headers
+// CORS Headers for handling cross-origin requests
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Main Handler
+// Main handler function to serve requests
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -38,10 +28,12 @@ serve(async (req) => {
       });
     }
 
+    // Initialize Stripe with the secret key from environment variables
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2023-10-16",
     });
 
+    // Prepare OAuth parameters
     const state = userId; // Use the user ID as the state
     const redirectUri = Deno.env.get("STRIPE_REDIRECT_URI")!;
     const clientId = Deno.env.get("STRIPE_CLIENT_ID")!;
@@ -49,6 +41,7 @@ serve(async (req) => {
     console.log("Stripe Client ID:", clientId);
     console.log("Redirect URI:", redirectUri);
 
+    // Generate the Stripe OAuth URL
     const url = stripe.oauth.authorizeUrl({
       response_type: "code",
       client_id: clientId,

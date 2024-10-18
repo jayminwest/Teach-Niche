@@ -80,7 +80,7 @@ export default function Header() {
                   <Link className="btn btn-secondary" to="/logout">Logout</Link>
                 </>
               )
-              : <Link className="btn" to="/sign-up">Get Started</Link>}
+              : <Link className="btn btn-accent" to="/sign-up">Get Started</Link>}
           </div>
         </div>
       </div>
