@@ -97,47 +97,51 @@ async function verifyStripeSignature(
 
 // Main handler function to serve requests
 serve(async (req) => {
-  if (req.method !== "POST") {
+  if (req.method === "POST") {
+    // Your existing webhook logic for POST requests
+    const payload = await req.text();
+    const sig = req.headers.get("stripe-signature");
+
+    // Enhanced Logging: Log the raw signature and payload for debugging
+    console.log("Received Stripe signature header:", sig);
+    console.log("Received payload:", payload);
+
+    if (!sig) {
+      console.error("Missing Stripe signature.");
+      return new Response("Missing Stripe signature.", { status: 400 });
+    }
+
+    let event: any;
+
+    try {
+      event = await verifyStripeSignature(payload, sig, webhookSecret);
+    } catch (err: any) {
+      console.error("⚠️  Webhook signature verification failed.", err.message);
+      return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+    }
+
+    // Handle the event
+    switch (event.type) {
+      case "checkout.session.completed":
+        const session = event.data.object;
+
+        // Fulfill the purchase
+        await handleCheckoutSession(session);
+        break;
+      // ... handle other event types if necessary
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+
+    return new Response(JSON.stringify({ received: true }), { status: 200 });
+  } else if (req.method === "GET") {
+    // Handle GET requests (e.g., for testing or verification)
+    return new Response("Stripe webhook is functioning correctly", { status: 200 });
+  } else {
+    // Handle other HTTP methods
     return new Response("Method Not Allowed", { status: 405 });
   }
-
-  const payload = await req.text();
-  const sig = req.headers.get("stripe-signature");
-
-  // Enhanced Logging: Log the raw signature and payload for debugging
-  console.log("Received Stripe signature header:", sig);
-  console.log("Received payload:", payload);
-
-  if (!sig) {
-    console.error("Missing Stripe signature.");
-    return new Response("Missing Stripe signature.", { status: 400 });
-  }
-
-  let event: any;
-
-  try {
-    event = await verifyStripeSignature(payload, sig, webhookSecret);
-  } catch (err: any) {
-    console.error("⚠️  Webhook signature verification failed.", err.message);
-    return new Response(`Webhook Error: ${err.message}`, { status: 400 });
-  }
-
-  // Handle the event
-  switch (event.type) {
-    case "checkout.session.completed":
-      const session = event.data.object;
-
-      // Fulfill the purchase
-      await handleCheckoutSession(session);
-      break;
-    // ... handle other event types if necessary
-    default:
-      console.log(`Unhandled event type ${event.type}`);
-  }
-
-  return new Response(JSON.stringify({ received: true }), { status: 200 });
 });
-
 // Function to handle checkout session completion
 const handleCheckoutSession = async (session: any) => {
   const tutorialId = session.metadata?.tutorial_id;
@@ -188,3 +192,4 @@ const handleCheckoutSession = async (session: any) => {
     // Optional: Send a confirmation email or trigger other workflows here
   }
 };
+

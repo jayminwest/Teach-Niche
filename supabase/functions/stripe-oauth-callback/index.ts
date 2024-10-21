@@ -2,6 +2,7 @@
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno";
+import { allowedOrigins, corsHeaders, createCorsResponse } from "../_shared/config.ts";
 
 // Initialize Stripe with the secret key from environment variables
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -13,18 +14,19 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-// CORS Headers for handling cross-origin requests
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
-
 // Main handler function to serve requests
 serve(async (req) => {
-  console.log("Stripe OAuth callback invoked.");
+  const origin = req.headers.get("origin") || "";
+
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    if (allowedOrigins.includes(origin)) {
+      return new Response("ok", { headers: corsHeaders(origin) });
+    } else {
+      return new Response(null, {
+        status: 403,
+        statusText: "Forbidden",
+      });
+    }
   }
 
   const url = new URL(req.url);

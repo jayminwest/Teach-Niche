@@ -3,6 +3,7 @@
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno";
+import { allowedOrigins, corsHeaders, createCorsResponse } from "../_shared/config.ts";
 
 // Initialize Stripe with the secret key from environment variables
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -16,18 +17,21 @@ const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 // Main handler function to serve requests
 serve(async (req) => {
-  console.log("[create-lesson] Function invoked.");
+  const origin = req.headers.get("origin") || "";
 
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      status: 200,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-      },
-    });
+    if (allowedOrigins.includes(origin)) {
+      return new Response("ok", {
+        status: 200,
+        headers: corsHeaders(origin),
+      });
+    } else {
+      return new Response(null, {
+        status: 403,
+        statusText: "Forbidden",
+      });
+    }
   }
 
   // Only allow POST requests

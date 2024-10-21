@@ -47,18 +47,19 @@ export default function LessonPage() {
           .from("profiles")
           .select("full_name, avatar_url")
           .eq("id", lessonData.creator_id)
-          .single();
+          .maybeSingle();
 
         if (creatorError) {
-          console.error(
-            "Error fetching creator profile:",
-            creatorError.message,
-          );
-          throw creatorError;
+          console.error("Error fetching creator profile:", creatorError.message);
+          // Handle the error appropriately, maybe set a default value or show an error message
+          setCreator(null);
+        } else if (creatorData) {
+          setCreator(creatorData);
+          console.log("Creator profile fetched successfully:", creatorData);
+        } else {
+          console.log("Creator profile not found");
+          setCreator(null);
         }
-
-        setCreator(creatorData);
-        console.log("Creator profile fetched successfully:", creatorData);
 
         // If user is logged in, check if they have purchased the lesson
         if (user) {

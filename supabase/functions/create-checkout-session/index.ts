@@ -3,6 +3,7 @@
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno"; // Ensure using Supabase v2
+import { allowedOrigins, corsHeaders, createCorsResponse } from "../_shared/config.ts";
 
 // Initialize Stripe
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -13,32 +14,6 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-
-// Allowed Origins for CORS
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://teach-niche.com",
-];
-
-// CORS Headers
-const corsHeaders = (origin: string) => ({
-  "Access-Control-Allow-Origin": origin,
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Credentials": "true",
-  Vary: "Origin",
-});
-
-// Helper Function to Create CORS Response
-const createCorsResponse = (status: number, body: any, origin: string) => {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      ...corsHeaders(origin),
-    },
-  });
-};
 
 // Main Handler
 serve(async (req) => {

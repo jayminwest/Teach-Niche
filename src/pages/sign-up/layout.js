@@ -20,6 +20,7 @@ export default function SignUpLayout() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   /**
    * Navigates to the sign-in page.
@@ -85,18 +86,26 @@ export default function SignUpLayout() {
    * Handles sign-up with Google OAuth.
    */
   const handleGoogleSignUp = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        // Redirect URL after successful sign-up
-        redirectTo: "https://your-domain.com/profile",
-      },
-    });
+    setError(null);
+    setIsGoogleLoading(true);
 
-    if (error) {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) throw error;
+
+      // The user will be redirected to Google for authentication
+      // After successful authentication, they will be redirected back to your app
+    } catch (error) {
       setError(error.message);
+    } finally {
+      setIsGoogleLoading(false);
     }
-    // The user will be redirected to Google for authentication
   };
 
   return (
@@ -115,10 +124,10 @@ export default function SignUpLayout() {
             <button
               className="btn btn-warning flex items-center justify-center mb-4"
               onClick={handleGoogleSignUp}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isGoogleLoading}
             >
               <FcGoogle className="mr-2" size={24} />
-              Sign Up with Google
+              {isGoogleLoading ? "Connecting..." : "Sign Up with Google"}
             </button>
             <div className="divider"></div>
             <h2 className="card-title text-2xl mb-4">Sign Up</h2>

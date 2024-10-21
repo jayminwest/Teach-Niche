@@ -1,19 +1,22 @@
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno";
-
-// CORS Headers for handling cross-origin requests
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { allowedOrigins, corsHeaders, createCorsResponse } from "../_shared/config.ts";
 
 // Main handler function to serve requests
 serve(async (req) => {
+  const origin = req.headers.get("origin") || "";
+
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    if (allowedOrigins.includes(origin)) {
+      return new Response("ok", { headers: corsHeaders(origin) });
+    } else {
+      return new Response(null, {
+        status: 403,
+        statusText: "Forbidden",
+      });
+    }
   }
 
   try {
@@ -22,10 +25,7 @@ serve(async (req) => {
 
     if (!userId) {
       console.error("User ID is required.");
-      return new Response(JSON.stringify({ error: "User ID is required." }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return createCorsResponse(400, { error: "User ID is required." }, origin);
     }
 
     // Initialize Stripe with the secret key from environment variables
@@ -52,21 +52,12 @@ serve(async (req) => {
 
     console.log("Generated Stripe OAuth URL:", url);
 
-    return new Response(JSON.stringify({ url }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return createCorsResponse(200, { url }, origin);
   } catch (error: any) {
     console.error("Error in create-stripe-connect:", error);
-    return new Response(
-      JSON.stringify({
-        error: error.message || "An unexpected error occurred",
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
+    return createCorsResponse(500, {
+      error: error.message || "An unexpected error occurred",
+    }, origin);
   }
 });
 

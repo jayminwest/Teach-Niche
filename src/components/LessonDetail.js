@@ -116,17 +116,17 @@ export default function LessonDetail({ lesson, creator, hasAccess, lessonId }) {
     <div className="bg-white shadow-md rounded p-6">
       <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1>
       <div className="flex items-center mb-4">
-        {creator.avatar_url
-          ? (
-            <img
-              src={creator.avatar_url}
-              alt={`${creator.full_name}'s avatar`}
-              className="w-12 h-12 rounded-full mr-4"
-            />
-          )
-          : <div className="w-12 h-12 rounded-full bg-gray-300 mr-4"></div>}
+        {creator && creator.avatar_url ? (
+          <img
+            src={creator.avatar_url}
+            alt={`${creator.full_name}'s avatar`}
+            className="w-12 h-12 rounded-full mr-4"
+          />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-gray-300 mr-4"></div>
+        )}
         <div>
-          <p className="text-lg font-semibold">{creator.full_name}</p>
+          <p className="text-lg font-semibold">{creator ? creator.full_name : 'Unknown Creator'}</p>
           {/* Add more creator info if needed */}
         </div>
       </div>
