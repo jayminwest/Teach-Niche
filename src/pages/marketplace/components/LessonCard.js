@@ -116,7 +116,7 @@ const LessonCard = ({
       </figure>
       <div className="card-body">
         <h2 className="card-title">{title}</h2>
-        <p>Teacher: {creatorName}</p>
+        <p>Creator: {creatorName}</p>
         <p>Price: ${price}</p>
         <p>{description}</p>
         {error && <p className="text-red-500">{error}</p>}

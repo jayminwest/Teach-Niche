@@ -7,13 +7,14 @@ import { useAuth } from "../../../context/AuthContext";
 /**
  * LessonsGrid Component
  *
- * Renders a grid of lessons, optionally filtering to show only purchased lessons.
+ * Renders a grid of lessons, optionally filtering to show only purchased lessons and sorting by price.
  *
  * @param {Object} props - The component props.
  * @param {boolean} [props.showPurchasedOnly=false] - Whether to show only purchased lessons.
+ * @param {string} props.sortOption - The current sort option.
  * @returns {JSX.Element} The Lessons Grid.
  */
-const LessonsGrid = ({ showPurchasedOnly = false }) => {
+const LessonsGrid = ({ showPurchasedOnly = false, sortOption }) => {
   const [lessons, setLessons] = useState([]);
   const [purchasedLessons, setPurchasedLessons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,9 +39,7 @@ const LessonsGrid = ({ showPurchasedOnly = false }) => {
 
           if (purchasesError) throw purchasesError;
 
-          setPurchasedLessons(
-            purchases.map((purchase) => purchase.tutorial_id),
-          );
+          setPurchasedLessons(purchases.map((purchase) => purchase.tutorial_id));
         }
       } catch (error) {
         console.error("Error fetching lessons or purchases:", error.message);
@@ -51,6 +50,17 @@ const LessonsGrid = ({ showPurchasedOnly = false }) => {
 
     fetchLessons();
   }, [user]);
+
+  const sortLessons = (lessonsToSort) => {
+    switch (sortOption) {
+      case "price_asc":
+        return [...lessonsToSort].sort((a, b) => a.price - b.price);
+      case "price_desc":
+        return [...lessonsToSort].sort((a, b) => b.price - a.price);
+      default:
+        return lessonsToSort;
+    }
+  };
 
   if (loading) {
     return (
@@ -64,21 +74,23 @@ const LessonsGrid = ({ showPurchasedOnly = false }) => {
     ? lessons.filter((lesson) => purchasedLessons.includes(lesson.id))
     : lessons;
 
+  const sortedLessons = sortLessons(displayLessons);
+
   return (
     <div className="container p-4 mx-auto">
-      {showPurchasedOnly && displayLessons.length === 0
-        ? <p>You haven't purchased any lessons yet.</p>
-        : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {displayLessons.map((lesson) => (
-              <LessonCard
-                key={lesson.id}
-                {...lesson}
-                isPurchased={purchasedLessons.includes(lesson.id)}
-              />
-            ))}
-          </div>
-        )}
+      {showPurchasedOnly && sortedLessons.length === 0 ? (
+        <p>You haven't purchased any lessons yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {sortedLessons.map((lesson) => (
+            <LessonCard
+              key={lesson.id}
+              {...lesson}
+              isPurchased={purchasedLessons.includes(lesson.id)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
