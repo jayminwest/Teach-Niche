@@ -29,15 +29,13 @@ const AboutUs = () => {
   const joinOptions = [
     {
       title: "For Learners",
-      description:
-        "Access tutorials from some of the best kendama players in the world and take your skills to new heights.",
+      description: "Access tutorials from some of the best kendama players in the world and take your skills to new heights.",
       action: () => navigate("/marketplace"),
       buttonText: "View Lessons",
     },
     {
       title: "For Teachers",
-      description:
-        "Share your expertise, connect with a global audience, and earn income doing what you love.",
+      description: "Share your expertise, connect with a global audience, and earn income doing what you love.",
       action: handleTeachersClick,
       buttonText: "Become a Teacher",
     },
@@ -63,8 +61,7 @@ const AboutUs = () => {
             <div className="card-body">
               <h2 className="card-title text-2xl mb-4">Our Mission</h2>
               <p className="text-lg">
-                At{" "}
-                <strong>Teach Niche</strong>, our mission is to empower the
+                At <strong>Teach Niche</strong>, our mission is to empower the
                 kendama community by providing a platform where players of all
                 levels can share knowledge, hone their skills, and support one
                 another. We are dedicated to fostering growth, connection, and
@@ -76,8 +73,7 @@ const AboutUs = () => {
             <div className="card-body">
               <h2 className="card-title text-2xl mb-4">Our Story</h2>
               <p className="text-lg mb-4">
-                Hello! I'm{" "}
-                <strong>Jaymin West</strong>, the founder of Teach Niche. I've
+                Hello! I'm <strong>Jaymin West</strong>, the founder of Teach Niche. I've
                 been passionately playing kendama for over seven years.
                 Throughout my journey, I've witnessed the incredible talent and
                 dedication within our community.
@@ -91,26 +87,16 @@ const AboutUs = () => {
         </section>
 
         <section className="mb-12">
-          <h2 className="text-3xl font-bold text-center mb-6">
-            Why Teach Niche?
-          </h2>
+          <h2 className="text-3xl font-bold text-center mb-6">Why Teach Niche?</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {["Empowerment", "Education", "Community Growth", "Connection"].map(
-              (item, index) => (
-                <div
-                  key={index}
-                  className="card bg-primary text-primary-content"
-                >
-                  <div className="card-body items-center text-center">
-                    <h3 className="card-title">{item}</h3>
-                    <p>
-                      We believe in the power of {item.toLowerCase()}{" "}
-                      within the kendama community.
-                    </p>
-                  </div>
+            {["Empowerment", "Education", "Community Growth", "Connection"].map((item, index) => (
+              <div key={index} className="card bg-primary text-primary-content">
+                <div className="card-body items-center text-center">
+                  <h3 className="card-title">{item}</h3>
+                  <p>We believe in the power of {item.toLowerCase()} within the kendama community.</p>
                 </div>
-              ),
-            )}
+              </div>
+            ))}
           </div>
         </section>
 
@@ -137,9 +123,7 @@ const AboutUs = () => {
         </section>
 
         <section>
-          <h2 className="text-3xl font-bold text-center mb-6">
-            Join the Movement
-          </h2>
+          <h2 className="text-3xl font-bold text-center mb-6">Join the Movement</h2>
           <div className="flex flex-col md:flex-row gap-8 justify-center">
             {joinOptions.map((option, index) => (
               <div key={index} className="card w-96 bg-base-100 shadow-xl">

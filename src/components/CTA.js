@@ -13,10 +13,7 @@ const CTA = () => {
     <section className="py-12 md:py-24" aria-labelledby="cta-heading">
       <div className="container">
         <div className="flex flex-col md:flex-row justify-center items-center gap-6 text-center md:text-left">
-          <h2
-            id="cta-heading"
-            className="flex-grow text-4xl md:text-5xl 2xl:text-6xl font-bold text-primary"
-          >
+          <h2 id="cta-heading" className="flex-grow text-4xl md:text-5xl 2xl:text-6xl font-bold text-primary">
             Share Your Expertise <br className="hidden sm:inline" />
             and Grow with Teach Niche.
           </h2>

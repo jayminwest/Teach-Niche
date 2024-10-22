@@ -4,7 +4,7 @@ import LessonsGrid from "../pages/marketplace/components/LessonsGrid";
 /**
  * FeaturedLessons Component
  *
- * Displays a section of featured lessons from the marketplace.
+ * Displays a section of featured lessons from the marketplace, limited to six lessons.
  *
  * @returns {JSX.Element} The featured lessons section.
  */
@@ -26,7 +26,7 @@ const FeaturedLessons = () => {
             Explore our curated selection of top-rated lessons.
           </p>
         </div>
-        <LessonsGrid showPurchasedOnly={false} />
+        <LessonsGrid showPurchasedOnly={false} limit={6} />
       </div>
     </section>
   );

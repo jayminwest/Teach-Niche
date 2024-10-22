@@ -15,9 +15,8 @@ import { useNavigate } from "react-router-dom";
  * @param {string} props.creator_id - The creator's ID.
  * @param {number} props.price - The lesson price.
  * @param {string} props.description - The lesson description.
- * @param {string} props.content_url - The lesson content URL.
+ * @param {string} props.thumbnail_url - The lesson thumbnail URL.
  * @param {boolean} props.isPurchased - Whether the lesson has been purchased.
- * @param {boolean} props.isCreated - Whether the lesson was created by the current user.
  * @returns {JSX.Element} The Lesson Card.
  */
 const LessonCard = ({
@@ -26,9 +25,8 @@ const LessonCard = ({
   creator_id,
   price,
   description,
-  content_url,
+  thumbnail_url,
   isPurchased,
-  isCreated,
 }) => {
   const [creatorName, setCreatorName] = useState("");
   const { user, session } = useAuth();
@@ -36,6 +34,8 @@ const LessonCard = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [imageError, setImageError] = useState(false);
+
+  const isCreator = user && user.id === creator_id;
 
   useEffect(() => {
     const fetchCreatorName = async () => {
@@ -99,16 +99,13 @@ const LessonCard = ({
 
   const handleImageError = () => setImageError(true);
 
-  const placeholderImage =
-    "https://via.placeholder.com/400x300?text=Lesson+Image";
+  const placeholderImage = "https://via.placeholder.com/400x300?text=Lesson+Image";
 
   return (
     <div className="card w-80 h-auto bg-base-100 shadow-xl overflow-hidden">
       <figure className="h-48 overflow-hidden">
         <img
-          src={imageError
-            ? placeholderImage
-            : (content_url || placeholderImage)}
+          src={imageError ? placeholderImage : (thumbnail_url || placeholderImage)}
           alt={`Lesson: ${title}`}
           className="w-full h-full object-cover"
           onError={handleImageError}
@@ -120,27 +117,23 @@ const LessonCard = ({
         <p>Price: ${price}</p>
         <p>{description}</p>
         {error && <p className="text-red-500">{error}</p>}
-        {isCreated
-          ? (
-            <button className="btn btn-primary" onClick={handleEdit}>
-              Edit Lesson
-            </button>
-          )
-          : isPurchased
-          ? (
-            <button className="btn btn-success" onClick={handleAccess}>
-              Access Lesson
-            </button>
-          )
-          : (
-            <button
-              className={`btn btn-primary ${loading ? "loading" : ""}`}
-              onClick={handlePurchase}
-              disabled={loading}
-            >
-              {loading ? "Processing..." : "Purchase Lesson"}
-            </button>
-          )}
+        {isCreator ? (
+          <button className="btn btn-primary" onClick={handleEdit}>
+            Edit Lesson
+          </button>
+        ) : isPurchased ? (
+          <button className="btn btn-success" onClick={handleAccess}>
+            Access Lesson
+          </button>
+        ) : (
+          <button
+            className={`btn btn-primary ${loading ? "loading" : ""}`}
+            onClick={handlePurchase}
+            disabled={loading}
+          >
+            {loading ? "Processing..." : "Purchase Lesson"}
+          </button>
+        )}
       </div>
     </div>
   );

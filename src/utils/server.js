@@ -9,7 +9,7 @@ const { createClient } = require("@supabase/supabase-js");
  */
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 const app = express();
@@ -17,7 +17,7 @@ app.use(express.json());
 
 /**
  * Register a new user.
- *
+ * 
  * @route POST /register
  * @param {Object} req.body
  * @param {string} req.body.email - User's email
@@ -27,10 +27,7 @@ app.use(express.json());
 app.post("/register", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const { data: user, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    const { data: user, error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
     res.status(200).json({ user });
   } catch (error) {
@@ -40,7 +37,7 @@ app.post("/register", async (req, res) => {
 
 /**
  * Log in a user.
- *
+ * 
  * @route POST /login
  * @param {Object} req.body
  * @param {string} req.body.email - User's email
@@ -50,10 +47,7 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const { data: user, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { data: user, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
     res.status(200).json({ user });
   } catch (error) {

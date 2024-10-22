@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import AlertMessage from "./AlertMessage";
 
 /**
  * Footer Component
@@ -11,11 +12,42 @@ import { useAuth } from "../context/AuthContext";
  */
 const Footer = () => {
   const { user } = useAuth();
+  const [email, setEmail] = useState("");
+  const [subscriptionMessage, setSubscriptionMessage] = useState(null);
+  const [subscriptionError, setSubscriptionError] = useState(null);
 
-  const handleSubscribe = (e) => {
+  const handleSubscribe = async (e) => {
     e.preventDefault();
-    // Implement subscription logic here
-    console.log("Newsletter subscription submitted");
+    setSubscriptionMessage(null);
+    setSubscriptionError(null);
+
+    try {
+      console.log("Sending request to:", `${process.env.REACT_APP_SUPABASE_FUNCTIONS_URL}/subscribe`);
+      const response = await fetch(
+        `${process.env.REACT_APP_SUPABASE_FUNCTIONS_URL}/subscribe`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      console.log("Response status:", response.status);
+      const data = await response.json();
+      console.log("Response data:", data);
+
+      if (response.ok) {
+        setSubscriptionMessage(data.message);
+        setEmail("");
+      } else {
+        throw new Error(data.error || 'Subscription failed');
+      }
+    } catch (error) {
+      console.error("Subscription error:", error);
+      setSubscriptionError(error.message);
+    }
   };
 
   return (
@@ -58,6 +90,8 @@ const Footer = () => {
                   id="newsletter-email"
                   placeholder="username@site.com"
                   className="input input-bordered join-item"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
                 <button type="submit" className="btn btn-primary join-item">
@@ -65,6 +99,7 @@ const Footer = () => {
                 </button>
               </div>
             </fieldset>
+            <AlertMessage success={subscriptionMessage} error={subscriptionError} />
           </form>
         </div>
 
@@ -72,13 +107,13 @@ const Footer = () => {
           <div className="flex-grow text-center sm:text-start">
             <p>
               &copy; {new Date().getFullYear()}{" "}
-              Teach Niche. All rights reserved.
+              Teach Niche, LLC. All rights reserved.
             </p>
           </div>
           <div className="grid grid-flow-col gap-4">
             <Link
               className="link link-primary"
-              to="https://instagram.com"
+              to="https://www.instagram.com/teachniche/?hl=en"
               aria-label="Follow Teach Niche on Instagram"
             >
               Follow Teach Niche On Instagram

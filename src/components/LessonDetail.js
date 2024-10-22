@@ -53,9 +53,7 @@ const LessonDetail = ({ lesson, creator, hasAccess, lessonId }) => {
 
     try {
       const functionsUrl = process.env.REACT_APP_SUPABASE_FUNCTIONS_URL;
-      if (!functionsUrl) {
-        throw new Error("Functions URL not set in environment variables.");
-      }
+      if (!functionsUrl) throw new Error("Functions URL not set in environment variables.");
 
       const response = await fetch(`${functionsUrl}/create-checkout-session`, {
         method: "POST",
@@ -68,9 +66,7 @@ const LessonDetail = ({ lesson, creator, hasAccess, lessonId }) => {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to create checkout session.");
-      }
+      if (!response.ok) throw new Error(data.error || "Failed to create checkout session.");
 
       if (data.sessionUrl) {
         window.location.href = data.sessionUrl;
@@ -88,51 +84,46 @@ const LessonDetail = ({ lesson, creator, hasAccess, lessonId }) => {
     <div className="bg-white shadow-md rounded p-6">
       <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1>
       <div className="flex items-center mb-4">
-        {creator && creator.avatar_url
-          ? (
-            <img
-              src={creator.avatar_url}
-              alt={`${creator.full_name}'s avatar`}
-              className="w-12 h-12 rounded-full mr-4"
-            />
-          )
-          : <div className="w-12 h-12 rounded-full bg-gray-300 mr-4"></div>}
+        {creator && creator.avatar_url ? (
+          <img
+            src={creator.avatar_url}
+            alt={`${creator.full_name}'s avatar`}
+            className="w-12 h-12 rounded-full mr-4"
+          />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-gray-300 mr-4"></div>
+        )}
         <div>
-          <p className="text-lg font-semibold">
-            {creator ? creator.full_name : "Unknown Creator"}
-          </p>
+          <p className="text-lg font-semibold">{creator ? creator.full_name : 'Unknown Creator'}</p>
         </div>
       </div>
       <p className="mb-4">{lesson.description}</p>
       <p className="mb-4 font-semibold">Price: ${lesson.price}</p>
 
-      {hasAccess
-        ? (
-          <div className="lesson-content">
-            {lesson.video_url && (
-              <iframe
-                src={lesson.video_url}
-                title={lesson.title}
-                className="w-full h-96 mb-4"
-                allowFullScreen
-              >
-              </iframe>
-            )}
-            <ReactQuill value={lesson.content} readOnly={true} theme="bubble" />
-          </div>
-        )
-        : (
-          <div>
-            {error && <p className="text-red-500 mb-2">Error: {error}</p>}
-            <button
-              className={`btn btn-primary ${loading ? "loading" : ""}`}
-              onClick={handlePurchase}
-              disabled={loading}
-            >
-              {loading ? "Processing..." : "Purchase Lesson"}
-            </button>
-          </div>
-        )}
+      {hasAccess ? (
+        <div className="lesson-content">
+          {lesson.video_url && (
+            <iframe
+              src={lesson.video_url}
+              title={lesson.title}
+              className="w-full h-96 mb-4"
+              allowFullScreen
+            ></iframe>
+          )}
+          <ReactQuill value={lesson.content} readOnly={true} theme="bubble" />
+        </div>
+      ) : (
+        <div>
+          {error && <p className="text-red-500 mb-2">Error: {error}</p>}
+          <button
+            className={`btn btn-primary ${loading ? "loading" : ""}`}
+            onClick={handlePurchase}
+            disabled={loading}
+          >
+            {loading ? "Processing..." : "Purchase Lesson"}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

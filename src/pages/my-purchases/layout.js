@@ -21,10 +21,7 @@ const MyPurchasesLayout = () => {
         <Header />
         <main className="flex-grow flex justify-center items-center">
           <p className="text-center">
-            Please{" "}
-            <a href="/sign-in" className="text-blue-500 hover:underline">
-              sign in
-            </a>{" "}
+            Please <a href="/sign-in" className="text-blue-500 hover:underline">sign in</a>{" "}
             to view your purchased lessons.
           </p>
         </main>

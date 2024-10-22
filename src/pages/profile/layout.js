@@ -96,7 +96,7 @@ const Profile = () => {
     try {
       const { data, error } = await supabase
         .from("tutorials")
-        .select("id, title, description, price, content_url, created_at")
+        .select("id, title, description, price, content_url, created_at, thumbnail_url")
         .eq("creator_id", userId);
 
       if (error) throw error;
@@ -113,7 +113,7 @@ const Profile = () => {
         .select(`
           tutorial_id,
           purchase_date,
-          tutorials (id, title, description, price, content_url, created_at)
+          tutorials (id, title, description, price, content_url, created_at, thumbnail_url, creator_id)
         `)
         .eq("user_id", userId);
 

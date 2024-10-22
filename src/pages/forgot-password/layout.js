@@ -53,9 +53,7 @@ const ForgotPasswordLayout = () => {
                 />
               </div>
               <div className="form-control mt-6">
-                <button className="btn btn-primary" type="submit">
-                  Send Reset Link
-                </button>
+                <button className="btn btn-primary" type="submit">Send Reset Link</button>
               </div>
             </form>
             <AlertMessage success={message} error={error} />

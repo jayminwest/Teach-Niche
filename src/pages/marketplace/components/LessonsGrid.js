@@ -12,9 +12,10 @@ import { useAuth } from "../../../context/AuthContext";
  * @param {Object} props - The component props.
  * @param {boolean} [props.showPurchasedOnly=false] - Whether to show only purchased lessons.
  * @param {string} props.sortOption - The current sort option.
+ * @param {number} [props.limit] - The maximum number of lessons to display.
  * @returns {JSX.Element} The Lessons Grid.
  */
-const LessonsGrid = ({ showPurchasedOnly = false, sortOption }) => {
+const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
   const [lessons, setLessons] = useState([]);
   const [purchasedLessons, setPurchasedLessons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,9 +24,13 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption }) => {
   useEffect(() => {
     const fetchLessons = async () => {
       try {
-        const { data: allLessons, error: lessonsError } = await supabase
-          .from("tutorials")
-          .select("*");
+        let query = supabase.from("tutorials").select("*");
+        
+        if (limit) {
+          query = query.limit(limit);
+        }
+
+        const { data: allLessons, error: lessonsError } = await query;
 
         if (lessonsError) throw lessonsError;
 
@@ -49,7 +54,7 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption }) => {
     };
 
     fetchLessons();
-  }, [user]);
+  }, [user, limit]);
 
   const sortLessons = (lessonsToSort) => {
     switch (sortOption) {

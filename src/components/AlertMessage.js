@@ -15,9 +15,7 @@ const AlertMessage = ({ error, success }) => {
     return <div className="alert alert-error mt-4" role="alert">{error}</div>;
   }
   if (success) {
-    return (
-      <div className="alert alert-success mt-4" role="alert">{success}</div>
-    );
+    return <div className="alert alert-success mt-4" role="alert">{success}</div>;
   }
   return null;
 };

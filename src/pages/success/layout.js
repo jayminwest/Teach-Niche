@@ -1,6 +1,6 @@
 // src/pages/success.js
 import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import AlertMessage from "../../components/AlertMessage";
@@ -29,7 +29,7 @@ const SuccessPage = () => {
 
       try {
         const response = await fetch(
-          `/api/get-purchase?session_id=${sessionId}`,
+          `/api/get-purchase?session_id=${sessionId}`
         );
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -60,10 +60,7 @@ const SuccessPage = () => {
               <h3 className="text-xl font-semibold mb-2">Purchase Details:</h3>
               <p>Lesson: {purchaseDetails.lessonTitle}</p>
               <p>Price: ${purchaseDetails.price}</p>
-              <p>
-                Purchase Date:{" "}
-                {new Date(purchaseDetails.purchaseDate).toLocaleDateString()}
-              </p>
+              <p>Purchase Date: {new Date(purchaseDetails.purchaseDate).toLocaleDateString()}</p>
             </div>
           )}
           <Link to="/my-purchases" className="btn btn-primary">

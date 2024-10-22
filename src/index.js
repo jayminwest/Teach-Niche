@@ -79,5 +79,5 @@ root.render(
         <Analytics />
       </BrowserRouter>
     </AuthProvider>
-  </React.StrictMode>,
+  </React.StrictMode>
 );
