@@ -9,7 +9,7 @@ import supabase from "../utils/supabaseClient";
  * Restricts access to routes based on user authentication status.
  *
  * @param {Object} props
- * @param {JSX.Element} props.children - The child components to render if authenticated.
+ * @param {React.ReactNode} props.children - The child components to render if authenticated.
  * @returns {JSX.Element} The protected route or a redirect to sign-in.
  */
 const ProtectedRoute = ({ children }) => {
@@ -17,49 +17,30 @@ const ProtectedRoute = ({ children }) => {
   const [session, setSession] = useState(null);
 
   useEffect(() => {
-    /**
-     * Fetches the current user session from Supabase.
-     */
     const fetchSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error fetching session:", error.message);
-      }
+      if (error) console.error("Error fetching session:", error.message);
       setSession(session);
       setLoading(false);
     };
 
     fetchSession();
 
-    // Listen for authentication state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session);
-        setLoading(false);
-      },
-    );
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setLoading(false);
+    });
 
-    // Cleanup listener on unmount
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
 
   if (loading) {
-    // Display a loading indicator while fetching the session
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
-      </div>
-    );
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
-  if (!session) {
-    // Redirect unauthenticated users to the sign-in page
-    return <Navigate to="/sign-in" replace />;
-  }
-
-  return children;
+  return session ? children : <Navigate to="/sign-in" replace />;
 };
 
 export default ProtectedRoute;

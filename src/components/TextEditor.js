@@ -14,7 +14,6 @@ import "react-quill/dist/quill.snow.css";
  * @returns {JSX.Element} The text editor component.
  */
 const TextEditor = ({ value, onChange }) => {
-  // Configuration for the toolbar options
   const modules = {
     toolbar: [
       [{ header: [1, 2, 3, false] }],
@@ -25,12 +24,12 @@ const TextEditor = ({ value, onChange }) => {
     ],
   };
 
-  // Allowed formats for the editor
   const formats = [
     "header",
     "bold",
     "italic",
     "underline",
+    "strike",
     "blockquote",
     "list",
     "bullet",

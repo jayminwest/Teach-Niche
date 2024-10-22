@@ -8,9 +8,9 @@ import { Link } from "react-router-dom";
  *
  * @returns {JSX.Element} The hero section.
  */
-export default function Hero() {
+const Hero = () => {
   return (
-    <section>
+    <section className="hero-section">
       <div className="container">
         <div
           className="hero h-96 md:h-[500px] rounded-box overflow-hidden"
@@ -18,6 +18,8 @@ export default function Hero() {
             backgroundImage:
               "url(https://images.unsplash.com/photo-1470240731273-7821a6eeb6bd?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D)",
           }}
+          role="img"
+          aria-label="Kendama player in action"
         >
           <div className="hero-overlay bg-opacity-60 bg-primary"></div>
           <div className="hero-content text-center text-secondary-content">
@@ -39,4 +41,6 @@ export default function Hero() {
       </div>
     </section>
   );
-}
+};
+
+export default Hero;

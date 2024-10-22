@@ -15,129 +15,121 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-// Main Handler
+/**
+ * Handle CORS preflight request
+ * @param origin - Request origin
+ * @returns Response for CORS preflight
+ */
+const handleCorsPreflightRequest = (origin: string) => {
+  if (allowedOrigins.includes(origin)) {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders(origin),
+    });
+  }
+  return new Response(null, { status: 403 });
+};
+
+/**
+ * Authenticate user using Supabase token
+ * @param token - Supabase access token
+ * @returns User object or null if authentication fails
+ */
+const authenticateUser = async (token: string) => {
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) {
+    console.error("Authentication failed:", error);
+    return null;
+  }
+  return user;
+};
+
+/**
+ * Fetch tutorial details
+ * @param tutorialId - ID of the tutorial
+ * @returns Tutorial object or null if not found
+ */
+const fetchTutorial = async (tutorialId: string) => {
+  const { data: tutorial, error } = await supabase
+    .from("tutorials")
+    .select("*, profiles:creator_id(stripe_account_id)")
+    .eq("id", tutorialId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching tutorial:", error);
+    return null;
+  }
+  return tutorial;
+};
+
+/**
+ * Create Stripe checkout session
+ * @param tutorial - Tutorial object
+ * @param userId - ID of the user making the purchase
+ * @returns Stripe checkout session URL
+ */
+const createStripeCheckoutSession = async (tutorial: any, userId: string) => {
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    line_items: [{ price: tutorial.stripe_price_id, quantity: 1 }],
+    mode: "payment",
+    success_url: `${Deno.env.get("FRONTEND_URL")}/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${Deno.env.get("FRONTEND_URL")}/cancel`,
+    metadata: { tutorial_id: tutorial.id },
+    client_reference_id: userId,
+  }, {
+    stripeAccount: tutorial.profiles.stripe_account_id,
+  });
+
+  return session.url;
+};
+
+// Main handler function
 serve(async (req) => {
   const origin = req.headers.get("origin") || "";
 
-  // Handle CORS Preflight
   if (req.method === "OPTIONS") {
-    if (allowedOrigins.includes(origin)) {
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders(origin),
-      });
-    } else {
-      return new Response(null, {
-        status: 403,
-        statusText: "Forbidden",
-      });
-    }
+    return handleCorsPreflightRequest(origin);
   }
 
-  // Only allow POST requests
   if (req.method !== "POST") {
     return new Response("Method Not Allowed", { status: 405 });
   }
 
-  // Check if Origin is Allowed
   if (!allowedOrigins.includes(origin)) {
     return createCorsResponse(403, { error: "Origin not allowed" }, origin);
   }
 
-  // Authenticate User
-  const supabaseAccessToken = req.headers.get("Authorization")?.replace(
-    "Bearer ",
-    "",
-  );
-  if (!supabaseAccessToken) {
+  const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+  if (!token) {
     return createCorsResponse(401, { error: "Unauthorized token" }, origin);
   }
 
-  // Get the user from the access token using Supabase v2
-  const { data: { user }, error: authError } = await supabase.auth.getUser(
-    supabaseAccessToken,
-  );
-
-  if (authError || !user) {
+  const user = await authenticateUser(token);
+  if (!user) {
     return createCorsResponse(401, { error: "Unauthorized user" }, origin);
   }
 
   try {
-    console.log("Request received");
     const { tutorialId } = await req.json();
-    console.log(`Received tutorialId: ${tutorialId}`);
-
     if (!tutorialId) {
-      return createCorsResponse(
-        400,
-        { error: "tutorialId is required" },
-        origin,
-      );
+      return createCorsResponse(400, { error: "tutorialId is required" }, origin);
     }
 
-    // Fetch the tutorial details using tutorialId, including the stripe_account_id from profiles
-    const { data: tutorial, error: tutorialError } = await supabase
-      .from("tutorials")
-      .select("*, profiles:creator_id(stripe_account_id)")
-      .eq("id", tutorialId)
-      .single();
-
-    if (tutorialError) {
-      console.error(
-        "Error fetching tutorial:",
-        JSON.stringify(tutorialError, null, 2),
-      );
-      return createCorsResponse(500, {
-        error: "Error fetching tutorial details",
-        details: tutorialError,
-      }, origin);
-    }
-
+    const tutorial = await fetchTutorial(tutorialId);
     if (!tutorial) {
-      console.error(`Tutorial with ID ${tutorialId} not found`);
       return createCorsResponse(404, { error: "Tutorial not found" }, origin);
     }
 
-    console.log("Tutorial found:", JSON.stringify(tutorial, null, 2));
-
-    if (!tutorial.profiles || !tutorial.profiles.stripe_account_id) {
-      console.error("Stripe account ID not found for tutorial creator");
-      return createCorsResponse(500, {
-        error: "Stripe account not set up for this tutorial",
-      }, origin);
+    if (!tutorial.profiles?.stripe_account_id) {
+      return createCorsResponse(500, { error: "Stripe account not set up for this tutorial" }, origin);
     }
 
-    console.log("Creating Stripe checkout session");
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price: tutorial.stripe_price_id,
-          quantity: 1,
-        },
-      ],
-      mode: "payment",
-      success_url: `${
-        Deno.env.get("FRONTEND_URL")
-      }/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${Deno.env.get("FRONTEND_URL")}/cancel`,
-
-      // Add metadata and client reference ID
-      metadata: {
-        tutorial_id: tutorialId,
-      },
-      client_reference_id: user.id,
-    }, {
-      stripeAccount: tutorial.profiles.stripe_account_id,
-    });
-
-    console.log("Checkout session created:", session.id);
-    return createCorsResponse(200, { sessionUrl: session.url }, origin);
+    const sessionUrl = await createStripeCheckoutSession(tutorial, user.id);
+    return createCorsResponse(200, { sessionUrl }, origin);
   } catch (error) {
     console.error("Error in create-checkout-session:", error);
-    return createCorsResponse(500, {
-      error: "Internal server error",
-      details: JSON.stringify(error),
-    }, origin);
+    return createCorsResponse(500, { error: "Internal server error", details: JSON.stringify(error) }, origin);
   }
 });

@@ -5,142 +5,79 @@ import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno";
 import { allowedOrigins, corsHeaders, createCorsResponse } from "../_shared/config.ts";
 
-// Initialize Stripe with the secret key from environment variables
+// Initialize Stripe
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2023-10-16",
 });
 
-// Initialize Supabase client with URL and service role key from environment variables
+// Initialize Supabase client
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-// Main handler function to serve requests
+// Main handler function
 serve(async (req) => {
   const origin = req.headers.get("origin") || "";
 
-  // Handle CORS preflight requests
+  // Handle CORS preflight request
   if (req.method === "OPTIONS") {
-    if (allowedOrigins.includes(origin)) {
-      return new Response("ok", {
-        status: 200,
-        headers: corsHeaders(origin),
-      });
-    } else {
-      return new Response(null, {
-        status: 403,
-        statusText: "Forbidden",
-      });
-    }
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders(origin),
+    });
   }
 
-  // Only allow POST requests
+  // Check if the origin is allowed
+  if (!allowedOrigins.includes(origin)) {
+    return new Response("Forbidden", { status: 403 });
+  }
+
   if (req.method !== "POST") {
-    console.error(`Method ${req.method} not allowed.`);
     return new Response("Method Not Allowed", { status: 405 });
   }
 
-  // Authenticate the user using the Supabase access token
-  const supabaseAccessToken = req.headers.get("Authorization")?.replace(
-    "Bearer ",
-    "",
-  );
-  if (!supabaseAccessToken) {
-    console.error("No Authorization header found.");
-    return new Response(JSON.stringify({ error: "Unauthorized token" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+  const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+  if (!token) {
+    return createCorsResponse(401, { error: "Unauthorized token" }, origin);
   }
 
-  // Retrieve the user from the access token
-  const { data: { user }, error: authError } = await supabase.auth.getUser(
-    supabaseAccessToken,
-  );
+  // Authenticate user
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
-    console.error("Authentication failed:", authError);
-    return new Response(JSON.stringify({ error: "Unauthorized user" }), {
-      status: 401,
-      headers: { "Content-Type": "application/json" },
-    });
+    return createCorsResponse(401, { error: "Unauthorized user" }, origin);
   }
 
   try {
-    console.log(`[create-lesson] Authenticated user: ${user.id}`);
-    const { title, description, price, video_url, content, category_ids } =
-      await req.json();
-    console.log(
-      `[create-lesson] Received data: ${
-        JSON.stringify({
-          title,
-          description,
-          price,
-          video_url,
-          content,
-          category_ids,
-        })
-      }`,
-    );
+    const { title, description, price, video_url, content, category_ids } = await req.json();
 
-    // Validate input fields
     if (!title || !price || !content) {
-      console.error("Missing required fields.");
-      return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      return createCorsResponse(400, { error: "Missing required fields" }, origin);
     }
 
-    // Retrieve user's Stripe Account ID
+    // Get user's Stripe account ID
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("stripe_account_id, stripe_onboarding_complete")
       .eq("id", user.id)
       .single();
 
-    if (
-      profileError || !profile.stripe_account_id ||
-      !profile.stripe_onboarding_complete
-    ) {
-      console.error("Stripe account not set up:", profileError);
-      return new Response(
-        JSON.stringify({
-          error: "Please connect your Stripe account before creating lessons.",
-        }),
-        {
-          status: 403,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+    if (profileError || !profile.stripe_account_id || !profile.stripe_onboarding_complete) {
+      return createCorsResponse(403, { error: "Please connect your Stripe account before creating lessons." }, origin);
     }
 
-    console.log(
-      `[create-lesson] Retrieved stripe_account_id: ${profile.stripe_account_id}`,
-    );
-
-    // Create Stripe Product on behalf of the connected account
+    // Create Stripe product and price
     const product = await stripe.products.create({
       name: title,
       description: description || "",
-    }, {
-      stripeAccount: profile.stripe_account_id,
-    });
-    console.log(`[create-lesson] Created Stripe Product: ${product.id}`);
+    }, { stripeAccount: profile.stripe_account_id });
 
-    // Create Stripe Price on behalf of the connected account
     const stripePrice = await stripe.prices.create({
-      unit_amount: Math.round(parseFloat(price) * 100), // Convert to cents
+      unit_amount: Math.round(parseFloat(price) * 100),
       currency: "usd",
       product: product.id,
-    }, {
-      stripeAccount: profile.stripe_account_id,
-    });
-    console.log(`[create-lesson] Created Stripe Price: ${stripePrice.id}`);
+    }, { stripeAccount: profile.stripe_account_id });
 
-    // Insert Lesson into Supabase
+    // Insert lesson into Supabase
     const { data, error: insertError } = await supabase
       .from("tutorials")
       .insert([
@@ -149,7 +86,7 @@ serve(async (req) => {
           description,
           price: parseFloat(price),
           video_url: video_url || null,
-          content, // This will be stored as JSONB
+          content,
           creator_id: user.id,
           stripe_product_id: product.id,
           stripe_price_id: stripePrice.id,
@@ -158,21 +95,10 @@ serve(async (req) => {
       .select();
 
     if (insertError || !data) {
-      console.error(`[create-lesson] Error inserting lesson: ${insertError}`);
-      return new Response(
-        JSON.stringify({
-          error: insertError?.message || "Failed to create lesson",
-        }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        },
-      );
+      return createCorsResponse(500, { error: insertError?.message || "Failed to create lesson" }, origin);
     }
 
-    console.log(`[create-lesson] Inserted lesson: ${JSON.stringify(data[0])}`);
-
-    // If categories are provided, insert into tutorial_categories
+    // Insert tutorial categories if provided
     if (Array.isArray(category_ids) && category_ids.length > 0) {
       const tutorialCategories = category_ids.map((category_id: number) => ({
         tutorial_id: data[0].id,
@@ -184,24 +110,13 @@ serve(async (req) => {
         .insert(tutorialCategories);
 
       if (categoryError) {
-        console.error(
-          "Error inserting tutorial categories:",
-          categoryError.message,
-        );
-      } else {
-        console.log("Inserted tutorial categories successfully.");
+        console.error("Error inserting tutorial categories:", categoryError.message);
       }
     }
 
-    return new Response(JSON.stringify({ lesson: data[0] }), {
-      status: 201,
-      headers: { "Content-Type": "application/json" },
-    });
+    return createCorsResponse(201, { lesson: data[0] }, origin);
   } catch (error: any) {
-    console.error(`[create-lesson] Unexpected error: ${error}`);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.error("Unexpected error:", error);
+    return createCorsResponse(500, { error: "Internal server error" }, origin);
   }
 });

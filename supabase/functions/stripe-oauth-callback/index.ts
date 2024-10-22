@@ -2,103 +2,90 @@
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno";
-import { allowedOrigins, corsHeaders, createCorsResponse } from "../_shared/config.ts";
+import { allowedOrigins, corsHeaders } from "../_shared/config.ts";
 
-// Initialize Stripe with the secret key from environment variables
+// Initialize Stripe
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
   apiVersion: "2023-10-16",
 });
 
-// Initialize Supabase client with URL and service role key from environment variables
+// Initialize Supabase client
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-// Main handler function to serve requests
+/**
+ * Exchange authorization code for Stripe access token
+ * @param code - Authorization code
+ * @returns Connected account ID
+ */
+const exchangeCodeForToken = async (code: string) => {
+  const response = await stripe.oauth.token({
+    grant_type: "authorization_code",
+    code,
+  });
+  return response.stripe_user_id;
+};
+
+/**
+ * Update user profile with Stripe account ID
+ * @param userId - User ID
+ * @param connectedAccountId - Stripe connected account ID
+ */
+const updateUserProfile = async (userId: string, connectedAccountId: string) => {
+  const { error, count } = await supabase
+    .from("profiles")
+    .update({
+      stripe_account_id: connectedAccountId,
+      stripe_onboarding_complete: true,
+    })
+    .eq("id", userId);
+
+  if (error) {
+    console.error("Error updating user profile:", error);
+    throw error;
+  }
+  console.log(`Number of profiles updated: ${count}`);
+};
+
+// Main handler function
 serve(async (req) => {
   const origin = req.headers.get("origin") || "";
 
   if (req.method === "OPTIONS") {
     if (allowedOrigins.includes(origin)) {
       return new Response("ok", { headers: corsHeaders(origin) });
-    } else {
-      return new Response(null, {
-        status: 403,
-        statusText: "Forbidden",
-      });
     }
+    return new Response(null, { status: 403 });
   }
 
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
 
-  console.log(`Received OAuth callback with code: ${code} and state: ${state}`);
-
   if (!code) {
-    console.error("Missing authorization code.");
-    return new Response(
-      JSON.stringify({ error: "Missing authorization code" }),
-      {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
+    return new Response("Missing authorization code", { status: 400 });
   }
 
   try {
-    // Exchange the authorization code for an access token
-    const response = await stripe.oauth.token({
-      grant_type: "authorization_code",
-      code,
-    });
-
-    const connectedAccountId = response.stripe_user_id;
-    console.log(`Obtained connected account ID: ${connectedAccountId}`);
-
+    const connectedAccountId = await exchangeCodeForToken(code);
     if (!connectedAccountId) {
       throw new Error("Failed to obtain connected account ID");
     }
 
-    const userId = state;
-    console.log(
-      `Updating profile for userId: ${userId} with Stripe Account ID: ${connectedAccountId}`,
-    );
+    await updateUserProfile(state!, connectedAccountId);
 
-    // Update the user's profile in Supabase
-    const { data: updateData, error: updateError, count } = await supabase
-      .from("profiles")
-      .update({
-        stripe_account_id: connectedAccountId,
-        stripe_onboarding_complete: true,
-      })
-      .eq("id", userId)
-      .select();
-
-    if (updateError) {
-      console.error("Error updating user profile:", updateError);
-      throw updateError;
-    }
-
-    console.log(`Number of profiles updated: ${count}`);
-    console.log("Profile updated successfully:", updateData);
-
-    // Redirect to success page
-    const successUrl = `${
-      Deno.env.get("FRONTEND_URL")
-    }/profile?stripe_connected=true`;
+    const successUrl = `${Deno.env.get("FRONTEND_URL")}/profile?stripe_connected=true`;
     return new Response(null, {
       status: 302,
-      headers: { ...corsHeaders, "Location": successUrl },
+      headers: { ...corsHeaders(origin), "Location": successUrl },
     });
   } catch (error: any) {
     console.error("Error in Stripe OAuth callback:", error);
-    const errorUrl = `${Deno.env.get("FRONTEND_URL")}/profile?stripe_error=${
-      encodeURIComponent(error.message)
-    }`;
+    const errorUrl = `${Deno.env.get("FRONTEND_URL")}/profile?stripe_error=${encodeURIComponent(error.message)}`;
     return new Response(null, {
       status: 302,
-      headers: { ...corsHeaders, "Location": errorUrl },
+      headers: { ...corsHeaders(origin), "Location": errorUrl },
     });
   }
 });
