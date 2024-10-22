@@ -1,8 +1,6 @@
 # Teach Niche
 
-![Build Status](https://img.shields.io/github/workflow/status/jayminwest/teach-niche/CI)
 ![License](https://img.shields.io/github/license/jayminwest/teach-niche)
-![npm version](https://img.shields.io/npm/v/teach-niche)
 
 Welcome to **Teach Niche**, a platform designed to empower the kendama community by providing a space where players of all levels can share knowledge, hone their skills, and support one another. Our mission is to foster growth, connection, and financial sustainability within the kendama world.
 
