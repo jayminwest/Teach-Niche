@@ -32,6 +32,8 @@ const MarketplaceLayout = () => {
               <option value="default">Sort by</option>
               <option value="price_asc">Price: Low to High</option>
               <option value="price_desc">Price: High to Low</option>
+              <option value="creator_asc">Creator: A to Z</option>
+              <option value="creator_desc">Creator: Z to A</option>
             </select>
           </div>
         </div>

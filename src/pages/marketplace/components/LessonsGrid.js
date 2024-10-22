@@ -7,7 +7,7 @@ import { useAuth } from "../../../context/AuthContext";
 /**
  * LessonsGrid Component
  *
- * Renders a grid of lessons, optionally filtering to show only purchased lessons and sorting by price.
+ * Renders a grid of lessons, optionally filtering to show only purchased lessons and sorting by price or creator.
  *
  * @param {Object} props - The component props.
  * @param {boolean} [props.showPurchasedOnly=false] - Whether to show only purchased lessons.
@@ -24,7 +24,12 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
   useEffect(() => {
     const fetchLessons = async () => {
       try {
-        let query = supabase.from("tutorials").select("*");
+        let query = supabase
+          .from("tutorials")
+          .select(`
+            *,
+            profiles:creator_id (full_name)
+          `);
         
         if (limit) {
           query = query.limit(limit);
@@ -62,6 +67,10 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
         return [...lessonsToSort].sort((a, b) => a.price - b.price);
       case "price_desc":
         return [...lessonsToSort].sort((a, b) => b.price - a.price);
+      case "creator_asc":
+        return [...lessonsToSort].sort((a, b) => a.profiles.full_name.localeCompare(b.profiles.full_name));
+      case "creator_desc":
+        return [...lessonsToSort].sort((a, b) => b.profiles.full_name.localeCompare(a.profiles.full_name));
       default:
         return lessonsToSort;
     }
@@ -91,6 +100,7 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
             <LessonCard
               key={lesson.id}
               {...lesson}
+              creatorName={lesson.profiles.full_name}
               isPurchased={purchasedLessons.includes(lesson.id)}
             />
           ))}

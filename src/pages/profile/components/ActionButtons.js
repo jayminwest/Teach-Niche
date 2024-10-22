@@ -21,7 +21,7 @@ const ActionButtons = ({ onCreateLesson, onDeleteProfile }) => {
         Delete Profile
       </button>
       <button
-        className="btn btn-secondary"
+        className="btn btn-success"
         onClick={onCreateLesson}
         aria-label="Create Lesson"
       >

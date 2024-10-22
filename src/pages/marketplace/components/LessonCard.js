@@ -1,8 +1,7 @@
 // src/pages/marketplace/components/LessonCard.js
-import React, { useEffect, useState } from "react";
-import supabase from "../../../utils/supabaseClient";
-import { useAuth } from "../../../context/AuthContext";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
 
 /**
  * LessonCard Component
@@ -13,6 +12,7 @@ import { useNavigate } from "react-router-dom";
  * @param {string} props.id - The lesson ID.
  * @param {string} props.title - The lesson title.
  * @param {string} props.creator_id - The creator's ID.
+ * @param {string} props.creatorName - The creator's name.
  * @param {number} props.price - The lesson price.
  * @param {string} props.description - The lesson description.
  * @param {string} props.thumbnail_url - The lesson thumbnail URL.
@@ -23,37 +23,19 @@ const LessonCard = ({
   id,
   title,
   creator_id,
+  creatorName,
   price,
   description,
   thumbnail_url,
   isPurchased,
 }) => {
-  const [creatorName, setCreatorName] = useState("");
-  const { user, session } = useAuth();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [imageError, setImageError] = useState(false);
+  const { user, session } = useAuth();
+  const navigate = useNavigate();
 
   const isCreator = user && user.id === creator_id;
-
-  useEffect(() => {
-    const fetchCreatorName = async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", creator_id)
-        .single();
-
-      if (error) {
-        console.error("Error fetching creator name:", error.message);
-      } else {
-        setCreatorName(data.full_name || "Unknown");
-      }
-    };
-
-    fetchCreatorName();
-  }, [creator_id]);
 
   const handlePurchase = async () => {
     if (!user) {

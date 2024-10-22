@@ -52,7 +52,7 @@ const Header = () => {
             {user ? (
               <>
                 <Link className="btn mr-2" to="/profile">View Profile</Link>
-                <Link className="btn btn-secondary" to="/logout">Logout</Link>
+                <Link className="btn btn-primary" to="/logout">Logout</Link>
               </>
             ) : (
               <Link className="btn btn-accent" to="/sign-up">Get Started</Link>

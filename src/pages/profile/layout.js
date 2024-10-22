@@ -37,6 +37,7 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [stripeConnected, setStripeConnected] = useState(false);
   const { user } = useAuth();
+  const [deletingLesson, setDeletingLesson] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -202,6 +203,37 @@ const Profile = () => {
     }
   };
 
+  const handleDeleteLesson = async (lessonId) => {
+    setDeletingLesson(lessonId);
+  };
+
+  const confirmDeleteLesson = async () => {
+    if (!deletingLesson) return;
+
+    try {
+      // Delete the lesson from the tutorials table
+      const { error: deleteError } = await supabase
+        .from("tutorials")
+        .delete()
+        .eq("id", deletingLesson);
+
+      if (deleteError) throw deleteError;
+
+      // Remove the lesson from the createdLessons state
+      setCreatedLessons(createdLessons.filter(lesson => lesson.id !== deletingLesson));
+      setSuccessMessage("Lesson deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting lesson:", error.message);
+      setError("Failed to delete lesson. Please try again.");
+    } finally {
+      setDeletingLesson(null);
+    }
+  };
+
+  const cancelDeleteLesson = () => {
+    setDeletingLesson(null);
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -335,13 +367,20 @@ const Profile = () => {
                   ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {createdLessons.map((lesson) => (
-                        <LessonCard
-                          key={lesson.id}
-                          {...lesson}
-                          creator_id={user.id}
-                          isCreated={true}
-                          isPurchased={false}
-                        />
+                        <div key={lesson.id} className="relative">
+                          <LessonCard
+                            {...lesson}
+                            creator_id={user.id}
+                            isCreated={true}
+                            isPurchased={false}
+                          />
+                          <button
+                            className="btn btn-error btn-sm absolute top-2 right-2"
+                            onClick={() => handleDeleteLesson(lesson.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )
@@ -374,6 +413,20 @@ const Profile = () => {
         </div>
       </main>
       <Footer />
+
+      {/* Confirmation Modal */}
+      {deletingLesson && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-xl">
+            <h3 className="text-lg font-bold mb-4">Confirm Deletion</h3>
+            <p>Are you sure you want to delete this lesson? This action cannot be undone.</p>
+            <div className="mt-4 flex justify-end space-x-2">
+              <button className="btn btn-ghost" onClick={cancelDeleteLesson}>Cancel</button>
+              <button className="btn btn-error" onClick={confirmDeleteLesson}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

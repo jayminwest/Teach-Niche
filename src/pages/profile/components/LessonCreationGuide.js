@@ -116,7 +116,7 @@ const LessonCreationGuide = () => {
 
       <div className="mt-8 flex justify-between">
         <button 
-          className="btn btn-secondary"
+          className="btn btn-primary"
           onClick={() => setActiveStep(Math.max(0, activeStep - 1))}
           disabled={activeStep === 0}
         >
