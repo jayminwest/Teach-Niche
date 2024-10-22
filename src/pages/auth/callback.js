@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import supabase from "../../utils/supabaseClient";
 
@@ -11,22 +11,39 @@ import supabase from "../../utils/supabaseClient";
  */
 const AuthCallback = () => {
   const navigate = useNavigate();
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const handleAuthCallback = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error during auth callback:", error);
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        
+        if (data?.session) {
+          navigate("/profile");
+        } else {
+          navigate("/sign-in");
+        }
+      } catch (err) {
+        console.error("Error during auth callback:", err);
+        setError(err.message);
         navigate("/sign-in");
-      } else if (data?.session) {
-        navigate("/profile");
       }
     };
 
     handleAuthCallback();
   }, [navigate]);
 
-  return <div>Processing authentication...</div>;
+  if (error) {
+    return <div className="text-red-500">Authentication failed: {error}</div>;
+  }
+
+  return (
+    <div className="flex justify-center items-center h-screen">
+      <span className="loading loading-spinner loading-lg"></span>
+      <p className="ml-2">Processing authentication...</p>
+    </div>
+  );
 };
 
 export default AuthCallback;

@@ -71,16 +71,24 @@ serve(async (req) => {
   }
 
   try {
+    console.log("Received code:", code);
+    console.log("Received state (userId):", state);
+
     const connectedAccountId = await exchangeCodeForToken(code);
+    console.log("Connected Account ID:", connectedAccountId);
+
     if (!connectedAccountId) {
       throw new Error("Failed to obtain connected account ID");
     }
 
     await updateUserProfile(state!, connectedAccountId);
+    console.log("User profile updated successfully");
 
     const successUrl = `${
       Deno.env.get("FRONTEND_URL")
     }/profile?stripe_connected=true`;
+    console.log("Redirecting to:", successUrl);
+
     return new Response(null, {
       status: 302,
       headers: { ...corsHeaders(origin), "Location": successUrl },

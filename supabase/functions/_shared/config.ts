@@ -6,6 +6,7 @@
 export const allowedOrigins = [
   "http://localhost:3000",
   "https://teach-niche.com",
+  "https://www.teach-niche.com",
 ];
 
 /**
@@ -15,7 +16,7 @@ export const allowedOrigins = [
  */
 export const corsHeaders = (origin: string) => ({
   "Access-Control-Allow-Origin": origin,
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-client-info, apikey",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Credentials": "true",
   Vary: "Origin",
