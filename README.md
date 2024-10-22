@@ -31,9 +31,7 @@ Teach Niche was founded by Jaymin West, a passionate kendama player with over se
 
 ## Demo
 
-![App Screenshot](path/to/screenshot.png)
-
-Check out our [live demo](http://teach-niche.com) to explore the platform.
+Check out the [live site](http://teach-niche.com) to explore the platform.
 
 ## Getting Started
 
@@ -50,7 +48,7 @@ To get started with Teach Niche, follow these steps:
    npm install
    ```
 
-3. **Set up environment variables**: Create a `.env` file in the root directory and add the necessary environment variables as shown in `.env.example`.
+3. **Set up environment variables**: Create a `.env` file in the root directory and add the necessary environment variables as shown in `.env.template`.
 
 4. **Run the development server**:
    ```bash
