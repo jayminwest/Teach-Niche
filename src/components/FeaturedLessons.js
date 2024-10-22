@@ -23,7 +23,7 @@ const FeaturedLessons = () => {
             Featured Lessons
           </h2>
           <p className="text-lg sm:text-2xl mb-6 md:mb-14">
-            Explore our curated selection of top-rated lessons.
+            Find lessons from your favorite players.
           </p>
         </div>
         <LessonsGrid showPurchasedOnly={false} limit={6} />

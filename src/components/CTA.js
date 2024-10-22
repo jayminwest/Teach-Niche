@@ -22,7 +22,7 @@ const CTA = () => {
             className="btn btn-warning rounded-full sm:btn-lg"
             role="button"
           >
-            Join Us
+            Join Us!
           </Link>
         </div>
       </div>

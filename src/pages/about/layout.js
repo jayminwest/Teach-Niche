@@ -61,11 +61,7 @@ const AboutUs = () => {
             <div className="card-body">
               <h2 className="card-title text-2xl mb-4">Our Mission</h2>
               <p className="text-lg">
-                At <strong>Teach Niche</strong>, our mission is to empower the
-                kendama community by providing a platform where players of all
-                levels can share knowledge, hone their skills, and support one
-                another. We are dedicated to fostering growth, connection, and
-                financial sustainability within the kendama world.
+                The mission of <strong>Teach Niche</strong> is to create a space within the kendama community for players of all skill levels to share knowledge, support one another, and hone their skills. Teach Niche places the community first and is dedicated to fostering growth, creating connections, and promoting more financial sustainability for the kendama community.
               </p>
             </div>
           </div>
@@ -74,9 +70,7 @@ const AboutUs = () => {
               <h2 className="card-title text-2xl mb-4">Our Story</h2>
               <p className="text-lg mb-4">
                 Hello! I'm <strong>Jaymin West</strong>, the founder of Teach Niche. I've
-                been passionately playing kendama for over seven years.
-                Throughout my journey, I've witnessed the incredible talent and
-                dedication within our community.
+                been passionately playing kendama for over seven years. I've been fortunate enough to sesh with players from all over the world and have tried to form Teach Niche around these shared values.
               </p>
               <p className="text-lg">
                 Teach Niche was born from a simple idea: to help kendama players
@@ -87,38 +81,16 @@ const AboutUs = () => {
         </section>
 
         <section className="mb-12">
-          <h2 className="text-3xl font-bold text-center mb-6">Why Teach Niche?</h2>
+          <h2 className="text-3xl font-bold text-center mb-6">Our Values</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {["Empowerment", "Education", "Community Growth", "Connection"].map((item, index) => (
+            {values.map((value, index) => (
               <div key={index} className="card bg-primary text-primary-content">
                 <div className="card-body items-center text-center">
-                  <h3 className="card-title">{item}</h3>
-                  <p>We believe in the power of {item.toLowerCase()} within the kendama community.</p>
+                  <h3 className="card-title">{value}</h3>
+                  <p>We believe in the power of {value.toLowerCase()} within the kendama community.</p>
                 </div>
               </div>
             ))}
-          </div>
-        </section>
-
-        <section className="mb-12">
-          <h2 className="text-3xl font-bold text-center mb-6">Our Values</h2>
-          <div className="overflow-x-auto">
-            <table className="table w-full">
-              <thead>
-                <tr>
-                  <th>Value</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                {values.map((value, index) => (
-                  <tr key={index}>
-                    <td>{value}</td>
-                    <td>Description for {value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
           </div>
         </section>
 

@@ -12,32 +12,32 @@ const Services = () => {
     {
       icon: "bi-pencil-square",
       title: "Expert Tutorials",
-      description: "Access comprehensive tutorials from top kendama players. Enhance your skills with structured lessons. Learn at your own pace.",
+      description: "Access comprehensive tutorials from top kendama players - Enhance your skills with structured lessons - Learn at your own pace.",
     },
     {
       icon: "bi-coin",
       title: "Monetize Your Skills",
-      description: "Create and sell your own kendama lessons. Earn income by sharing your expertise. Flexible pricing options.",
+      description: "Create and sell your own kendama lessons - Earn income by sharing your expertise - You set your own prices.",
     },
     {
       icon: "bi-people",
       title: "Community Support",
-      description: "Join a thriving community of kendama enthusiasts. Participate in forums and discussions. Collaborate and grow together.",
+      description: "Join a thriving community of kendama enthusiasts - Collaborate and grow together.",
     },
     {
       icon: "bi-shield-lock",
       title: "Integrity and Fairness",
-      description: "Transparent commission structures. Fair policies ensuring creators are rewarded. Trustworthy platform operations.",
+      description: "Community-first platform - Fair policies ensuring creators are rewarded - Trustworthy platform operations.",
     },
     {
       icon: "bi-tree",
       title: "Sustainability",
-      description: "Building a long-term ecosystem for kendama. Supporting continuous growth and innovation. Ensuring a viable career path for creators.",
+      description: "Designed to grow with the community - Building a long-term ecosystem for kendama - Supporting continuous growth and innovation.",
     },
     {
       icon: "bi-graph-up",
       title: "Growth and Learning",
-      description: "Resources for personal and communal development. Tools to track and enhance your kendama journey. Continuous learning opportunities.",
+      description: "Resources for personal skills development - Tools to support your favorite players - Endless learning opportunities.",
     },
   ];
 
@@ -49,8 +49,8 @@ const Services = () => {
             What is Teach Niche?
           </h2>
           <p className="text-lg sm:text-2xl mb-6 md:mb-14">
-            Teach Niche is a dedicated platform for the kendama community,
-            enabling players to learn from experts, share their skills, and
+            Teach Niche is a <b>community-first</b> platform designed to grow with the kendama community.
+            Our goal is to enable players to learn from experts, share their skills, and
             monetize their expertise.
           </p>
         </div>
