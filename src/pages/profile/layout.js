@@ -363,28 +363,36 @@ const Profile = () => {
             {activeTab === "created" && (
               <>
                 <h2 className="card-title text-2xl mb-4">Created Lessons</h2>
-                {createdLessons.length > 0
-                  ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {createdLessons.map((lesson) => (
-                        <div key={lesson.id} className="relative">
-                          <LessonCard
-                            {...lesson}
-                            creator_id={user.id}
-                            isCreated={true}
-                            isPurchased={false}
-                          />
+                {createdLessons.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {createdLessons.map((lesson) => (
+                      <div key={lesson.id} className="relative">
+                        <LessonCard
+                          {...lesson}
+                          creator_id={user.id}
+                          isCreated={true}
+                          isPurchased={false}
+                        />
+                        <div className="absolute top-2 right-2 flex gap-2">
                           <button
-                            className="btn btn-error btn-sm absolute top-2 right-2"
+                            className="btn btn-primary btn-sm"
+                            onClick={() => navigate(`/edit-lesson/${lesson.id}`)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn btn-error btn-sm"
                             onClick={() => handleDeleteLesson(lesson.id)}
                           >
                             Delete
                           </button>
                         </div>
-                      ))}
-                    </div>
-                  )
-                  : <p>You haven't created any lessons yet.</p>}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p>You haven't created any lessons yet.</p>
+                )}
               </>
             )}
 
@@ -421,7 +429,7 @@ const Profile = () => {
             <h3 className="text-lg font-bold mb-4">Confirm Deletion</h3>
             <p>Are you sure you want to delete this lesson? This action cannot be undone.</p>
             <div className="mt-4 flex justify-end space-x-2">
-              <button className="btn btn-ghost" onClick={cancelDeleteLesson}>Cancel</button>
+              <button className="btn btn-ghost" onClick={() => setDeletingLesson(null)}>Cancel</button>
               <button className="btn btn-error" onClick={confirmDeleteLesson}>Delete</button>
             </div>
           </div>
