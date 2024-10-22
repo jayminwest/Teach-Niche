@@ -18,28 +18,29 @@ const LessonCreationGuide = () => {
 
   const steps = [
     {
-      title: "1. Video Tutorial",
-      content: (
-        <>
-          <h3 className="text-xl font-semibold mb-2">Guidelines:</h3>
-          <ul className="list-disc pl-5 space-y-2">
-            <li><strong>Length & Pricing:</strong> Aim for concise videos. Price at $1 per 2 minutes of content.</li>
-            <li><strong>Recording:</strong> Film indoors with a clean background. Use portrait orientation.</li>
-            <li><strong>Quality:</strong> Ensure good lighting and clear audio. Wear contrasting clothing.</li>
-            <li><strong>Structure:</strong> Include an introduction, demonstration, step-by-step breakdown, tips, and conclusion.</li>
-          </ul>
-        </>
-      ),
-    },
-    {
-      title: "2. Text Tutorial",
+      title: "1. Text Tutorial",
       content: (
         <>
           <h3 className="text-xl font-semibold mb-2">Guidelines:</h3>
           <ul className="list-disc pl-5 space-y-2">
             <li><strong>Comprehensive:</strong> Should stand alone as a high-quality guide.</li>
-            <li><strong>Structure:</strong> Include title, introduction, materials needed, step-by-step instructions, tips, and conclusion.</li>
+            <li><strong>Structure:</strong> Include title, introduction, ideal setup, step-by-step instructions, tips, common mistakes and a conclusion.</li>
             <li><strong>Formatting:</strong> Use headings, bullet points, and emphasis for clarity.</li>
+            <li><strong>NOTE:</strong> Teach Niche does not save drafts and so it is recommended you write your lesson elsewhere first and then paste and format it here.</li>
+          </ul>
+        </>
+      ),
+    },
+    {
+      title: "2. Video Tutorial",
+      content: (
+        <>
+          <h3 className="text-xl font-semibold mb-2">Guidelines:</h3>
+          <ul className="list-disc pl-5 space-y-2">
+            <li><strong>Length & Pricing:</strong> Aim for concise videos. General price guideline is $1 per 2 minutes of content (i.e. $5 for a 10 minute video). Remember you can set your own price!</li>
+            <li><strong>Recording:</strong> Film indoors with a clean background. <b>Use portrait orientation.</b></li>
+            <li><strong>Quality:</strong> Ensure good lighting and clear audio. Wear clothing that contrasts with your setup.</li>
+            <li><strong>Structure:</strong> Include an introduction, demonstration, step-by-step breakdown, tips, and conclusion. Tell them what you'll teach them, teach them, tell them what you taught them. You should be using your text tutorial for structure.</li>
           </ul>
         </>
       ),
@@ -65,10 +66,10 @@ const LessonCreationGuide = () => {
         <>
           <h3 className="text-xl font-semibold mb-2">Guidelines:</h3>
           <ul className="list-disc pl-5 space-y-2">
-            <li><strong>Standard Model:</strong> $1 per 2 minutes of video content.</li>
-            <li><strong>Value-Based:</strong> Consider depth and uniqueness of content.</li>
-            <li><strong>Market Awareness:</strong> Check pricing of similar content.</li>
-            <li><strong>Accessibility:</strong> Balance fair pricing with audience reach.</li>
+            <li><strong>Standard Guideline:</strong> $1 per 2 minutes of video content.</li>
+            <li><strong>Value-Based:</strong> Is this a popular trick? Are people going to want to learn this specific trick from you?</li>
+            <li><strong>Accessibility:</strong> Balance fair pricing with audience reach. Remember, you're the one making money from this so set the price where you think it will sell.</li>
+            <li><strong>NOTE:</strong> Teach Niche takes money to operate and as such the platform fee per lesson sold is 15%. This is subject to change at any point.</li>
           </ul>
         </>
       ),

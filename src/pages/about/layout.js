@@ -50,7 +50,7 @@ const AboutUs = () => {
             <div className="max-w-md">
               <h1 className="text-5xl font-bold">About Teach Niche</h1>
               <p className="py-6 text-xl italic">
-                Built by Kendama Players, for Kendama Players
+                Built to serve the kendama community.
               </p>
             </div>
           </div>
