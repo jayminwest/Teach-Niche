@@ -16,7 +16,7 @@ module.exports = {
     },
     extend: {
       colors: {
-        accent: '#ffffff', // Replace with your desired accent color
+        accent: "#ffffff", // Replace with your desired accent color
       },
     },
   },

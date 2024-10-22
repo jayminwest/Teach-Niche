@@ -3,7 +3,11 @@
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno"; // Ensure using Supabase v2
-import { allowedOrigins, corsHeaders, createCorsResponse } from "../_shared/config.ts";
+import {
+  allowedOrigins,
+  corsHeaders,
+  createCorsResponse,
+} from "../_shared/config.ts";
 
 // Initialize Stripe
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -74,7 +78,9 @@ const createStripeCheckoutSession = async (tutorial: any, userId: string) => {
     payment_method_types: ["card"],
     line_items: [{ price: tutorial.stripe_price_id, quantity: 1 }],
     mode: "payment",
-    success_url: `${Deno.env.get("FRONTEND_URL")}/success?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${
+      Deno.env.get("FRONTEND_URL")
+    }/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${Deno.env.get("FRONTEND_URL")}/cancel`,
     metadata: { tutorial_id: tutorial.id },
     client_reference_id: userId,
@@ -114,7 +120,11 @@ serve(async (req) => {
   try {
     const { tutorialId } = await req.json();
     if (!tutorialId) {
-      return createCorsResponse(400, { error: "tutorialId is required" }, origin);
+      return createCorsResponse(
+        400,
+        { error: "tutorialId is required" },
+        origin,
+      );
     }
 
     const tutorial = await fetchTutorial(tutorialId);
@@ -123,13 +133,18 @@ serve(async (req) => {
     }
 
     if (!tutorial.profiles?.stripe_account_id) {
-      return createCorsResponse(500, { error: "Stripe account not set up for this tutorial" }, origin);
+      return createCorsResponse(500, {
+        error: "Stripe account not set up for this tutorial",
+      }, origin);
     }
 
     const sessionUrl = await createStripeCheckoutSession(tutorial, user.id);
     return createCorsResponse(200, { sessionUrl }, origin);
   } catch (error) {
     console.error("Error in create-checkout-session:", error);
-    return createCorsResponse(500, { error: "Internal server error", details: JSON.stringify(error) }, origin);
+    return createCorsResponse(500, {
+      error: "Internal server error",
+      details: JSON.stringify(error),
+    }, origin);
   }
 });

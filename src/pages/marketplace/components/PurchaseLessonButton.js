@@ -7,37 +7,30 @@ import { useNavigate } from "react-router-dom";
 /**
  * PurchaseLessonButton Component
  *
- * Renders a button to purchase a lesson.
+ * Renders a button to purchase a lesson and handles the purchase process.
  *
- * @param {Object} props - The component props.
+ * @param {Object} props
+ * @param {string} props.lessonId - The ID of the lesson to be purchased.
  * @returns {JSX.Element} The Purchase Lesson Button.
  */
 const PurchaseLessonButton = ({ lessonId }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
   const { user, session } = useAuth();
   const navigate = useNavigate();
 
-  /**
-   * Handles the purchase of a lesson.
-   */
   const handlePurchase = async () => {
     if (!user) {
       navigate("/sign-in");
       return;
     }
 
-    console.log("Initiating purchase for lessonId:", lessonId);
-
     setLoading(true);
     setError(null);
 
     try {
       if (!session) {
-        console.error("No active session found.");
-        navigate("/sign-in");
-        return;
+        throw new Error("No active session found.");
       }
 
       const response = await fetch(
@@ -52,36 +45,20 @@ const PurchaseLessonButton = ({ lessonId }) => {
         },
       );
 
-      const contentType = response.headers.get("content-type");
-
       if (!response.ok) {
-        // Attempt to parse error message
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          setError(errorData.error || "Failed to create checkout session");
-        } else {
-          // If response is not JSON, log it for debugging
-          const errorText = await response.text();
-          console.error("Non-JSON response:", errorText);
-          setError("An unexpected error occurred.");
-        }
-        return;
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create checkout session");
       }
 
-      if (contentType && contentType.includes("application/json")) {
-        const data = await response.json();
-        // Redirect to Stripe Checkout
+      const data = await response.json();
+      if (data.sessionUrl) {
         window.location.href = data.sessionUrl;
       } else {
-        console.error(
-          "Expected JSON response but received:",
-          await response.text(),
-        );
-        setError("An unexpected error occurred.");
+        throw new Error("Checkout session URL not returned");
       }
     } catch (err) {
       console.error("Error during purchase:", err);
-      setError("An unexpected error occurred.");
+      setError(err.message || "An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -89,7 +66,7 @@ const PurchaseLessonButton = ({ lessonId }) => {
 
   return (
     <div>
-      {error && <p className="text-red-500">{error}</p>}
+      {error && <p className="text-red-500 mb-2">{error}</p>}
       <button
         onClick={handlePurchase}
         disabled={loading}

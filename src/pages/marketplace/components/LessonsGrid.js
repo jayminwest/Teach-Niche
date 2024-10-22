@@ -10,9 +10,10 @@ import { useAuth } from "../../../context/AuthContext";
  * Renders a grid of lessons, optionally filtering to show only purchased lessons.
  *
  * @param {Object} props - The component props.
+ * @param {boolean} [props.showPurchasedOnly=false] - Whether to show only purchased lessons.
  * @returns {JSX.Element} The Lessons Grid.
  */
-export default function LessonsGrid({ showPurchasedOnly = false }) {
+const LessonsGrid = ({ showPurchasedOnly = false }) => {
   const [lessons, setLessons] = useState([]);
   const [purchasedLessons, setPurchasedLessons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,34 +22,25 @@ export default function LessonsGrid({ showPurchasedOnly = false }) {
   useEffect(() => {
     const fetchLessons = async () => {
       try {
-        // Fetch all lessons
         const { data: allLessons, error: lessonsError } = await supabase
           .from("tutorials")
           .select("*");
 
-        if (lessonsError) {
-          throw lessonsError;
-        }
+        if (lessonsError) throw lessonsError;
 
         setLessons(allLessons);
 
-        // If user is authenticated, fetch purchased lessons
         if (user) {
           const { data: purchases, error: purchasesError } = await supabase
             .from("purchases")
             .select("tutorial_id")
             .eq("user_id", user.id);
 
-          if (purchasesError) {
-            throw purchasesError;
-          }
+          if (purchasesError) throw purchasesError;
 
-          const purchasedIds = purchases.map((purchase) =>
-            purchase.tutorial_id
+          setPurchasedLessons(
+            purchases.map((purchase) => purchase.tutorial_id),
           );
-          setPurchasedLessons(purchasedIds);
-        } else {
-          setPurchasedLessons([]);
         }
       } catch (error) {
         console.error("Error fetching lessons or purchases:", error.message);
@@ -63,7 +55,7 @@ export default function LessonsGrid({ showPurchasedOnly = false }) {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        Loading...
+        <span className="loading loading-spinner loading-lg"></span>
       </div>
     );
   }
@@ -89,4 +81,6 @@ export default function LessonsGrid({ showPurchasedOnly = false }) {
         )}
     </div>
   );
-}
+};
+
+export default LessonsGrid;

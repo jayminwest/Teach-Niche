@@ -10,12 +10,17 @@ import LessonsGrid from "./components/LessonsGrid";
  *
  * @returns {JSX.Element} The Marketplace page.
  */
-export default function MarketplaceLayout() {
+const MarketplaceLayout = () => {
   return (
-    <div>
+    <div className="flex flex-col min-h-screen">
       <Header />
-      <LessonsGrid />
+      <main className="flex-grow container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">Lesson Marketplace</h1>
+        <LessonsGrid />
+      </main>
       <Footer />
     </div>
   );
-}
+};
+
+export default MarketplaceLayout;

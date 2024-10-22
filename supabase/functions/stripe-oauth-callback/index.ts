@@ -32,7 +32,10 @@ const exchangeCodeForToken = async (code: string) => {
  * @param userId - User ID
  * @param connectedAccountId - Stripe connected account ID
  */
-const updateUserProfile = async (userId: string, connectedAccountId: string) => {
+const updateUserProfile = async (
+  userId: string,
+  connectedAccountId: string,
+) => {
   const { error, count } = await supabase
     .from("profiles")
     .update({
@@ -75,14 +78,18 @@ serve(async (req) => {
 
     await updateUserProfile(state!, connectedAccountId);
 
-    const successUrl = `${Deno.env.get("FRONTEND_URL")}/profile?stripe_connected=true`;
+    const successUrl = `${
+      Deno.env.get("FRONTEND_URL")
+    }/profile?stripe_connected=true`;
     return new Response(null, {
       status: 302,
       headers: { ...corsHeaders(origin), "Location": successUrl },
     });
   } catch (error: any) {
     console.error("Error in Stripe OAuth callback:", error);
-    const errorUrl = `${Deno.env.get("FRONTEND_URL")}/profile?stripe_error=${encodeURIComponent(error.message)}`;
+    const errorUrl = `${Deno.env.get("FRONTEND_URL")}/profile?stripe_error=${
+      encodeURIComponent(error.message)
+    }`;
     return new Response(null, {
       status: 302,
       headers: { ...corsHeaders(origin), "Location": errorUrl },

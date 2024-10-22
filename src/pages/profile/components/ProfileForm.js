@@ -5,26 +5,19 @@ import React, { useState } from "react";
  *
  * Renders a form for updating user profile information.
  *
- * @param {Object} props - The component props.
- * @returns {JSX.Element} The Profile Form.
+ * @param {Object} props
+ * @param {Object} props.profileData - The current profile data.
+ * @param {Function} props.onUpdate - Function to handle profile updates.
+ * @returns {JSX.Element} The Profile Form component.
  */
-export default function ProfileForm({ profileData, onUpdate }) {
+const ProfileForm = ({ profileData, onUpdate }) => {
   const [formData, setFormData] = useState(profileData);
 
-  /**
-   * Handles input changes in the form.
-   *
-   * @param {Event} e - The change event.
-   */
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  /**
-   * Handles form submission for updating profile.
-   *
-   * @param {Event} e - The form submission event.
-   */
   const handleSubmit = (e) => {
     e.preventDefault();
     onUpdate(formData);
@@ -44,6 +37,7 @@ export default function ProfileForm({ profileData, onUpdate }) {
           className="input input-bordered"
           value={formData.fullName}
           onChange={handleChange}
+          required
         />
       </div>
       <div className="form-control mt-4">
@@ -81,4 +75,6 @@ export default function ProfileForm({ profileData, onUpdate }) {
       </div>
     </form>
   );
-}
+};
+
+export default ProfileForm;

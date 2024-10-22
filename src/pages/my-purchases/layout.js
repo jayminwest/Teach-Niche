@@ -12,28 +12,37 @@ import { useAuth } from "../../context/AuthContext";
  *
  * @returns {JSX.Element} The My Purchases page.
  */
-export default function MyPurchasesLayout() {
+const MyPurchasesLayout = () => {
   const { user } = useAuth();
 
   if (!user) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <p>
-          Please <a href="/sign-in" className="text-blue-500">sign in</a>{" "}
-          to view your purchased lessons.
-        </p>
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow flex justify-center items-center">
+          <p className="text-center">
+            Please{" "}
+            <a href="/sign-in" className="text-blue-500 hover:underline">
+              sign in
+            </a>{" "}
+            to view your purchased lessons.
+          </p>
+        </main>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="flex flex-col min-h-screen">
       <Header />
-      <div className="container p-4 mx-auto">
-        <h2 className="text-2xl font-bold mb-4">My Purchased Lessons</h2>
+      <main className="flex-grow container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">My Purchased Lessons</h1>
         <LessonsGrid showPurchasedOnly />
-      </div>
+      </main>
       <Footer />
     </div>
   );
-}
+};
+
+export default MyPurchasesLayout;

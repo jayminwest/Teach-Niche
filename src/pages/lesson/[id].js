@@ -14,7 +14,7 @@ import Footer from "../../components/Footer";
  *
  * @returns {JSX.Element} The Lesson Detail page.
  */
-export default function LessonPage() {
+const LessonPage = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const [lesson, setLesson] = useState(null);
@@ -25,45 +25,28 @@ export default function LessonPage() {
 
   useEffect(() => {
     const fetchLessonAndAccess = async () => {
-      console.log(`Fetching lesson with ID: ${id}`);
       try {
-        // Fetch lesson details
         const { data: lessonData, error: lessonError } = await supabase
           .from("tutorials")
           .select("*")
           .eq("id", id)
           .single();
 
-        if (lessonError) {
-          console.error("Error fetching lesson:", lessonError.message);
-          throw lessonError;
-        }
+        if (lessonError) throw lessonError;
 
         setLesson(lessonData);
-        console.log("Lesson data fetched successfully:", lessonData);
 
-        // Fetch creator's profile
         const { data: creatorData, error: creatorError } = await supabase
           .from("profiles")
           .select("full_name, avatar_url")
           .eq("id", lessonData.creator_id)
           .maybeSingle();
 
-        if (creatorError) {
-          console.error("Error fetching creator profile:", creatorError.message);
-          // Handle the error appropriately, maybe set a default value or show an error message
-          setCreator(null);
-        } else if (creatorData) {
-          setCreator(creatorData);
-          console.log("Creator profile fetched successfully:", creatorData);
-        } else {
-          console.log("Creator profile not found");
-          setCreator(null);
-        }
+        if (creatorError) throw creatorError;
 
-        // If user is logged in, check if they have purchased the lesson
+        setCreator(creatorData);
+
         if (user) {
-          console.log(`Checking purchase for user ID: ${user.id}`);
           const { data: purchaseData, error: purchaseError } = await supabase
             .from("purchases")
             .select("*")
@@ -72,28 +55,16 @@ export default function LessonPage() {
             .single();
 
           if (purchaseError && purchaseError.code !== "PGRST116") {
-            // PGRST116: No rows found
-            console.error(
-              "Error fetching purchase data:",
-              purchaseError.message,
-            );
             throw purchaseError;
           }
 
-          if (purchaseData) {
-            setHasAccess(true);
-            console.log("User has access to the lesson.");
-          } else {
-            setHasAccess(false);
-            console.log("User does not have access to the lesson.");
-          }
+          setHasAccess(!!purchaseData);
         }
       } catch (err) {
         console.error("Error in fetchLessonAndAccess:", err);
         setError(err.message);
       } finally {
         setLoading(false);
-        console.log("Finished fetching lesson and access data.");
       }
     };
 
@@ -112,12 +83,8 @@ export default function LessonPage() {
     return (
       <div className="text-center mt-10 text-red-500">
         {error === "PGRST116: No rows found"
-          ? (
-            "You do not have access to this lesson. Please purchase it first."
-          )
-          : (
-            `An error occurred: ${error}`
-          )}
+          ? "You do not have access to this lesson. Please purchase it first."
+          : `An error occurred: ${error}`}
       </div>
     );
   }
@@ -133,15 +100,17 @@ export default function LessonPage() {
   return (
     <div>
       <Header />
-      <div className="container mx-auto p-4">
+      <main className="container mx-auto p-4">
         <LessonDetail
           lesson={lesson}
           creator={creator}
           hasAccess={hasAccess}
           lessonId={id}
         />
-      </div>
+      </main>
       <Footer />
     </div>
   );
-}
+};
+
+export default LessonPage;

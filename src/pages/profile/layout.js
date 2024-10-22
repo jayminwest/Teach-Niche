@@ -10,9 +10,17 @@ import ActionButtons from "./components/ActionButtons";
 import AlertMessage from "../../components/AlertMessage";
 import LessonCard from "../marketplace/components/LessonCard";
 import LessonCreationGuide from "./components/LessonCreationGuide";
+import { useAuth } from "../../context/AuthContext";
 
-export default function Profile() {
-  const [user, setUser] = useState(null);
+/**
+ * Profile Component
+ *
+ * Renders the user profile page with various sections for profile management,
+ * lesson creation, and viewing created/purchased lessons.
+ *
+ * @returns {JSX.Element} The Profile page.
+ */
+const Profile = () => {
   const [profileData, setProfileData] = useState({
     fullName: "",
     email: "",
@@ -28,16 +36,19 @@ export default function Profile() {
   const [purchasedLessons, setPurchasedLessons] = useState([]);
   const [activeTab, setActiveTab] = useState("profile");
   const [stripeConnected, setStripeConnected] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
-    fetchUserProfile();
-    checkStripeConnectionStatus();
-  }, [navigate]);
+    if (user) {
+      fetchUserProfile();
+      checkStripeConnectionStatus();
+    } else {
+      navigate("/sign-in");
+    }
+  }, [user, navigate]);
 
   const fetchUserProfile = async () => {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (user) {
-      setUser(user);
+    try {
       const { data, error } = await supabase
         .from("profiles")
         .select(
@@ -46,30 +57,29 @@ export default function Profile() {
         .eq("id", user.id)
         .single();
 
-      if (data) {
-        setProfileData({
-          fullName: data.full_name || "",
-          email: data.email || "",
-          bio: data.bio || "",
-          profilePicture: data.avatar_url || "",
-          socialMediaTag: data.social_media_tag || "",
-          stripe_account_id: data.stripe_account_id,
-          stripe_onboarding_complete: data.stripe_onboarding_complete,
-        });
-        setStripeConnected(data.stripe_onboarding_complete);
-      }
+      if (error) throw error;
 
-      if (error) {
-        console.error("Error fetching user profile:", error.message);
-        setError(error.message);
-      }
+      setProfileData({
+        fullName: data.full_name || "",
+        email: data.email || "",
+        bio: data.bio || "",
+        profilePicture: data.avatar_url || "",
+        socialMediaTag: data.social_media_tag || "",
+        stripe_account_id: data.stripe_account_id,
+        stripe_onboarding_complete: data.stripe_onboarding_complete,
+      });
+      setStripeConnected(data.stripe_onboarding_complete);
 
-      await fetchCreatedLessons(user.id);
-      await fetchPurchasedLessons(user.id);
-    } else {
-      navigate("/sign-in");
+      await Promise.all([
+        fetchCreatedLessons(user.id),
+        fetchPurchasedLessons(user.id),
+      ]);
+    } catch (error) {
+      console.error("Error fetching user profile:", error.message);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const checkStripeConnectionStatus = () => {
@@ -78,52 +88,48 @@ export default function Profile() {
     if (stripeConnected === "true") {
       setStripeConnected(true);
       setSuccessMessage("Stripe account connected successfully!");
-      // Remove the query parameter from the URL
       window.history.replaceState({}, document.title, "/profile");
     }
   };
 
   const fetchCreatedLessons = async (userId) => {
-    const { data, error } = await supabase
-      .from("tutorials")
-      .select("id, title, description, price, content_url, created_at")
-      .eq("creator_id", userId);
+    try {
+      const { data, error } = await supabase
+        .from("tutorials")
+        .select("id, title, description, price, content_url, created_at")
+        .eq("creator_id", userId);
 
-    if (error) {
-      console.error("Error fetching created lessons:", error.message);
-    } else {
+      if (error) throw error;
       setCreatedLessons(data);
+    } catch (error) {
+      console.error("Error fetching created lessons:", error.message);
     }
   };
 
   const fetchPurchasedLessons = async (userId) => {
-    const { data, error } = await supabase
-      .from("purchases")
-      .select(`
-        tutorial_id,
-        purchase_date,
-        tutorials (id, title, description, price, content_url, created_at)
-      `)
-      .eq("user_id", userId);
+    try {
+      const { data, error } = await supabase
+        .from("purchases")
+        .select(`
+          tutorial_id,
+          purchase_date,
+          tutorials (id, title, description, price, content_url, created_at)
+        `)
+        .eq("user_id", userId);
 
-    if (error) {
-      console.error("Error fetching purchased lessons:", error.message);
-    } else {
+      if (error) throw error;
       setPurchasedLessons(data.map((purchase) => ({
         ...purchase.tutorials,
         purchaseDate: purchase.purchase_date,
       })));
+    } catch (error) {
+      console.error("Error fetching purchased lessons:", error.message);
     }
   };
 
   const handleProfileUpdate = async (updatedData) => {
     setError(null);
     setSuccessMessage("");
-
-    if (!user) {
-      setError("User not authenticated.");
-      return;
-    }
 
     try {
       const updates = {
@@ -149,11 +155,6 @@ export default function Profile() {
   };
 
   const handleDeleteProfile = async () => {
-    if (!user) {
-      setError("User not authenticated.");
-      return;
-    }
-
     try {
       const { error } = await supabase.from("profiles").delete().eq(
         "id",
@@ -179,14 +180,12 @@ export default function Profile() {
       );
 
       if (error) {
-        console.error("Supabase function error:", error);
         throw new Error(error.message || "Failed to initiate Stripe Connect");
       }
 
       if (data && data.url) {
         window.location.href = data.url;
       } else {
-        console.error("Unexpected response:", data);
         throw new Error("Failed to initiate Stripe Connect: No URL returned");
       }
     } catch (err) {
@@ -196,15 +195,11 @@ export default function Profile() {
   };
 
   const handleCreateLesson = () => {
-    if (stripeConnected) { // Ensure Stripe is connected
-      setActiveTab("create-lesson"); // Update activeTab to 'create-lesson'
+    if (stripeConnected) {
+      setActiveTab("create-lesson");
     } else {
       setError("Please connect your Stripe account before creating lessons.");
     }
-  };
-
-  const proceedToCreateLesson = () => {
-    navigate("/create-lesson");
   };
 
   if (loading) {
@@ -381,4 +376,6 @@ export default function Profile() {
       <Footer />
     </div>
   );
-}
+};
+
+export default Profile;

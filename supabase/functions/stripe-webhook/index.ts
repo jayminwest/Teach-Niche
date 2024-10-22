@@ -148,7 +148,9 @@ serve(async (req) => {
       return new Response(`Webhook Error: ${err.message}`, { status: 400 });
     }
   } else if (req.method === "GET") {
-    return new Response("Stripe webhook is functioning correctly", { status: 200 });
+    return new Response("Stripe webhook is functioning correctly", {
+      status: 200,
+    });
   } else {
     return new Response("Method Not Allowed", { status: 405 });
   }

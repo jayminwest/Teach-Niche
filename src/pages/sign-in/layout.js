@@ -1,10 +1,11 @@
 // src/pages/sign-in/layout.js
 import React, { useState } from "react";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
 import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import supabase from "../../utils/supabaseClient";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import AlertMessage from "../../components/AlertMessage";
 
 /**
  * SignInLayout Component
@@ -13,7 +14,7 @@ import supabase from "../../utils/supabaseClient";
  *
  * @returns {JSX.Element} The Sign In page.
  */
-export default function SignInLayout() {
+const SignInLayout = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,7 +39,6 @@ export default function SignInLayout() {
 
       if (error) throw error;
 
-      // Redirect to the profile page after successful sign-in
       navigate("/profile");
     } catch (error) {
       setError(error.message);
@@ -54,26 +54,24 @@ export default function SignInLayout() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        // Redirect URL after successful sign-in
-        redirectTo: "https://your-domain.com/profile",
+        redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
 
     if (error) {
       setError(error.message);
     }
-    // The user will be redirected to Google for authentication
   };
 
   return (
-    <div className="container mx-auto">
+    <div className="flex flex-col min-h-screen">
       <Header />
-      <div className="flex justify-center items-center min-h-screen">
+      <main className="flex-grow flex justify-center items-center py-10">
         <div className="card w-full max-w-sm shadow-2xl bg-base-100">
           <div className="card-body">
-            <h2 className="card-title">Sign In</h2>
+            <h2 className="card-title text-2xl mb-4">Sign In</h2>
             <form onSubmit={handleSignIn}>
-              <div className="form-control mt-4">
+              <div className="form-control">
                 <label className="label" htmlFor="email">
                   <span className="label-text">Email</span>
                 </label>
@@ -111,25 +109,27 @@ export default function SignInLayout() {
                 </button>
               </div>
             </form>
-            {error && <p className="text-red-500 mt-4">{error}</p>}
             <div className="divider">OR</div>
             <button
-              className="btn btn-warning flex items-center justify-center mb-4"
+              className="btn btn-outline flex items-center justify-center"
               onClick={handleGoogleSignIn}
               disabled={isSubmitting}
             >
               <FcGoogle className="mr-2" size={24} />
               Sign In with Google
             </button>
-            <div className="form-control mt-6 justify-center items-center">
+            <div className="mt-6 text-center">
               <Link to="/forgot-password" className="link link-primary">
                 Forgot Password?
               </Link>
             </div>
+            <AlertMessage error={error} />
           </div>
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );
-}
+};
+
+export default SignInLayout;

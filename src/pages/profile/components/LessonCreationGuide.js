@@ -7,9 +7,9 @@ import { useNavigate } from "react-router-dom";
  *
  * Renders a guide for instructors on how to create a lesson.
  *
- * @returns {JSX.Element} The Lesson Creation Guide.
+ * @returns {JSX.Element} The Lesson Creation Guide component.
  */
-export default function LessonCreationGuide() {
+const LessonCreationGuide = () => {
   const navigate = useNavigate();
 
   /**
@@ -192,10 +192,13 @@ Your contributions help grow and strengthen the kendama community. We're excited
         <button
           className="btn btn-primary text-xl px-6 py-3"
           onClick={handleCreateLesson}
+          aria-label="Create Lesson"
         >
           Create Lesson
         </button>
       </div>
     </div>
   );
-}
+};
+
+export default LessonCreationGuide;

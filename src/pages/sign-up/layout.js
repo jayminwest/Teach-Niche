@@ -1,10 +1,11 @@
 // src/pages/sign-up/layout.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
 import { FcGoogle } from "react-icons/fc";
 import supabase from "../../utils/supabaseClient";
+import Header from "../../components/Header";
+import Footer from "../../components/Footer";
+import AlertMessage from "../../components/AlertMessage";
 
 /**
  * SignUpLayout Component
@@ -13,65 +14,49 @@ import supabase from "../../utils/supabaseClient";
  *
  * @returns {JSX.Element} The Sign Up page.
  */
-export default function SignUpLayout() {
+const SignUpLayout = () => {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  /**
-   * Navigates to the sign-in page.
-   */
-  const handleSignInClick = () => {
-    navigate("/sign-in");
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  /**
-   * Handles sign-up with email and password.
-   *
-   * @param {Event} event - The form submission event.
-   */
   const handleSignUp = async (event) => {
     event.preventDefault();
     setError(null);
     setIsSubmitting(true);
 
     try {
-      // Sign up the user with email and password
       const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: formData.email,
+        password: formData.password,
         options: {
           data: {
-            // Optionally pass additional user metadata here
+            full_name: formData.name,
           },
         },
       });
 
       if (error) throw error;
 
-      const user = data.user;
-
-      if (user) {
-        // Use upsert to insert or update the profile
-        const { error: profileError } = await supabase.from("profiles").upsert([
+      if (data.user) {
+        await supabase.from("profiles").upsert([
           {
-            id: user.id,
-            full_name: name || null, // Allow name to be optional
-            email: email, // Store email if needed
+            id: data.user.id,
+            full_name: formData.name || null,
+            email: formData.email,
             updated_at: new Date(),
           },
         ]);
 
-        if (profileError) {
-          setError(profileError.message);
-        } else {
-          // Redirect to the profile page after successful sign-up
-          navigate("/profile");
-        }
+        navigate("/profile");
       } else {
         setError("User sign-up failed.");
       }
@@ -82,67 +67,60 @@ export default function SignUpLayout() {
     }
   };
 
-  /**
-   * Handles sign-up with Google OAuth.
-   */
   const handleGoogleSignUp = async () => {
     setError(null);
-    setIsGoogleLoading(true);
+    setIsSubmitting(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
       if (error) throw error;
-
-      // The user will be redirected to Google for authentication
-      // After successful authentication, they will be redirected back to your app
     } catch (error) {
       setError(error.message);
     } finally {
-      setIsGoogleLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="container mx-auto">
+    <div className="flex flex-col min-h-screen">
       <Header />
-      <div className="flex justify-center items-center min-h-screen py-10">
-        <div className="card w-full max-w-sm shadow-2xl bg-base-100 p-6">
+      <main className="flex-grow flex justify-center items-center py-10">
+        <div className="card w-full max-w-sm shadow-2xl bg-base-100">
           <div className="card-body">
-            <button
-              className="btn btn-primary mb-4"
-              onClick={handleSignInClick}
-              disabled={isSubmitting}
-            >
-              Have an account? Sign In
-            </button>
-            <button
-              className="btn btn-warning flex items-center justify-center mb-4"
-              onClick={handleGoogleSignUp}
-              disabled={isSubmitting || isGoogleLoading}
-            >
-              <FcGoogle className="mr-2" size={24} />
-              {isGoogleLoading ? "Connecting..." : "Sign Up with Google"}
-            </button>
-            <div className="divider"></div>
             <h2 className="card-title text-2xl mb-4">Sign Up</h2>
             <form onSubmit={handleSignUp}>
               <div className="form-control">
+                <label className="label" htmlFor="name">
+                  <span className="label-text">Full Name</span>
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  placeholder="Full Name"
+                  className="input input-bordered"
+                  value={formData.name}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="form-control mt-4">
                 <label className="label" htmlFor="email">
                   <span className="label-text">Email</span>
                 </label>
                 <input
                   type="email"
                   id="email"
+                  name="email"
                   placeholder="Email"
                   className="input input-bordered"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formData.email}
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -153,25 +131,12 @@ export default function SignUpLayout() {
                 <input
                   type="password"
                   id="password"
+                  name="password"
                   placeholder="Password"
                   className="input input-bordered"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={formData.password}
+                  onChange={handleChange}
                   required
-                />
-              </div>
-              {/* Optional: Allow users to add their full name during sign-up */}
-              <div className="form-control mt-4">
-                <label className="label" htmlFor="name">
-                  <span className="label-text">Full Name (Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  placeholder="Full Name"
-                  className="input input-bordered"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
                 />
               </div>
               <div className="form-control mt-6">
@@ -184,11 +149,22 @@ export default function SignUpLayout() {
                 </button>
               </div>
             </form>
-            {error && <p className="text-red-500 mt-4">{error}</p>}
+            <div className="divider">OR</div>
+            <button
+              className="btn btn-outline flex items-center justify-center"
+              onClick={handleGoogleSignUp}
+              disabled={isSubmitting}
+            >
+              <FcGoogle className="mr-2" size={24} />
+              Sign Up with Google
+            </button>
+            <AlertMessage error={error} />
           </div>
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );
-}
+};
+
+export default SignUpLayout;

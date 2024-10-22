@@ -5,24 +5,30 @@ import React from "react";
  *
  * Renders action buttons for profile actions like creating a lesson or deleting a profile.
  *
- * @param {Object} props - The component props.
- * @returns {JSX.Element} The Action Buttons.
+ * @param {Object} props
+ * @param {Function} props.onCreateLesson - Function to handle lesson creation.
+ * @param {Function} props.onDeleteProfile - Function to handle profile deletion.
+ * @returns {JSX.Element} The Action Buttons component.
  */
-export default function ActionButtons({ onCreateLesson, onDeleteProfile }) {
+const ActionButtons = ({ onCreateLesson, onDeleteProfile }) => {
   return (
     <div className="flex justify-between">
       <button
         className="btn btn-error"
         onClick={onDeleteProfile}
+        aria-label="Delete Profile"
       >
         Delete Profile
       </button>
       <button
         className="btn btn-secondary"
         onClick={onCreateLesson}
+        aria-label="Create Lesson"
       >
         Create Lesson
       </button>
     </div>
   );
-}
+};
+
+export default ActionButtons;

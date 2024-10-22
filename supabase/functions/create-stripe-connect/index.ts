@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
-import { allowedOrigins, corsHeaders, createCorsResponse } from "../_shared/config.ts";
+import {
+  allowedOrigins,
+  corsHeaders,
+  createCorsResponse,
+} from "../_shared/config.ts";
 
 // Initialize Stripe with the secret key from environment variables
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {

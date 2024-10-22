@@ -1,3 +1,4 @@
+import React from "react";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./App.css";
 
@@ -11,21 +12,24 @@ import Footer from "./components/Footer";
 /**
  * App Component
  *
- * Renders the main application layout with header, hero section, services, featured lessons, call-to-action, and footer.
+ * Renders the main application layout with header, hero section, services,
+ * featured lessons, call-to-action, and footer.
  *
  * @returns {JSX.Element} The main application layout.
  */
-function App() {
+const App = () => {
   return (
-    <div>
+    <div className="flex flex-col min-h-screen">
       <Header />
-      <Hero />
-      <Services />
-      <FeaturedLessons />
-      <CTA />
+      <main className="flex-grow">
+        <Hero />
+        <Services />
+        <FeaturedLessons />
+        <CTA />
+      </main>
       <Footer />
     </div>
   );
-}
+};
 
 export default App;

@@ -1,11 +1,12 @@
 // src/pages/create-lesson/layout.js
 
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import TextEditor from "../../components/TextEditor";
-import { useNavigate } from "react-router-dom";
 import supabase from "../../utils/supabaseClient";
+import AlertMessage from "../../components/AlertMessage";
 
 /**
  * CreateLesson Component
@@ -14,18 +15,19 @@ import supabase from "../../utils/supabaseClient";
  *
  * @returns {JSX.Element} The Create Lesson page.
  */
-export default function CreateLesson() {
-  const [lessonTitle, setLessonTitle] = useState("");
-  const [lessonDescription, setLessonDescription] = useState("");
-  const [lessonCost, setLessonCost] = useState("");
-  const [youtubeLink, setYoutubeLink] = useState("");
-  const [lessonContent, setLessonContent] = useState("");
+const CreateLesson = () => {
+  const [lessonData, setLessonData] = useState({
+    title: "",
+    description: "",
+    cost: "",
+    youtubeLink: "",
+    content: "",
+  });
   const [categoryIds, setCategoryIds] = useState([]);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
 
-  // Fetch Categories for Selection
   useEffect(() => {
     const fetchCategories = async () => {
       const { data, error } = await supabase.from("categories").select("*");
@@ -39,62 +41,56 @@ export default function CreateLesson() {
     fetchCategories();
   }, []);
 
-  /**
-   * Handles category selection changes.
-   *
-   * @param {Event} e - The change event.
-   */
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setLessonData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleCategoryChange = (e) => {
     const { value, checked } = e.target;
     if (checked) {
-      setCategoryIds([...categoryIds, parseInt(value)]);
+      setCategoryIds((prev) => [...prev, parseInt(value)]);
     } else {
-      setCategoryIds(categoryIds.filter((id) => id !== parseInt(value)));
+      setCategoryIds((prev) => prev.filter((id) => id !== parseInt(value)));
     }
   };
 
-  /**
-   * Handles form submission for creating a lesson.
-   *
-   * @param {Event} e - The form submission event.
-   */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
-    // Validate required fields
-    if (!lessonTitle || !lessonDescription || !lessonCost || !lessonContent) {
+    if (
+      !lessonData.title || !lessonData.description || !lessonData.cost ||
+      !lessonData.content
+    ) {
       setError("Please fill in all required fields.");
       return;
     }
 
-    // Retrieve the current session
-    const { data: sessionData, error: sessionError } = await supabase.auth
-      .getSession();
-    const session = sessionData.session;
-
-    if (sessionError || !session) {
-      console.error("User not authenticated");
-      navigate("/sign-in");
-      return;
-    }
-
     try {
+      const { data: sessionData, error: sessionError } = await supabase.auth
+        .getSession();
+      if (sessionError || !sessionData.session) {
+        throw new Error("User not authenticated");
+      }
+
       const functionsUrl = process.env.REACT_APP_SUPABASE_FUNCTIONS_URL;
-      console.log("Function URL:", `${functionsUrl}/create-lesson`);
+      if (!functionsUrl) {
+        throw new Error("Functions URL not set in environment variables.");
+      }
 
       const response = await fetch(`${functionsUrl}/create-lesson`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${sessionData.session.access_token}`,
         },
         body: JSON.stringify({
-          title: lessonTitle,
-          description: lessonDescription,
-          price: parseFloat(lessonCost),
-          video_url: youtubeLink || null,
-          content: lessonContent,
+          title: lessonData.title,
+          description: lessonData.description,
+          price: parseFloat(lessonData.cost),
+          video_url: lessonData.youtubeLink || null,
+          content: lessonData.content,
           category_ids: categoryIds,
         }),
       });
@@ -105,10 +101,10 @@ export default function CreateLesson() {
         console.log("Lesson created:", data.lesson);
         navigate("/marketplace");
       } else {
-        setError(data.error || "Failed to create lesson");
+        throw new Error(data.error || "Failed to create lesson");
       }
     } catch (err) {
-      setError("An unexpected error occurred.");
+      setError(err.message || "An unexpected error occurred.");
       console.error("Error creating lesson:", err);
     }
   };
@@ -116,7 +112,7 @@ export default function CreateLesson() {
   return (
     <div className="container mx-auto">
       <Header />
-      <div className="flex flex-col justify-center items-center min-h-screen py-10">
+      <main className="flex flex-col justify-center items-center min-h-screen py-10">
         <div className="card w-full max-w-2xl shadow-2xl bg-base-100 p-6">
           <h2 className="card-title text-3xl mb-4">Create New Lesson</h2>
           <form onSubmit={handleSubmit}>
@@ -129,8 +125,8 @@ export default function CreateLesson() {
                 id="lessonTitle"
                 placeholder="Title"
                 className="input input-bordered"
-                value={lessonTitle}
-                onChange={(e) => setLessonTitle(e.target.value)}
+                value={lessonData.title}
+                onChange={(e) => handleInputChange(e)}
                 required
               />
             </div>
@@ -142,21 +138,11 @@ export default function CreateLesson() {
                 id="lessonDescription"
                 placeholder="Description"
                 className="textarea textarea-bordered"
-                value={lessonDescription}
-                onChange={(e) => setLessonDescription(e.target.value)}
+                value={lessonData.description}
+                onChange={(e) => handleInputChange(e)}
                 required
               >
               </textarea>
-            </div>
-            <div className="form-control mb-4">
-              <label className="label" htmlFor="lessonContent">
-                <span className="label-text">Content (required)</span>
-              </label>
-              <TextEditor
-                value={lessonContent}
-                onChange={setLessonContent}
-                required={true}
-              />
             </div>
             <div className="form-control mb-4">
               <label className="label" htmlFor="lessonCost">
@@ -168,8 +154,8 @@ export default function CreateLesson() {
                 id="lessonCost"
                 placeholder="Cost"
                 className="input input-bordered"
-                value={lessonCost}
-                onChange={(e) => setLessonCost(e.target.value)}
+                value={lessonData.cost}
+                onChange={(e) => handleInputChange(e)}
                 required
               />
             </div>
@@ -184,11 +170,20 @@ export default function CreateLesson() {
                 id="youtubeLink"
                 placeholder="YouTube Link (optional)"
                 className="input input-bordered"
-                value={youtubeLink}
-                onChange={(e) => setYoutubeLink(e.target.value)}
+                value={lessonData.youtubeLink}
+                onChange={(e) => handleInputChange(e)}
               />
             </div>
-            {/* Optional: Category Selection */}
+            <div className="form-control mb-4">
+              <label className="label" htmlFor="lessonContent">
+                <span className="label-text">Content (required)</span>
+              </label>
+              <TextEditor
+                value={lessonData.content}
+                onChange={(content) =>
+                  setLessonData((prev) => ({ ...prev, content }))}
+              />
+            </div>
             {categories.length > 0 && (
               <div className="form-control mb-4">
                 <label className="label">Categories</label>
@@ -216,10 +211,12 @@ export default function CreateLesson() {
               </button>
             </div>
           </form>
-          {error && <p className="text-red-500 mt-4">{error}</p>}
+          <AlertMessage error={error} />
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   );
-}
+};
+
+export default CreateLesson;

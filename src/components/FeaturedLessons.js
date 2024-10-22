@@ -10,10 +10,16 @@ import LessonsGrid from "../pages/marketplace/components/LessonsGrid";
  */
 const FeaturedLessons = () => {
   return (
-    <section className="py-10 md:py-16 bg-neutral" aria-labelledby="featured-lessons-heading">
+    <section
+      className="py-10 md:py-16 bg-neutral"
+      aria-labelledby="featured-lessons-heading"
+    >
       <div className="container">
         <div className="text-center text-white mb-8">
-          <h2 id="featured-lessons-heading" className="text-3xl sm:text-5xl font-bold">
+          <h2
+            id="featured-lessons-heading"
+            className="text-3xl sm:text-5xl font-bold"
+          >
             Featured Lessons
           </h2>
           <p className="text-lg sm:text-2xl mb-6 md:mb-14">

@@ -28,7 +28,11 @@ export const corsHeaders = (origin: string) => ({
  * @param origin - Request origin
  * @returns Response object with CORS headers
  */
-export const createCorsResponse = (status: number, body: any, origin: string) => {
+export const createCorsResponse = (
+  status: number,
+  body: any,
+  origin: string,
+) => {
   return new Response(JSON.stringify(body), {
     status,
     headers: {

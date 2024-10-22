@@ -6,15 +6,12 @@ import supabase from "../../../utils/supabaseClient";
  *
  * Renders a profile picture with an option to upload a new one.
  *
- * @param {Object} props - The component props.
+ * @param {Object} props
+ * @param {string} props.profilePicture - The current profile picture URL.
+ * @param {Function} props.onUpdate - Function to handle profile picture updates.
  * @returns {JSX.Element} The Profile Picture component.
  */
-export default function ProfilePicture({ profilePicture, onUpdate }) {
-  /**
-   * Handles profile picture change and upload.
-   *
-   * @param {Event} e - The change event.
-   */
+const ProfilePicture = ({ profilePicture, onUpdate }) => {
   const handleProfilePictureChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -47,7 +44,7 @@ export default function ProfilePicture({ profilePicture, onUpdate }) {
         {profilePicture
           ? <img src={profilePicture} alt="Profile" />
           : (
-            <div className="bg-neutral-focus text-neutral-content rounded-full w-32 h-32">
+            <div className="bg-neutral-focus text-neutral-content rounded-full w-32 h-32 flex items-center justify-center">
               <span className="text-3xl">?</span>
             </div>
           )}
@@ -55,6 +52,7 @@ export default function ProfilePicture({ profilePicture, onUpdate }) {
       <label
         htmlFor="profilePicture"
         className="btn btn-circle btn-sm absolute bottom-0 right-0"
+        aria-label="Change profile picture"
       >
         <i className="fas fa-edit"></i>
       </label>
@@ -67,4 +65,6 @@ export default function ProfilePicture({ profilePicture, onUpdate }) {
       />
     </div>
   );
-}
+};
+
+export default ProfilePicture;

@@ -3,7 +3,11 @@
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno";
-import { allowedOrigins, corsHeaders, createCorsResponse } from "../_shared/config.ts";
+import {
+  allowedOrigins,
+  corsHeaders,
+  createCorsResponse,
+} from "../_shared/config.ts";
 
 // Initialize Stripe
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -42,16 +46,23 @@ serve(async (req) => {
   }
 
   // Authenticate user
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  const { data: { user }, error: authError } = await supabase.auth.getUser(
+    token,
+  );
   if (authError || !user) {
     return createCorsResponse(401, { error: "Unauthorized user" }, origin);
   }
 
   try {
-    const { title, description, price, video_url, content, category_ids } = await req.json();
+    const { title, description, price, video_url, content, category_ids } =
+      await req.json();
 
     if (!title || !price || !content) {
-      return createCorsResponse(400, { error: "Missing required fields" }, origin);
+      return createCorsResponse(
+        400,
+        { error: "Missing required fields" },
+        origin,
+      );
     }
 
     // Get user's Stripe account ID
@@ -61,8 +72,13 @@ serve(async (req) => {
       .eq("id", user.id)
       .single();
 
-    if (profileError || !profile.stripe_account_id || !profile.stripe_onboarding_complete) {
-      return createCorsResponse(403, { error: "Please connect your Stripe account before creating lessons." }, origin);
+    if (
+      profileError || !profile.stripe_account_id ||
+      !profile.stripe_onboarding_complete
+    ) {
+      return createCorsResponse(403, {
+        error: "Please connect your Stripe account before creating lessons.",
+      }, origin);
     }
 
     // Create Stripe product and price
@@ -95,7 +111,9 @@ serve(async (req) => {
       .select();
 
     if (insertError || !data) {
-      return createCorsResponse(500, { error: insertError?.message || "Failed to create lesson" }, origin);
+      return createCorsResponse(500, {
+        error: insertError?.message || "Failed to create lesson",
+      }, origin);
     }
 
     // Insert tutorial categories if provided
@@ -110,7 +128,10 @@ serve(async (req) => {
         .insert(tutorialCategories);
 
       if (categoryError) {
-        console.error("Error inserting tutorial categories:", categoryError.message);
+        console.error(
+          "Error inserting tutorial categories:",
+          categoryError.message,
+        );
       }
     }
 

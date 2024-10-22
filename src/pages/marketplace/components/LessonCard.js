@@ -10,20 +10,26 @@ import { useNavigate } from "react-router-dom";
  * Renders a card for a lesson with options to purchase, access, or edit.
  *
  * @param {Object} props - The component props.
+ * @param {string} props.id - The lesson ID.
+ * @param {string} props.title - The lesson title.
+ * @param {string} props.creator_id - The creator's ID.
+ * @param {number} props.price - The lesson price.
+ * @param {string} props.description - The lesson description.
+ * @param {string} props.content_url - The lesson content URL.
+ * @param {boolean} props.isPurchased - Whether the lesson has been purchased.
+ * @param {boolean} props.isCreated - Whether the lesson was created by the current user.
  * @returns {JSX.Element} The Lesson Card.
  */
-export default function LessonCard(
-  {
-    id,
-    title,
-    creator_id,
-    price,
-    description,
-    content_url,
-    isPurchased,
-    isCreated,
-  },
-) {
+const LessonCard = ({
+  id,
+  title,
+  creator_id,
+  price,
+  description,
+  content_url,
+  isPurchased,
+  isCreated,
+}) => {
   const [creatorName, setCreatorName] = useState("");
   const { user, session } = useAuth();
   const navigate = useNavigate();
@@ -33,7 +39,6 @@ export default function LessonCard(
 
   useEffect(() => {
     const fetchCreatorName = async () => {
-      console.log(`Fetching creator name for creator ID: ${creator_id}`);
       const { data, error } = await supabase
         .from("profiles")
         .select("full_name")
@@ -44,26 +49,20 @@ export default function LessonCard(
         console.error("Error fetching creator name:", error.message);
       } else {
         setCreatorName(data.full_name || "Unknown");
-        console.log("Creator name fetched successfully:", data.full_name);
       }
     };
 
     fetchCreatorName();
   }, [creator_id]);
 
-  /**
-   * Handles the purchase of a lesson.
-   */
   const handlePurchase = async () => {
     if (!user) {
-      console.warn("User not authenticated. Redirecting to sign-in.");
       navigate("/sign-in");
       return;
     }
 
     setLoading(true);
     setError(null);
-    console.log(`Initiating purchase for lesson ID: ${id}`);
 
     try {
       const functionsUrl = process.env.REACT_APP_SUPABASE_FUNCTIONS_URL;
@@ -71,69 +70,34 @@ export default function LessonCard(
         throw new Error("Functions URL not set in environment variables.");
       }
 
-      console.log(
-        `Creating checkout session at: ${functionsUrl}/create-checkout-session`,
-      );
       const response = await fetch(`${functionsUrl}/create-checkout-session`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${session?.access_token}`,
         },
-        body: JSON.stringify({
-          tutorialId: id,
-        }),
+        body: JSON.stringify({ tutorialId: id }),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        if (data.sessionUrl) {
-          console.log(
-            "Checkout session created successfully. Redirecting to Stripe.",
-          );
-          // Redirect to Stripe Checkout
-          window.location.href = data.sessionUrl;
-        } else {
-          console.error("Checkout session URL not returned.");
-          throw new Error("Checkout session URL not returned.");
-        }
+      if (response.ok && data.sessionUrl) {
+        window.location.href = data.sessionUrl;
       } else {
-        console.error("Failed to create checkout session:", data.error);
         throw new Error(data.error || "Failed to create checkout session.");
       }
     } catch (error) {
-      console.error("Error during purchase:", error.message);
       setError(error.message || "An unexpected error occurred.");
     } finally {
       setLoading(false);
-      console.log("Finished purchase process for lesson ID:", id);
     }
   };
 
-  /**
-   * Handles accessing a purchased lesson.
-   */
-  const handleAccess = () => {
-    console.log(`Accessing lesson ID: ${id}`);
-    navigate(`/lesson/${id}`);
-  };
+  const handleAccess = () => navigate(`/lesson/${id}`);
 
-  /**
-   * Handles editing a created lesson.
-   */
-  const handleEdit = () => {
-    console.log(`Editing lesson ID: ${id}`);
-    navigate(`/edit-lesson/${id}`);
-  };
+  const handleEdit = () => navigate(`/edit-lesson/${id}`);
 
-  /**
-   * Handles image loading error.
-   */
-  const handleImageError = () => {
-    console.log(`Error loading image for lesson ID: ${id}`);
-    setImageError(true);
-  };
+  const handleImageError = () => setImageError(true);
 
   const placeholderImage =
     "https://via.placeholder.com/400x300?text=Lesson+Image";
@@ -158,19 +122,13 @@ export default function LessonCard(
         {error && <p className="text-red-500">{error}</p>}
         {isCreated
           ? (
-            <button
-              className="btn btn-primary"
-              onClick={handleEdit}
-            >
+            <button className="btn btn-primary" onClick={handleEdit}>
               Edit Lesson
             </button>
           )
           : isPurchased
           ? (
-            <button
-              className="btn btn-success"
-              onClick={handleAccess}
-            >
+            <button className="btn btn-success" onClick={handleAccess}>
               Access Lesson
             </button>
           )
@@ -186,4 +144,6 @@ export default function LessonCard(
       </div>
     </div>
   );
-}
+};
+
+export default LessonCard;

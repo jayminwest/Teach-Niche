@@ -1,36 +1,67 @@
 // server.js
 require("dotenv").config();
 const express = require("express");
-const { createClient } = require("@supabase/supabase-js"); // Updated import
+const { createClient } = require("@supabase/supabase-js");
 
-// Use service role key for server-side operations
+/**
+ * Supabase client for server-side operations.
+ * Uses the service role key for elevated privileges.
+ */
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY, // Ensure this is the service role key
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
 );
+
 const app = express();
 app.use(express.json());
 
 /**
- * Registers a new user with email and password.
+ * Register a new user.
+ *
+ * @route POST /register
+ * @param {Object} req.body
+ * @param {string} req.body.email - User's email
+ * @param {string} req.body.password - User's password
+ * @returns {Object} User object or error message
  */
 app.post("/register", async (req, res) => {
   const { email, password } = req.body;
-  const { user, error } = await supabase.auth.signUp({ email, password });
-  if (error) return res.status(400).json({ error: error.message });
-  res.status(200).json({ user });
+  try {
+    const { data: user, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    if (error) throw error;
+    res.status(200).json({ user });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
 /**
- * Logs in a user with email and password.
+ * Log in a user.
+ *
+ * @route POST /login
+ * @param {Object} req.body
+ * @param {string} req.body.email - User's email
+ * @param {string} req.body.password - User's password
+ * @returns {Object} User object or error message
  */
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  const { user, error } = await supabase.auth.signIn({ email, password });
-  if (error) return res.status(400).json({ error: error.message });
-  res.status(200).json({ user });
+  try {
+    const { data: user, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+    res.status(200).json({ user });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 });
 
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
