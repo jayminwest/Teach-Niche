@@ -78,8 +78,10 @@ const CreateLesson = () => {
     setIsSubmitting(true);
 
     if (
-      !lessonData.title || !lessonData.description || !lessonData.cost ||
-      !lessonData.content
+      !lessonData.title.trim() ||
+      !lessonData.description.trim() ||
+      !lessonData.cost ||
+      !lessonData.content.trim()
     ) {
       setError("Please fill in all required fields.");
       setIsSubmitting(false);

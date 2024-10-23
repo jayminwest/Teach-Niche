@@ -5,6 +5,8 @@ import Footer from "../../components/Footer";
 import TextEditor from "../../components/TextEditor";
 import supabase from "../../utils/supabaseClient";
 import AlertMessage from "../../components/AlertMessage";
+import LessonRating from "../../components/LessonRating";
+import LessonDiscussion from "../../components/LessonDiscussion";
 
 /**
  * EditLesson Component
@@ -32,6 +34,7 @@ const EditLesson = () => {
   const [thumbnail, setThumbnail] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState("content");
 
   useEffect(() => {
     fetchLessonData();
@@ -49,14 +52,14 @@ const EditLesson = () => {
       if (error) throw error;
 
       setLessonData({
-        title: data.title,
-        description: data.description,
-        cost: data.price,
+        title: data.title || "",
+        description: data.description || "",
+        cost: data.price || "",
         youtubeLink: data.video_url || "",
-        content: data.content,
-        thumbnail_url: data.thumbnail_url || "", // Add this line
+        content: data.content || "",
+        thumbnail_url: data.thumbnail_url || "",
       });
-      setThumbnailPreview(data.thumbnail_url || null); // Add this line
+      setThumbnailPreview(data.thumbnail_url || null);
 
       const { data: categoryData, error: categoryError } = await supabase
         .from("tutorial_categories")
@@ -117,8 +120,10 @@ const EditLesson = () => {
     setIsSubmitting(true);
 
     if (
-      !lessonData.title || !lessonData.description || !lessonData.cost ||
-      !lessonData.content
+      !lessonData.title.trim() ||
+      !lessonData.description.trim() ||
+      lessonData.cost === "" ||
+      !lessonData.content.trim()
     ) {
       setError("Please fill in all required fields.");
       setIsSubmitting(false);
@@ -145,15 +150,20 @@ const EditLesson = () => {
         thumbnailUrl = publicUrl;
       }
 
+      const price = parseFloat(lessonData.cost);
+      if (isNaN(price) || price < 0) {
+        throw new Error("Price must be a non-negative number.");
+      }
+
       const { data, error } = await supabase
         .from("tutorials")
         .update({
-          title: lessonData.title,
-          description: lessonData.description,
-          price: parseFloat(lessonData.cost),
-          video_url: lessonData.youtubeLink || null,
-          content: lessonData.content,
-          thumbnail_url: thumbnailUrl, // Add this line
+          title: lessonData.title.trim(),
+          description: lessonData.description.trim(),
+          price: price,
+          video_url: lessonData.youtubeLink.trim() || null,
+          content: lessonData.content.trim(),
+          thumbnail_url: thumbnailUrl,
         })
         .eq("id", id);
 
@@ -187,20 +197,10 @@ const EditLesson = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-          <h2 className="text-3xl font-bold mb-6 text-center">Edit Lesson</h2>
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "content":
+        return (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label
@@ -216,6 +216,7 @@ const EditLesson = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 value={lessonData.title}
                 onChange={handleInputChange}
+                onBlur={handleInputChange}
                 required
               />
             </div>
@@ -234,6 +235,7 @@ const EditLesson = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 value={lessonData.description}
                 onChange={handleInputChange}
+                onBlur={handleInputChange}
                 required
               >
               </textarea>
@@ -254,6 +256,7 @@ const EditLesson = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 value={lessonData.cost}
                 onChange={handleInputChange}
+                onBlur={handleInputChange}
                 required
               />
             </div>
@@ -272,6 +275,7 @@ const EditLesson = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 value={lessonData.youtubeLink}
                 onChange={handleInputChange}
+                onBlur={handleInputChange}
               />
             </div>
 
@@ -345,6 +349,48 @@ const EditLesson = () => {
               </button>
             </div>
           </form>
+        );
+      case "reviews":
+        return <LessonRating lessonId={id} />;
+      case "discussion":
+        return <LessonDiscussion lessonId={id} />;
+      default:
+        return null;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-grow container mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+          <h2 className="text-3xl font-bold mb-6 text-center">Edit Lesson</h2>
+          <div className="mb-6">
+            <div className="flex border-b">
+              {["content", "reviews", "discussion"].map((tab) => (
+                <button
+                  key={tab}
+                  className={`py-2 px-4 ${
+                    activeTab === tab
+                      ? "border-b-2 border-indigo-500 text-indigo-600"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                  onClick={() => setActiveTab(tab)}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+          {renderTabContent()}
           <AlertMessage error={error} success={success} />
         </div>
       </main>

@@ -1,100 +1,53 @@
 // src/components/LessonDetail.js
-import React, { useEffect, useState } from "react";
-import supabase from "../utils/supabaseClient";
+import React from "react";
+import ReactMarkdown from "react-markdown";
 import { useAuth } from "../context/AuthContext";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import supabase from "../utils/supabaseClient";
 
-/**
- * LessonDetail Component
- *
- * Displays detailed information about a specific lesson, including purchase options.
- *
- * @param {Object} props
- * @param {Object} props.lesson - The lesson data.
- * @param {Object} props.creator - The creator's data.
- * @param {boolean} props.hasAccess - Whether the user has access to the lesson content.
- * @param {string} props.lessonId - The ID of the lesson.
- * @returns {JSX.Element} The lesson detail component.
- */
 const LessonDetail = ({ lesson, creator, hasAccess, lessonId }) => {
-  const { user, session } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [categoryIds, setCategoryIds] = useState([]);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("tutorial_categories")
-          .select("category_id")
-          .eq("tutorial_id", lessonId);
-
-        if (error) throw error;
-
-        setCategoryIds(data.map((tc) => tc.category_id));
-      } catch (err) {
-        console.error("Error fetching categories:", err.message);
-      }
-    };
-
-    fetchCategories();
-  }, [lessonId]);
-
-  const handlePurchase = async () => {
+  const handleAccessLesson = async () => {
     if (!user) {
+      // Redirect to sign-in page if the user is not logged in
       window.location.href = "/sign-in";
       return;
     }
 
-    setLoading(true);
-    setError(null);
-
     try {
-      const functionsUrl = process.env.REACT_APP_SUPABASE_FUNCTIONS_URL;
-      if (!functionsUrl) {
-        throw new Error("Functions URL not set in environment variables.");
-      }
+      // Insert a new purchase record for the free lesson
+      const { error } = await supabase
+        .from("purchases")
+        .insert([
+          {
+            user_id: user.id,
+            tutorial_id: lessonId,
+            purchase_date: new Date().toISOString(),
+          },
+        ]);
 
-      const response = await fetch(`${functionsUrl}/create-checkout-session`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({ tutorialId: lessonId }),
-      });
+      if (error) throw error;
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to create checkout session.");
-      }
-
-      if (data.sessionUrl) {
-        window.location.href = data.sessionUrl;
-      } else {
-        throw new Error("Checkout session URL not returned.");
-      }
-    } catch (err) {
-      setError(err.message || "An unexpected error occurred.");
-    } finally {
-      setLoading(false);
+      // Refresh the page to update the access status
+      window.location.reload();
+    } catch (error) {
+      console.error("Error granting access to free lesson:", error);
+      alert("An error occurred. Please try again.");
     }
   };
 
   return (
     <div className="bg-white shadow-md rounded p-6">
-      <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1>
       <div className="flex items-center mb-4">
         {creator && creator.avatar_url
           ? (
-            <img
-              src={creator.avatar_url}
-              alt={`${creator.full_name}'s avatar`}
-              className="w-12 h-12 rounded-full mr-4"
-            />
+            <div className="w-12 h-12 mr-4 overflow-hidden rounded-full">
+              <img
+                src={creator.avatar_url}
+                alt={`${creator.full_name}'s avatar`}
+                className="w-full h-full object-cover"
+              />
+            </div>
           )
           : <div className="w-12 h-12 rounded-full bg-gray-300 mr-4"></div>}
         <div>
@@ -104,7 +57,8 @@ const LessonDetail = ({ lesson, creator, hasAccess, lessonId }) => {
         </div>
       </div>
       <p className="mb-4">{lesson.description}</p>
-      <p className="mb-4 font-semibold">Price: ${lesson.price}</p>
+
+      {!hasAccess && <p className="mb-4 font-semibold">Price: Free</p>}
 
       {hasAccess
         ? (
@@ -113,23 +67,22 @@ const LessonDetail = ({ lesson, creator, hasAccess, lessonId }) => {
               <iframe
                 src={lesson.video_url}
                 title={lesson.title}
-                className="w-full h-96 mb-4"
+                className="w-full aspect-video mb-4"
                 allowFullScreen
-              >
-              </iframe>
+              />
             )}
-            <ReactQuill value={lesson.content} readOnly={true} theme="bubble" />
+            <div className="prose max-w-none overflow-y-auto max-h-[60vh] p-4 bg-gray-100 rounded">
+              <ReactMarkdown>{lesson.content}</ReactMarkdown>
+            </div>
           </div>
         )
         : (
           <div>
-            {error && <p className="text-red-500 mb-2">Error: {error}</p>}
             <button
-              className={`btn btn-primary ${loading ? "loading" : ""}`}
-              onClick={handlePurchase}
-              disabled={loading}
+              className="btn btn-primary"
+              onClick={handleAccessLesson}
             >
-              {loading ? "Processing..." : "Purchase Lesson"}
+              {user ? "Access Free Lesson" : "Sign In to Access Free Lesson"}
             </button>
           </div>
         )}

@@ -39,7 +39,14 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
 
         if (lessonsError) throw lessonsError;
 
-        setLessons(allLessons);
+        // Identify the welcome lesson
+        const welcomeLessonId = process.env.REACT_APP_WELCOME_LESSON_ID;
+        const lessonsWithWelcomeFlag = allLessons.map((lesson) => ({
+          ...lesson,
+          isWelcomeLesson: lesson.id === welcomeLessonId,
+        }));
+
+        setLessons(lessonsWithWelcomeFlag);
 
         if (user) {
           const { data: purchases, error: purchasesError } = await supabase
@@ -101,13 +108,14 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
       {showPurchasedOnly && sortedLessons.length === 0
         ? <p>You haven't purchased any lessons yet.</p>
         : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
             {sortedLessons.map((lesson) => (
               <LessonCard
                 key={lesson.id}
                 {...lesson}
                 creatorName={lesson.profiles.full_name}
                 isPurchased={purchasedLessons.includes(lesson.id)}
+                isWelcomeLesson={lesson.isWelcomeLesson}
               />
             ))}
           </div>

@@ -51,9 +51,17 @@ export const AuthProvider = ({ children }) => {
    * @returns {Promise<void>}
    */
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      // Clear local session state
+      setSession(null);
+      setUser(null);
+    } catch (error) {
       console.error("Error signing out:", error.message);
+      // Even if there's an error, we should clear the local session
+      setSession(null);
+      setUser(null);
     }
   };
 
