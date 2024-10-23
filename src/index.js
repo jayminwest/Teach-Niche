@@ -20,6 +20,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import MyPurchasesLayout from "./pages/my-purchases/layout";
 import Logout from "./pages/logout/layout";
 import NotFound from "./pages/not-found/layout";
+import AuthCallback from "./pages/auth/callback";
 
 /**
  * Main entry point for the React application.
@@ -37,6 +38,7 @@ root.render(
           <Route path="/sign-up" element={<SignUpLayout />} />
           <Route path="/forgot-password" element={<ForgotPasswordLayout />} />
           <Route path="/about" element={<AboutLayout />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route
             path="/profile"
             element={
