@@ -81,13 +81,16 @@ const LessonCard = ({
 
   const handleImageError = () => setImageError(true);
 
-  const placeholderImage = "https://via.placeholder.com/400x300?text=Lesson+Image";
+  const placeholderImage =
+    "https://via.placeholder.com/400x300?text=Lesson+Image";
 
   return (
     <div className="card w-80 h-auto bg-base-100 shadow-xl overflow-hidden">
       <figure className="h-48 overflow-hidden">
         <img
-          src={imageError ? placeholderImage : (thumbnail_url || placeholderImage)}
+          src={imageError
+            ? placeholderImage
+            : (thumbnail_url || placeholderImage)}
           alt={`Lesson: ${title}`}
           className="w-full h-full object-cover"
           onError={handleImageError}
@@ -99,23 +102,27 @@ const LessonCard = ({
         <p>Price: ${price}</p>
         <p>{description}</p>
         {error && <p className="text-red-500">{error}</p>}
-        {isCreator ? (
-          <button className="btn btn-primary" onClick={handleEdit}>
-            Edit Lesson
-          </button>
-        ) : isPurchased ? (
-          <button className="btn btn-success" onClick={handleAccess}>
-            Access Lesson
-          </button>
-        ) : (
-          <button
-            className={`btn btn-primary ${loading ? "loading" : ""}`}
-            onClick={handlePurchase}
-            disabled={loading}
-          >
-            {loading ? "Processing..." : "Purchase Lesson"}
-          </button>
-        )}
+        {isCreator
+          ? (
+            <button className="btn btn-primary" onClick={handleEdit}>
+              Edit Lesson
+            </button>
+          )
+          : isPurchased
+          ? (
+            <button className="btn btn-success" onClick={handleAccess}>
+              Access Lesson
+            </button>
+          )
+          : (
+            <button
+              className={`btn btn-primary ${loading ? "loading" : ""}`}
+              onClick={handlePurchase}
+              disabled={loading}
+            >
+              {loading ? "Processing..." : "Purchase Lesson"}
+            </button>
+          )}
       </div>
     </div>
   );

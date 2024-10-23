@@ -30,7 +30,7 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
             *,
             profiles:creator_id (full_name)
           `);
-        
+
         if (limit) {
           query = query.limit(limit);
         }
@@ -49,7 +49,9 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
 
           if (purchasesError) throw purchasesError;
 
-          setPurchasedLessons(purchases.map((purchase) => purchase.tutorial_id));
+          setPurchasedLessons(
+            purchases.map((purchase) => purchase.tutorial_id),
+          );
         }
       } catch (error) {
         console.error("Error fetching lessons or purchases:", error.message);
@@ -68,9 +70,13 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
       case "price_desc":
         return [...lessonsToSort].sort((a, b) => b.price - a.price);
       case "creator_asc":
-        return [...lessonsToSort].sort((a, b) => a.profiles.full_name.localeCompare(b.profiles.full_name));
+        return [...lessonsToSort].sort((a, b) =>
+          a.profiles.full_name.localeCompare(b.profiles.full_name)
+        );
       case "creator_desc":
-        return [...lessonsToSort].sort((a, b) => b.profiles.full_name.localeCompare(a.profiles.full_name));
+        return [...lessonsToSort].sort((a, b) =>
+          b.profiles.full_name.localeCompare(a.profiles.full_name)
+        );
       default:
         return lessonsToSort;
     }
@@ -92,20 +98,20 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
 
   return (
     <div className="container p-4 mx-auto">
-      {showPurchasedOnly && sortedLessons.length === 0 ? (
-        <p>You haven't purchased any lessons yet.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {sortedLessons.map((lesson) => (
-            <LessonCard
-              key={lesson.id}
-              {...lesson}
-              creatorName={lesson.profiles.full_name}
-              isPurchased={purchasedLessons.includes(lesson.id)}
-            />
-          ))}
-        </div>
-      )}
+      {showPurchasedOnly && sortedLessons.length === 0
+        ? <p>You haven't purchased any lessons yet.</p>
+        : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {sortedLessons.map((lesson) => (
+              <LessonCard
+                key={lesson.id}
+                {...lesson}
+                creatorName={lesson.profiles.full_name}
+                isPurchased={purchasedLessons.includes(lesson.id)}
+              />
+            ))}
+          </div>
+        )}
     </div>
   );
 };

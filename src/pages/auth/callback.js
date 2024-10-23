@@ -18,7 +18,7 @@ const AuthCallback = () => {
       try {
         const { data, error } = await supabase.auth.getSession();
         if (error) throw error;
-        
+
         if (data?.session) {
           navigate("/profile");
         } else {

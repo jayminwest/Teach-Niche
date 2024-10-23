@@ -77,39 +77,43 @@ const CreateLesson = () => {
     setSuccess(null);
     setIsSubmitting(true);
 
-    if (!lessonData.title || !lessonData.description || !lessonData.cost || !lessonData.content) {
+    if (
+      !lessonData.title || !lessonData.description || !lessonData.cost ||
+      !lessonData.content
+    ) {
       setError("Please fill in all required fields.");
       setIsSubmitting(false);
       return;
     }
 
     try {
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth
+        .getSession();
       if (sessionError || !sessionData.session) {
         throw new Error("User not authenticated");
       }
 
       let thumbnailUrl = null;
       if (thumbnail) {
-        const fileExt = thumbnail.name.split('.').pop();
+        const fileExt = thumbnail.name.split(".").pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `lesson-thumbnails/${fileName}`;
 
         const { data, error: uploadError } = await supabase.storage
-          .from('lesson-thumbnails')
+          .from("lesson-thumbnails")
           .upload(filePath, thumbnail);
 
         if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage
-          .from('lesson-thumbnails')
+          .from("lesson-thumbnails")
           .getPublicUrl(filePath);
 
         thumbnailUrl = publicUrl;
       }
 
       const { data, error } = await supabase
-        .from('tutorials')
+        .from("tutorials")
         .insert({
           title: lessonData.title,
           description: lessonData.description,
@@ -123,13 +127,13 @@ const CreateLesson = () => {
       if (error) throw error;
 
       if (categoryIds.length > 0) {
-        const categoryInserts = categoryIds.map(categoryId => ({
+        const categoryInserts = categoryIds.map((categoryId) => ({
           tutorial_id: data[0].id,
           category_id: categoryId,
         }));
 
         const { error: categoryError } = await supabase
-          .from('tutorial_categories')
+          .from("tutorial_categories")
           .insert(categoryInserts);
 
         if (categoryError) throw categoryError;
@@ -150,10 +154,15 @@ const CreateLesson = () => {
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-          <h2 className="text-3xl font-bold mb-6 text-center">Create New Lesson</h2>
+          <h2 className="text-3xl font-bold mb-6 text-center">
+            Create New Lesson
+          </h2>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="title"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Title
               </label>
               <input
@@ -168,7 +177,10 @@ const CreateLesson = () => {
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Description
               </label>
               <textarea
@@ -179,11 +191,15 @@ const CreateLesson = () => {
                 value={lessonData.description}
                 onChange={handleInputChange}
                 required
-              ></textarea>
+              >
+              </textarea>
             </div>
 
             <div>
-              <label htmlFor="cost" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="cost"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Cost (USD)
               </label>
               <input
@@ -199,7 +215,10 @@ const CreateLesson = () => {
             </div>
 
             <div>
-              <label htmlFor="youtubeLink" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="youtubeLink"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 YouTube Link (optional)
               </label>
               <input
@@ -218,7 +237,11 @@ const CreateLesson = () => {
               </label>
               <div className="mt-1 flex items-center">
                 {thumbnailPreview && (
-                  <img src={thumbnailPreview} alt="Thumbnail preview" className="w-32 h-32 object-cover mr-4" />
+                  <img
+                    src={thumbnailPreview}
+                    alt="Thumbnail preview"
+                    className="w-32 h-32 object-cover mr-4"
+                  />
                 )}
                 <input
                   type="file"
@@ -235,7 +258,8 @@ const CreateLesson = () => {
               </label>
               <TextEditor
                 value={lessonData.content}
-                onChange={(content) => setLessonData((prev) => ({ ...prev, content }))}
+                onChange={(content) =>
+                  setLessonData((prev) => ({ ...prev, content }))}
               />
             </div>
 
@@ -254,7 +278,10 @@ const CreateLesson = () => {
                         onChange={handleCategoryChange}
                         className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                       />
-                      <label htmlFor={`category-${category.id}`} className="ml-2 block text-sm text-gray-900">
+                      <label
+                        htmlFor={`category-${category.id}`}
+                        className="ml-2 block text-sm text-gray-900"
+                      >
                         {category.name}
                       </label>
                     </div>

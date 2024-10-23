@@ -116,7 +116,10 @@ const EditLesson = () => {
     setSuccess(null);
     setIsSubmitting(true);
 
-    if (!lessonData.title || !lessonData.description || !lessonData.cost || !lessonData.content) {
+    if (
+      !lessonData.title || !lessonData.description || !lessonData.cost ||
+      !lessonData.content
+    ) {
       setError("Please fill in all required fields.");
       setIsSubmitting(false);
       return;
@@ -125,18 +128,18 @@ const EditLesson = () => {
     try {
       let thumbnailUrl = thumbnailPreview;
       if (thumbnail) {
-        const fileExt = thumbnail.name.split('.').pop();
+        const fileExt = thumbnail.name.split(".").pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `lesson-thumbnails/${fileName}`;
 
         const { data, error: uploadError } = await supabase.storage
-          .from('lesson-thumbnails')
+          .from("lesson-thumbnails")
           .upload(filePath, thumbnail);
 
         if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage
-          .from('lesson-thumbnails')
+          .from("lesson-thumbnails")
           .getPublicUrl(filePath);
 
         thumbnailUrl = publicUrl;
@@ -200,7 +203,10 @@ const EditLesson = () => {
           <h2 className="text-3xl font-bold mb-6 text-center">Edit Lesson</h2>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="title"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Title
               </label>
               <input
@@ -215,7 +221,10 @@ const EditLesson = () => {
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Description
               </label>
               <textarea
@@ -226,11 +235,15 @@ const EditLesson = () => {
                 value={lessonData.description}
                 onChange={handleInputChange}
                 required
-              ></textarea>
+              >
+              </textarea>
             </div>
 
             <div>
-              <label htmlFor="cost" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="cost"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Cost (USD)
               </label>
               <input
@@ -246,7 +259,10 @@ const EditLesson = () => {
             </div>
 
             <div>
-              <label htmlFor="youtubeLink" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="youtubeLink"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 YouTube Link (optional)
               </label>
               <input
@@ -265,7 +281,11 @@ const EditLesson = () => {
               </label>
               <div className="mt-1 flex items-center">
                 {thumbnailPreview && (
-                  <img src={thumbnailPreview} alt="Thumbnail preview" className="w-32 h-32 object-cover mr-4" />
+                  <img
+                    src={thumbnailPreview}
+                    alt="Thumbnail preview"
+                    className="w-32 h-32 object-cover mr-4"
+                  />
                 )}
                 <input
                   type="file"
@@ -282,7 +302,8 @@ const EditLesson = () => {
               </label>
               <TextEditor
                 value={lessonData.content}
-                onChange={(content) => setLessonData((prev) => ({ ...prev, content }))}
+                onChange={(content) =>
+                  setLessonData((prev) => ({ ...prev, content }))}
               />
             </div>
 
@@ -302,7 +323,10 @@ const EditLesson = () => {
                         onChange={handleCategoryChange}
                         className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
                       />
-                      <label htmlFor={`category-${category.id}`} className="ml-2 block text-sm text-gray-900">
+                      <label
+                        htmlFor={`category-${category.id}`}
+                        className="ml-2 block text-sm text-gray-900"
+                      >
                         {category.name}
                       </label>
                     </div>

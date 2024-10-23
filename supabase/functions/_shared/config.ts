@@ -16,7 +16,8 @@ export const allowedOrigins = [
  */
 export const corsHeaders = (origin: string) => ({
   "Access-Control-Allow-Origin": origin,
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-client-info, apikey",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, x-client-info, apikey",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Credentials": "true",
   Vary: "Origin",

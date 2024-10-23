@@ -24,7 +24,7 @@ const MarketplaceLayout = () => {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Lesson Marketplace</h1>
           <div className="form-control w-full max-w-xs">
-            <select 
+            <select
               className="select select-bordered"
               value={sortOption}
               onChange={handleSortChange}

@@ -97,7 +97,9 @@ const Profile = () => {
     try {
       const { data, error } = await supabase
         .from("tutorials")
-        .select("id, title, description, price, content_url, created_at, thumbnail_url")
+        .select(
+          "id, title, description, price, content_url, created_at, thumbnail_url",
+        )
         .eq("creator_id", userId);
 
       if (error) throw error;
@@ -156,13 +158,68 @@ const Profile = () => {
   };
 
   const handleDeleteProfile = async () => {
-    try {
-      const { error } = await supabase.from("profiles").delete().eq(
-        "id",
-        user.id,
-      );
-      if (error) throw error;
+    const confirmed = window.confirm(
+      "Are you sure you want to delete your profile? This will permanently delete all your tutorials, purchases, and reviews. This action cannot be undone.",
+    );
 
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      // First get all tutorials by the user
+      const { data: userTutorials, error: tutorialsQueryError } = await supabase
+        .from("tutorials")
+        .select("id")
+        .eq("creator_id", user.id);
+
+      if (tutorialsQueryError) throw tutorialsQueryError;
+
+      const tutorialIds = userTutorials?.map((t) => t.id) || [];
+
+      // Delete reviews (both user's reviews and reviews on their tutorials)
+      const { error: reviewsError } = await supabase
+        .from("reviews")
+        .delete()
+        .or(`user_id.eq.${user.id},tutorial_id.in.(${tutorialIds.join(",")})`);
+
+      if (reviewsError) throw reviewsError;
+
+      // Delete purchases (both user's purchases and purchases of their tutorials)
+      const { error: purchasesError } = await supabase
+        .from("purchases")
+        .delete()
+        .or(`user_id.eq.${user.id},tutorial_id.in.(${tutorialIds.join(",")})`);
+
+      if (purchasesError) throw purchasesError;
+
+      if (tutorialIds.length > 0) {
+        // Delete tutorial categories
+        const { error: categoriesError } = await supabase
+          .from("tutorial_categories")
+          .delete()
+          .in("tutorial_id", tutorialIds);
+
+        if (categoriesError) throw categoriesError;
+
+        // Delete tutorials
+        const { error: tutorialsError } = await supabase
+          .from("tutorials")
+          .delete()
+          .eq("creator_id", user.id);
+
+        if (tutorialsError) throw tutorialsError;
+      }
+
+      // Finally delete the profile
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", user.id);
+
+      if (profileError) throw profileError;
+
+      // Sign out and redirect
       await supabase.auth.signOut();
       navigate("/sign-in");
     } catch (error) {
@@ -220,7 +277,9 @@ const Profile = () => {
       if (deleteError) throw deleteError;
 
       // Remove the lesson from the createdLessons state
-      setCreatedLessons(createdLessons.filter(lesson => lesson.id !== deletingLesson));
+      setCreatedLessons(
+        createdLessons.filter((lesson) => lesson.id !== deletingLesson),
+      );
       setSuccessMessage("Lesson deleted successfully!");
     } catch (error) {
       console.error("Error deleting lesson:", error.message);
@@ -232,6 +291,10 @@ const Profile = () => {
 
   const cancelDeleteLesson = () => {
     setDeletingLesson(null);
+  };
+
+  const handleLogout = () => {
+    navigate("/logout");
   };
 
   if (loading) {
@@ -246,8 +309,10 @@ const Profile = () => {
     <div className="min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="card bg-base-100 shadow-xl max-w-3xl mx-auto">
-          <div className="card-body">
+        <div className="card bg-base-100 shadow-xl max-w-5xl mx-auto">
+          <div className="card-body p-8">
+            <AlertMessage error={error} success={successMessage} />
+
             <div className="tabs tabs-boxed mb-6">
               <a
                 className={`tab ${activeTab === "profile" ? "tab-active" : ""}`}
@@ -294,7 +359,7 @@ const Profile = () => {
             {activeTab === "profile" && (
               <>
                 <h2 className="card-title text-3xl mb-6">Profile</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   <div className="md:col-span-1">
                     <ProfilePicture
                       profilePicture={profileData.profilePicture}
@@ -304,19 +369,45 @@ const Profile = () => {
                           profilePicture: url,
                         })}
                     />
+                    {!profileData.stripe_onboarding_complete && (
+                      <div className="alert alert-warning mt-6 p-4">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="stroke-current shrink-0 h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                          />
+                        </svg>
+                        <span>Connect Stripe to sell lessons.</span>
+                        <button
+                          className="btn btn-sm"
+                          onClick={() => setActiveTab("connect-stripe")}
+                        >
+                          Connect
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <div className="md:col-span-2">
                     <ProfileForm
                       profileData={profileData}
                       onUpdate={handleProfileUpdate}
                     />
+                    <div className="mt-8">
+                      <ActionButtons
+                        onCreateLesson={handleCreateLesson}
+                        onDeleteProfile={handleDeleteProfile}
+                        onLogout={handleLogout}
+                      />
+                    </div>
                   </div>
                 </div>
-                <div className="divider my-6"></div>
-                <ActionButtons
-                  onCreateLesson={handleCreateLesson}
-                  onDeleteProfile={handleDeleteProfile}
-                />
               </>
             )}
 
@@ -363,36 +454,38 @@ const Profile = () => {
             {activeTab === "created" && (
               <>
                 <h2 className="card-title text-2xl mb-4">Created Lessons</h2>
-                {createdLessons.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {createdLessons.map((lesson) => (
-                      <div key={lesson.id} className="relative">
-                        <LessonCard
-                          {...lesson}
-                          creator_id={user.id}
-                          isCreated={true}
-                          isPurchased={false}
-                        />
-                        <div className="absolute top-2 right-2 flex gap-2">
-                          <button
-                            className="btn btn-primary btn-sm"
-                            onClick={() => navigate(`/edit-lesson/${lesson.id}`)}
-                          >
-                            Edit
-                          </button>
-                          <button
-                            className="btn btn-error btn-sm"
-                            onClick={() => handleDeleteLesson(lesson.id)}
-                          >
-                            Delete
-                          </button>
+                {createdLessons.length > 0
+                  ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {createdLessons.map((lesson) => (
+                        <div key={lesson.id} className="relative">
+                          <LessonCard
+                            {...lesson}
+                            creator_id={user.id}
+                            isCreated={true}
+                            isPurchased={false}
+                          />
+                          <div className="absolute top-2 right-2 flex gap-2">
+                            <button
+                              className="btn btn-primary btn-sm"
+                              onClick={() =>
+                                navigate(`/edit-lesson/${lesson.id}`)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="btn btn-error btn-sm"
+                              onClick={() =>
+                                handleDeleteLesson(lesson.id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p>You haven't created any lessons yet.</p>
-                )}
+                      ))}
+                    </div>
+                  )
+                  : <p>You haven't created any lessons yet.</p>}
               </>
             )}
 
@@ -415,8 +508,6 @@ const Profile = () => {
                   : <p>You haven't purchased any lessons yet.</p>}
               </>
             )}
-
-            <AlertMessage error={error} success={successMessage} />
           </div>
         </div>
       </main>
@@ -427,10 +518,20 @@ const Profile = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl">
             <h3 className="text-lg font-bold mb-4">Confirm Deletion</h3>
-            <p>Are you sure you want to delete this lesson? This action cannot be undone.</p>
+            <p>
+              Are you sure you want to delete this lesson? This action cannot be
+              undone.
+            </p>
             <div className="mt-4 flex justify-end space-x-2">
-              <button className="btn btn-ghost" onClick={() => setDeletingLesson(null)}>Cancel</button>
-              <button className="btn btn-error" onClick={confirmDeleteLesson}>Delete</button>
+              <button
+                className="btn btn-ghost"
+                onClick={() => setDeletingLesson(null)}
+              >
+                Cancel
+              </button>
+              <button className="btn btn-error" onClick={confirmDeleteLesson}>
+                Delete
+              </button>
             </div>
           </div>
         </div>
