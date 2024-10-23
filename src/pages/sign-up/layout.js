@@ -1,6 +1,6 @@
 // src/pages/sign-up/layout.js
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import supabase from "../../utils/supabaseClient";
 import Header from "../../components/Header";
@@ -159,6 +159,12 @@ const SignUpLayout = () => {
               Sign Up with Google
             </button>
             <AlertMessage error={error} />
+            <div className="mt-6 text-center">
+              <p>Already have an account?</p>
+              <Link to="/sign-in" className="btn btn-link">
+                Sign In
+              </Link>
+            </div>
           </div>
         </div>
       </main>

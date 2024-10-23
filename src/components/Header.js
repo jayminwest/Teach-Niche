@@ -14,7 +14,7 @@ const Header = () => {
   const { user } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 py-2 bg-base-100">
+    <header className="sticky top-0 z-50 py-2 bg-base-100 border-b border-base-300">
       <div className="container">
         <nav className="navbar px-0">
           <div className="navbar-start">

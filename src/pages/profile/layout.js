@@ -38,6 +38,7 @@ const Profile = () => {
   const [stripeConnected, setStripeConnected] = useState(false);
   const { user } = useAuth();
   const [deletingLesson, setDeletingLesson] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -47,6 +48,19 @@ const Profile = () => {
       navigate("/sign-in");
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   const fetchUserProfile = async () => {
     try {
@@ -297,6 +311,18 @@ const Profile = () => {
     navigate("/logout");
   };
 
+  const tabOptions = [
+    { value: "profile", label: "Profile" },
+    { value: "created", label: "Created Lessons" },
+    { value: "purchased", label: "Purchased Lessons" },
+    ...((!profileData.stripe_onboarding_complete)
+      ? [{ value: "connect-stripe", label: "Connect Stripe" }]
+      : []),
+    ...(stripeConnected
+      ? [{ value: "create-lesson", label: "Create Lesson" }]
+      : []),
+  ];
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -313,48 +339,35 @@ const Profile = () => {
           <div className="card-body p-8">
             <AlertMessage error={error} success={successMessage} />
 
-            <div className="tabs tabs-boxed mb-6">
-              <a
-                className={`tab ${activeTab === "profile" ? "tab-active" : ""}`}
-                onClick={() => setActiveTab("profile")}
-              >
-                Profile
-              </a>
-              <a
-                className={`tab ${activeTab === "created" ? "tab-active" : ""}`}
-                onClick={() => setActiveTab("created")}
-              >
-                Created Lessons
-              </a>
-              <a
-                className={`tab ${
-                  activeTab === "purchased" ? "tab-active" : ""
-                }`}
-                onClick={() => setActiveTab("purchased")}
-              >
-                Purchased Lessons
-              </a>
-              {!profileData.stripe_onboarding_complete && (
-                <a
-                  className={`tab ${
-                    activeTab === "connect-stripe" ? "tab-active" : ""
-                  }`}
-                  onClick={() => setActiveTab("connect-stripe")}
+            {isMobile
+              ? (
+                <select
+                  className="select select-bordered w-full mb-6"
+                  value={activeTab}
+                  onChange={(e) => setActiveTab(e.target.value)}
                 >
-                  Connect Stripe
-                </a>
+                  {tabOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              )
+              : (
+                <div className="tabs tabs-boxed mb-6 flex-wrap justify-center">
+                  {tabOptions.map((option) => (
+                    <a
+                      key={option.value}
+                      className={`tab ${
+                        activeTab === option.value ? "tab-active" : ""
+                      }`}
+                      onClick={() => setActiveTab(option.value)}
+                    >
+                      {option.label}
+                    </a>
+                  ))}
+                </div>
               )}
-              {stripeConnected && (
-                <a
-                  className={`tab ${
-                    activeTab === "create-lesson" ? "tab-active" : ""
-                  }`}
-                  onClick={() => setActiveTab("create-lesson")}
-                >
-                  Create Lesson
-                </a>
-              )}
-            </div>
 
             {activeTab === "profile" && (
               <>

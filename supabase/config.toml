@@ -128,13 +128,13 @@ secure_password_change = false
 max_frequency = "1s"
 
 # Use a production-ready SMTP server
-# [auth.email.smtp]
-# host = "smtp.sendgrid.net"
-# port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+[auth.email.smtp]
+host = "smtp.gmail.com"
+port = 587
+user = "teach-niche-419806@appspot.gserviceaccount.com"
+pass = "1//04dtpwqRPbngZCgYIARAAGAQSNwF-L9Ir59LVzKnjn46q66ZiCWl41E0EECKmFJA3BHRWmCKrdU0zVZCqQfabOUrpCJkPRIqt0Mo"
+admin_email = "info@teach-niche.com"
+sender_name = "Teach Niche"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

@@ -19,10 +19,11 @@ export default function Logout() {
     const performSignOut = async () => {
       try {
         await signOut();
-        navigate("/"); // Redirect to home after logout
+        // Always navigate to home after attempting to sign out
+        navigate("/");
       } catch (err) {
-        setError("Failed to sign out. Please try again.");
         console.error("Error signing out:", err.message);
+        setError("Failed to sign out. Please try again.");
       }
     };
 
@@ -31,7 +32,19 @@ export default function Logout() {
 
   return (
     <div className="flex justify-center items-center h-screen">
-      {error ? <p className="text-red-500">{error}</p> : <p>Signing out...</p>}
+      {error
+        ? (
+          <div>
+            <p className="text-red-500">{error}</p>
+            <button
+              onClick={() => navigate("/")}
+              className="btn btn-primary mt-4"
+            >
+              Return to Home
+            </button>
+          </div>
+        )
+        : <p>Signing out...</p>}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 // src/components/TextEditor.js
-import React from "react";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import React, { useMemo } from "react";
+import SimpleMDE from "react-simplemde-editor";
+import "easymde/dist/easymde.min.css";
 
 /**
  * TextEditor Component
@@ -14,37 +14,33 @@ import "react-quill/dist/quill.snow.css";
  * @returns {JSX.Element} The text editor component.
  */
 const TextEditor = ({ value, onChange }) => {
-  const modules = {
+  const options = useMemo(() => ({
+    autofocus: false,
+    spellChecker: false,
     toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      ["bold", "italic", "underline", "strike", "blockquote"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["link", "image"],
-      ["clean"],
+      "bold",
+      "italic",
+      "heading",
+      "|",
+      "quote",
+      "unordered-list",
+      "ordered-list",
+      "|",
+      "link",
+      "image",
+      "|",
+      "preview",
+      "side-by-side",
+      "fullscreen",
     ],
-  };
-
-  const formats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "blockquote",
-    "list",
-    "bullet",
-    "link",
-    "image",
-  ];
+  }), []);
 
   return (
-    <ReactQuill
-      theme="snow"
+    <SimpleMDE
+      key="simplemde-editor"
       value={value}
       onChange={onChange}
-      modules={modules}
-      formats={formats}
-      placeholder="Write your tutorial content here..."
+      options={options}
     />
   );
 };

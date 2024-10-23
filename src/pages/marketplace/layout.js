@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import LessonsGrid from "./components/LessonsGrid";
@@ -12,6 +12,20 @@ import LessonsGrid from "./components/LessonsGrid";
  */
 const MarketplaceLayout = () => {
   const [sortOption, setSortOption] = useState("default");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   const handleSortChange = (e) => {
     setSortOption(e.target.value);
@@ -21,11 +35,23 @@ const MarketplaceLayout = () => {
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Lesson Marketplace</h1>
-          <div className="form-control w-full max-w-xs">
+        <div
+          className={`${
+            isMobile
+              ? "flex flex-col space-y-4"
+              : "flex justify-between items-center"
+          } mb-6`}
+        >
+          <h1 className={`font-bold ${isMobile ? "text-2xl" : "text-3xl"}`}>
+            Lesson Marketplace
+          </h1>
+          <div
+            className={`form-control ${
+              isMobile ? "w-full" : "w-full max-w-xs"
+            }`}
+          >
             <select
-              className="select select-bordered"
+              className="select select-bordered w-full"
               value={sortOption}
               onChange={handleSortChange}
             >

@@ -17,6 +17,7 @@ import { useAuth } from "../../../context/AuthContext";
  * @param {string} props.description - The lesson description.
  * @param {string} props.thumbnail_url - The lesson thumbnail URL.
  * @param {boolean} props.isPurchased - Whether the lesson has been purchased.
+ * @param {boolean} props.isWelcomeLesson - Whether the lesson is a welcome lesson.
  * @returns {JSX.Element} The Lesson Card.
  */
 const LessonCard = ({
@@ -28,18 +29,32 @@ const LessonCard = ({
   description,
   thumbnail_url,
   isPurchased,
+  isWelcomeLesson,
 }) => {
+  const navigate = useNavigate();
+  const { user, session } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [imageError, setImageError] = useState(false);
-  const { user, session } = useAuth();
-  const navigate = useNavigate();
-
   const isCreator = user && user.id === creator_id;
+
+  const handleAccess = () => navigate(`/lesson/${id}`);
+
+  const handleEdit = () => navigate(`/edit-lesson/${id}`);
+
+  const handleImageError = () => setImageError(true);
+
+  const placeholderImage =
+    "https://via.placeholder.com/400x300?text=Lesson+Image";
 
   const handlePurchase = async () => {
     if (!user) {
       navigate("/sign-in");
+      return;
+    }
+
+    if (isWelcomeLesson) {
+      handleAccess();
       return;
     }
 
@@ -75,15 +90,6 @@ const LessonCard = ({
     }
   };
 
-  const handleAccess = () => navigate(`/lesson/${id}`);
-
-  const handleEdit = () => navigate(`/edit-lesson/${id}`);
-
-  const handleImageError = () => setImageError(true);
-
-  const placeholderImage =
-    "https://via.placeholder.com/400x300?text=Lesson+Image";
-
   return (
     <div className="card w-80 h-auto bg-base-100 shadow-xl overflow-hidden">
       <figure className="h-48 overflow-hidden">
@@ -108,7 +114,7 @@ const LessonCard = ({
               Edit Lesson
             </button>
           )
-          : isPurchased
+          : isPurchased || isWelcomeLesson
           ? (
             <button className="btn btn-success" onClick={handleAccess}>
               Access Lesson
