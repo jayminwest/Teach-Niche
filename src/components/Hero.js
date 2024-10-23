@@ -25,7 +25,7 @@ const Hero = () => {
           <div className="hero-content text-center text-white">
             <div className="max-w-lg">
               <h1 className="mb-5 sm:mb-7 text-4xl sm:text-5xl font-bold">
-                Welcome to Teach Niche!
+                About Teach Niche
               </h1>
               <p className="mb-5 sm:mb-7 sm:text-lg">
                 Empowering the kendama community by providing a platform for
