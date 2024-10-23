@@ -20,15 +20,22 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error fetching session:", error.message);
-      } else {
+      try {
+        setLoading(true);
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
         setSession(session);
         setUser(session?.user || null);
+      } catch (error) {
+        console.error("Error fetching session:", error.message);
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -38,6 +45,7 @@ export const AuthProvider = ({ children }) => {
       (_event, session) => {
         setSession(session);
         setUser(session?.user || null);
+        setLoading(false);
       },
     );
 
@@ -52,16 +60,16 @@ export const AuthProvider = ({ children }) => {
    */
   const signOut = async () => {
     try {
+      setLoading(true);
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-      // Clear local session state
-      setSession(null);
-      setUser(null);
     } catch (error) {
       console.error("Error signing out:", error.message);
-      // Even if there's an error, we should clear the local session
+      setError(error.message);
+    } finally {
       setSession(null);
       setUser(null);
+      setLoading(false);
     }
   };
 
@@ -69,6 +77,8 @@ export const AuthProvider = ({ children }) => {
     session,
     user,
     signOut,
+    loading,
+    error,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

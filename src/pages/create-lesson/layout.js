@@ -21,7 +21,6 @@ const CreateLesson = () => {
     title: "",
     description: "",
     cost: "",
-    youtubeLink: "",
     content: "",
   });
   const [categoryIds, setCategoryIds] = 
@@ -88,6 +87,7 @@ const CreateLesson = () => {
     setError(null);
     setSuccess(null);
     setIsSubmitting(true);
+    setVideoUploadProgress(0);
 
     if (
       !lessonData.title.trim() || 
@@ -127,14 +127,18 @@ const CreateLesson = () => {
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Vimeo upload error:", errorData);
-        let errorMessage = 'Failed to upload video to Vimeo';
-        if (errorData.developer_message) {
-          errorMessage += `: ${errorData.developer_message}`;
-        }
-        throw new Error(errorMessage);
+        throw new Error(errorData.error || 'Failed to upload video to Vimeo');
       }
 
+      // Set up progress listener
+      const channel = new BroadcastChannel("vimeo-upload-progress");
+      channel.onmessage = (event) => {
+        setVideoUploadProgress(event.data.progress);
+      };
+
       const { vimeo_video_id } = await response.json();
+
+      channel.close();
 
       let thumbnailUrl = null;
       if (thumbnail) {
@@ -161,7 +165,6 @@ const CreateLesson = () => {
           title: lessonData.title,
           description: lessonData.description,
           price: parseFloat(lessonData.cost),
-          video_url: lessonData.youtubeLink || null,
           content: lessonData.content,
           creator_id: session.user.id,
           thumbnail_url: thumbnailUrl,
@@ -260,19 +263,26 @@ const CreateLesson = () => {
 
             <div>
               <label
-                htmlFor="youtubeLink"
+                htmlFor="video"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                YouTube Link (optional)
+                Upload Video (required)
               </label>
               <input
-                type="url"
-                id="youtubeLink"
-                name="youtubeLink"
+                type="file"
+                id="video"
+                accept="video/*"
+                onChange={handleVideoChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={lessonData.youtubeLink}
-                onChange={handleInputChange}
+                required
               />
+              {videoUploadProgress > 0 && (
+                <div className="mt-2">
+                  <div className="bg-blue-500 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={{ width: `${videoUploadProgress}%` }}>
+                    {videoUploadProgress}%
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -333,30 +343,6 @@ const CreateLesson = () => {
                 </div>
               </div>
             )}
-
-            <div>
-              <label
-                htmlFor="video"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Upload Video (required)
-              </label>
-              <input
-                type="file"
-                id="video"
-                accept="video/*"
-                onChange={handleVideoChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                required
-              />
-              {videoUploadProgress > 0 && (
-                <div className="mt-2">
-                  <div className="bg-blue-500 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={{ width: `${videoUploadProgress}%` }}>
-                    {videoUploadProgress}%
-                  </div>
-                </div>
-              )}
-            </div>
 
             <div>
               <button

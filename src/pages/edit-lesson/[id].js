@@ -23,10 +23,9 @@ const EditLesson = () => {
     title: "",
     description: "",
     cost: "",
-    youtubeLink: "",
     content: "",
-    thumbnail_url: "", // Add this line
-    vimeo_video_id: "", // Add this line
+    thumbnail_url: "",
+    vimeo_video_id: "",
   });
   const [categoryIds, setCategoryIds] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -60,7 +59,6 @@ const EditLesson = () => {
         title: data.title || "",
         description: data.description || "",
         cost: data.price || "",
-        youtubeLink: data.video_url || "",
         content: data.content || "",
         thumbnail_url: data.thumbnail_url || "",
         vimeo_video_id: data.vimeo_video_id || "",
@@ -131,6 +129,7 @@ const EditLesson = () => {
     setError(null);
     setSuccess(null);
     setIsSubmitting(true);
+    setVideoUploadProgress(0);
 
     if (
       !lessonData.title.trim() || 
@@ -144,7 +143,6 @@ const EditLesson = () => {
     }
 
     try {
-      // Get the session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw sessionError;
 
@@ -155,14 +153,10 @@ const EditLesson = () => {
       let vimeo_video_id = lessonData.vimeo_video_id;
 
       if (videoFile) {
-        // Upload new video to Vimeo
         const formData = new FormData();
         formData.append('video', videoFile);
         formData.append('title', lessonData.title);
         formData.append('description', lessonData.description);
-
-        console.log('Video file:', videoFile);
-        console.log('Form data:', formData);
 
         const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/upload-vimeo-video`, {
           method: 'POST',
@@ -178,8 +172,16 @@ const EditLesson = () => {
           throw new Error(errorData.error || 'Failed to upload video to Vimeo');
         }
 
+        // Set up progress listener
+        const channel = new BroadcastChannel("vimeo-upload-progress");
+        channel.onmessage = (event) => {
+          setVideoUploadProgress(event.data.progress);
+        };
+
         const { vimeo_video_id: new_vimeo_video_id } = await response.json();
         vimeo_video_id = new_vimeo_video_id;
+
+        channel.close();
       }
 
       let thumbnailUrl = thumbnailPreview;
@@ -212,10 +214,9 @@ const EditLesson = () => {
           title: lessonData.title.trim(),
           description: lessonData.description.trim(),
           price: price,
-          video_url: lessonData.youtubeLink.trim() || null,
           content: lessonData.content.trim(),
           thumbnail_url: thumbnailUrl,
-          vimeo_video_id: vimeo_video_id, // Add this line
+          vimeo_video_id: vimeo_video_id,
         })
         .eq("id", id);
 
@@ -255,10 +256,7 @@ const EditLesson = () => {
         return (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label
-                htmlFor="title"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
                 Title
               </label>
               <input
@@ -268,16 +266,12 @@ const EditLesson = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 value={lessonData.title}
                 onChange={handleInputChange}
-                onBlur={handleInputChange}
                 required
               />
             </div>
 
             <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
                 Description
               </label>
               <textarea
@@ -287,17 +281,12 @@ const EditLesson = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 value={lessonData.description}
                 onChange={handleInputChange}
-                onBlur={handleInputChange}
                 required
-              >
-              </textarea>
+              ></textarea>
             </div>
 
             <div>
-              <label
-                htmlFor="cost"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="cost" className="block text-sm font-medium text-gray-700 mb-1">
                 Cost (USD)
               </label>
               <input
@@ -308,26 +297,7 @@ const EditLesson = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 value={lessonData.cost}
                 onChange={handleInputChange}
-                onBlur={handleInputChange}
                 required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="youtubeLink"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                YouTube Link (optional)
-              </label>
-              <input
-                type="url"
-                id="youtubeLink"
-                name="youtubeLink"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={lessonData.youtubeLink}
-                onChange={handleInputChange}
-                onBlur={handleInputChange}
               />
             </div>
 
@@ -392,10 +362,7 @@ const EditLesson = () => {
             )}
 
             <div>
-              <label
-                htmlFor="video"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="video" className="block text-sm font-medium text-gray-700 mb-1">
                 Upload New Video (optional)
               </label>
               <input

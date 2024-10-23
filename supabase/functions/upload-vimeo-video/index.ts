@@ -6,16 +6,22 @@ import {
   allowedOrigins 
 } from "../_shared/config.ts";
 
+const VIMEO_API_URL = "https://api.vimeo.com";
+
 serve(async (req) => {
   const origin = req.headers.get("origin") || "";
+  console.log("Request origin:", origin);
 
-  // Handle CORS preflight request
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders(origin) });
   }
 
-  // Check if the origin is allowed
-  if (!allowedOrigins.includes(origin)) {
+  // Allow requests with no origin (like mobile apps or curl requests)
+  if (!origin && !allowedOrigins.includes(origin)) {
+    console.log("Request has no origin or origin is not in the allowed list");
+    // Proceed with the request, but log it for monitoring
+  } else if (!allowedOrigins.includes(origin)) {
+    console.log("Origin not allowed:", origin);
     return createCorsResponse(403, { error: "Origin not allowed" }, origin);
   }
 
@@ -56,8 +62,8 @@ serve(async (req) => {
       return createCorsResponse(400, { error: "Missing required fields" }, origin);
     }
 
-    // Create a new video on Vimeo
-    const createResponse = await fetch("https://api.vimeo.com/me/videos", {
+    console.log("Creating video on Vimeo...");
+    const createResponse = await fetch(`${VIMEO_API_URL}/me/videos`, {
       method: "POST",
       headers: {
         "Authorization": `bearer ${vimeoAccessToken}`,
@@ -77,21 +83,20 @@ serve(async (req) => {
     if (!createResponse.ok) {
       const errorData = await createResponse.json();
       console.error("Vimeo API error:", errorData);
-      let errorMessage = 'Failed to create video on Vimeo';
-      if (errorData.developer_message) {
-        errorMessage += `: ${errorData.developer_message}`;
-      }
-      if (errorData.error_code) {
-        errorMessage += ` (Error code: ${errorData.error_code})`;
-      }
-      return createCorsResponse(500, { error: errorMessage }, origin);
+      return createCorsResponse(500, { error: 'Failed to create video on Vimeo', details: errorData }, origin);
     }
 
     const createData = await createResponse.json();
+    console.log("Vimeo API response:", createData);
+
     const uploadLink = createData.upload.upload_link;
     const vimeoVideoId = createData.uri.split("/").pop();
 
-    // Upload the video file to Vimeo
+    if (!uploadLink) {
+      return createCorsResponse(500, { error: "Failed to get upload link from Vimeo" }, origin);
+    }
+
+    console.log("Uploading video to Vimeo...");
     const uploadResponse = await fetch(uploadLink, {
       method: "PATCH",
       headers: {
@@ -103,7 +108,46 @@ serve(async (req) => {
     });
 
     if (!uploadResponse.ok) {
+      console.error("Vimeo upload error:", await uploadResponse.text());
       return createCorsResponse(500, { error: "Failed to upload video to Vimeo" }, origin);
+    }
+
+    console.log("Video uploaded successfully");
+
+    // Wait for the video to be processed
+    let videoData;
+    let attempts = 0;
+    const maxAttempts = 10;
+    const delay = 5000; // 5 seconds
+
+    while (attempts < maxAttempts) {
+      const verifyResponse = await fetch(`${VIMEO_API_URL}/videos/${vimeoVideoId}`, {
+        headers: {
+          "Authorization": `bearer ${vimeoAccessToken}`,
+          "Content-Type": "application/json",
+          "Accept": "application/vnd.vimeo.*+json;version=3.4",
+        },
+      });
+
+      if (!verifyResponse.ok) {
+        console.error("Failed to verify video upload:", await verifyResponse.text());
+        return createCorsResponse(500, { error: "Failed to verify video upload" }, origin);
+      }
+
+      videoData = await verifyResponse.json();
+      console.log("Video data:", videoData);
+
+      if (videoData.status === "available") {
+        break;
+      }
+
+      await new Promise(resolve => setTimeout(resolve, delay));
+      attempts++;
+    }
+
+    if (videoData.status !== "available") {
+      console.error("Video processing timed out");
+      return createCorsResponse(500, { error: "Video processing timed out" }, origin);
     }
 
     return createCorsResponse(200, { vimeo_video_id: vimeoVideoId }, origin);

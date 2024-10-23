@@ -7,8 +7,12 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { user_id } = req.body
+  const authHeader = req.headers.authorization
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Missing authorization header' })
+  }
 
+  const { user_id } = req.body
   if (!user_id) {
     return res.status(400).json({ error: 'User ID is required' })
   }
@@ -16,6 +20,9 @@ export default async function handler(req, res) {
   try {
     const { data, error } = await supabase.functions.invoke('vimeo-oauth', {
       body: JSON.stringify({ user_id }),
+      headers: {
+        Authorization: authHeader
+      }
     })
 
     if (error) throw error
