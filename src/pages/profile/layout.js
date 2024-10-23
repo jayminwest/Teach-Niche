@@ -171,6 +171,14 @@ const Profile = () => {
     }
   };
 
+  const handleProfilePictureUpdate = async (newPictureUrl) => {
+    const updatedProfileData = {
+      ...profileData,
+      profilePicture: newPictureUrl,
+    };
+    await handleProfileUpdate(updatedProfileData);
+  };
+
   const handleDeleteProfile = async () => {
     const confirmed = window.confirm(
       "Are you sure you want to delete your profile? This will permanently delete all your tutorials, purchases, and reviews. This action cannot be undone.",
@@ -334,72 +342,54 @@ const Profile = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-grow container mx-auto px-4 py-8">
+      <main className="flex-grow container mx-auto px-4 sm:px-6 py-8">
         <div className="card bg-base-100 shadow-xl max-w-5xl mx-auto">
-          <div className="card-body p-8">
+          <div className="card-body p-4 sm:p-8">
             <AlertMessage error={error} success={successMessage} />
 
-            {isMobile
-              ? (
-                <select
-                  className="select select-bordered w-full mb-6"
-                  value={activeTab}
-                  onChange={(e) => setActiveTab(e.target.value)}
+            <div className="tabs tabs-boxed mb-6 bg-gray-100 p-1 rounded-full">
+              {tabOptions.map((option) => (
+                <a
+                  key={option.value}
+                  className={`tab tab-lg flex-1 rounded-full ${
+                    activeTab === option.value ? "bg-primary text-white" : ""
+                  }`}
+                  onClick={() => setActiveTab(option.value)}
                 >
-                  {tabOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              )
-              : (
-                <div className="tabs tabs-boxed mb-6 flex-wrap justify-center">
-                  {tabOptions.map((option) => (
-                    <a
-                      key={option.value}
-                      className={`tab ${
-                        activeTab === option.value ? "tab-active" : ""
-                      }`}
-                      onClick={() => setActiveTab(option.value)}
-                    >
-                      {option.label}
-                    </a>
-                  ))}
-                </div>
-              )}
+                  {option.label}
+                </a>
+              ))}
+            </div>
 
             {activeTab === "profile" && (
               <>
-                <h2 className="card-title text-3xl mb-6">Profile</h2>
+                <h2 className="text-4xl font-bold mb-6">Profile</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   <div className="md:col-span-1">
                     <ProfilePicture
                       profilePicture={profileData.profilePicture}
-                      onUpdate={(url) =>
-                        handleProfileUpdate({
-                          ...profileData,
-                          profilePicture: url,
-                        })}
+                      onUpdate={handleProfilePictureUpdate}
                     />
                     {!profileData.stripe_onboarding_complete && (
-                      <div className="alert alert-warning mt-6 p-4">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="stroke-current shrink-0 h-6 w-6"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                          />
-                        </svg>
-                        <span>Connect Stripe to sell lessons.</span>
+                      <div className="alert alert-warning mt-6 p-4 flex flex-col items-start">
+                        <div className="flex items-center mb-2">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="stroke-current shrink-0 h-6 w-6 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                            />
+                          </svg>
+                          <span>Connect Stripe to sell lessons.</span>
+                        </div>
                         <button
-                          className="btn btn-sm"
+                          className="btn btn-sm btn-neutral w-full mt-2"
                           onClick={() => setActiveTab("connect-stripe")}
                         >
                           Connect

@@ -13,17 +13,17 @@ import React from "react";
  */
 const ActionButtons = ({ onCreateLesson, onDeleteProfile, onLogout }) => {
   return (
-    <div className="flex justify-between items-center">
-      <div>
+    <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
         <button
-          className="btn btn-error mr-2"
+          className="btn btn-error w-full sm:w-auto"
           onClick={onDeleteProfile}
           aria-label="Delete Profile"
         >
           Delete Profile
         </button>
         <button
-          className="btn btn-primary"
+          className="btn btn-primary w-full sm:w-auto"
           onClick={onLogout}
           aria-label="Logout"
         >
@@ -31,7 +31,7 @@ const ActionButtons = ({ onCreateLesson, onDeleteProfile, onLogout }) => {
         </button>
       </div>
       <button
-        className="btn btn-success"
+        className="btn btn-success w-full sm:w-auto"
         onClick={onCreateLesson}
         aria-label="Create Lesson"
       >
