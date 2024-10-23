@@ -11,6 +11,7 @@ import AlertMessage from "../../components/AlertMessage";
 import LessonCard from "../marketplace/components/LessonCard";
 import LessonCreationGuide from "./components/LessonCreationGuide";
 import { useAuth } from "../../context/AuthContext";
+import ConnectVimeoButton from '../../components/ConnectVimeoButton';
 
 /**
  * Profile Component
@@ -39,11 +40,13 @@ const Profile = () => {
   const { user } = useAuth();
   const [deletingLesson, setDeletingLesson] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isVimeoConnected, setIsVimeoConnected] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchUserProfile();
       checkStripeConnectionStatus();
+      checkVimeoConnection();
     } else {
       navigate("/sign-in");
     }
@@ -319,6 +322,23 @@ const Profile = () => {
     navigate("/logout");
   };
 
+  const checkVimeoConnection = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('vimeo_access_token')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      setIsVimeoConnected(!!data.vimeo_access_token);
+    } catch (error) {
+      console.error('Error checking Vimeo connection:', error);
+      setIsVimeoConnected(false);
+    }
+  };
+
   const tabOptions = [
     { value: "profile", label: "Profile" },
     { value: "created", label: "Created Lessons" },
@@ -511,6 +531,15 @@ const Profile = () => {
                   : <p>You haven't purchased any lessons yet.</p>}
               </>
             )}
+
+            <div className="mt-8">
+              <h2 className="text-2xl font-bold mb-4">Vimeo Connection</h2>
+              {isVimeoConnected ? (
+                <p>Your Vimeo account is connected.</p>
+              ) : (
+                <ConnectVimeoButton onConnect={checkVimeoConnection} />
+              )}
+            </div>
           </div>
         </div>
       </main>

@@ -14,20 +14,9 @@ const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
 /**
- * Supabase client configuration options.
- * @type {Object}
- */
-const supabaseOptions = {
-  auth: {
-    persistSession: true,
-    detectSessionInUrl: true,
-  },
-};
-
-/**
  * Initialized Supabase client for client-side operations.
  * @type {SupabaseClient}
  */
-const supabase = createClient(supabaseUrl, supabaseAnonKey, supabaseOptions);
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default supabase;
