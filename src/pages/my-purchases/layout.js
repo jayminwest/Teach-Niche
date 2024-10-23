@@ -26,7 +26,10 @@ const MyPurchasesLayout = () => {
         <Header />
         <main className="flex-grow flex justify-center items-center">
           <p className="text-center">
-            Please <a href="/sign-in" className="text-blue-500 hover:underline">sign in</a>{" "}
+            Please{" "}
+            <a href="/sign-in" className="text-blue-500 hover:underline">
+              sign in
+            </a>{" "}
             to view your purchased lessons.
           </p>
         </main>
@@ -42,7 +45,7 @@ const MyPurchasesLayout = () => {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">My Purchased Lessons</h1>
           <div className="form-control w-full max-w-xs">
-            <select 
+            <select
               className="select select-bordered"
               value={sortOption}
               onChange={handleSortChange}

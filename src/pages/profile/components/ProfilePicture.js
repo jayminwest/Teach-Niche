@@ -46,18 +46,20 @@ const ProfilePicture = ({ profilePicture, onUpdate }) => {
   return (
     <div className="avatar">
       <div className="w-32 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-        {profilePicture ? (
-          <img 
-            src={profilePicture} 
-            alt="Profile" 
-            onError={handleImageError}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        ) : (
-          <div className="bg-neutral-focus text-neutral-content rounded-full w-32 h-32 flex items-center justify-center">
-            <span className="text-3xl">?</span>
-          </div>
-        )}
+        {profilePicture
+          ? (
+            <img
+              src={profilePicture}
+              alt="Profile"
+              onError={handleImageError}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          )
+          : (
+            <div className="bg-neutral-focus text-neutral-content rounded-full w-32 h-32 flex items-center justify-center">
+              <span className="text-3xl">?</span>
+            </div>
+          )}
       </div>
       <label
         htmlFor="profilePicture"

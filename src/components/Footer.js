@@ -22,16 +22,19 @@ const Footer = () => {
     setSubscriptionError(null);
 
     try {
-      console.log("Sending request to:", `${process.env.REACT_APP_SUPABASE_FUNCTIONS_URL}/subscribe`);
+      console.log(
+        "Sending request to:",
+        `${process.env.REACT_APP_SUPABASE_FUNCTIONS_URL}/subscribe`,
+      );
       const response = await fetch(
         `${process.env.REACT_APP_SUPABASE_FUNCTIONS_URL}/subscribe`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ email }),
-        }
+        },
       );
 
       console.log("Response status:", response.status);
@@ -42,7 +45,7 @@ const Footer = () => {
         setSubscriptionMessage(data.message);
         setEmail("");
       } else {
-        throw new Error(data.error || 'Subscription failed');
+        throw new Error(data.error || "Subscription failed");
       }
     } catch (error) {
       console.error("Subscription error:", error);
@@ -99,7 +102,10 @@ const Footer = () => {
                 </button>
               </div>
             </fieldset>
-            <AlertMessage success={subscriptionMessage} error={subscriptionError} />
+            <AlertMessage
+              success={subscriptionMessage}
+              error={subscriptionError}
+            />
           </form>
         </div>
 

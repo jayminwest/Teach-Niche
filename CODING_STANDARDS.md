@@ -1,15 +1,19 @@
 # Coding and Documentation Standards
 
-This document outlines the coding and documentation standards used in the Teach Niche project. Following these standards ensures consistency across the codebase and makes it easier for developers to understand and maintain the code.
+This document outlines the coding and documentation standards used in the Teach
+Niche project. Following these standards ensures consistency across the codebase
+and makes it easier for developers to understand and maintain the code.
 
 ## JavaScript/TypeScript
 
 ### General
 
 - Use ES6+ features when possible.
-- Use `const` for variables that are not reassigned, and `let` for those that are.
+- Use `const` for variables that are not reassigned, and `let` for those that
+  are.
 - Avoid using `var`.
-- Use arrow functions for anonymous functions and method definitions when `this` binding is not required.
+- Use arrow functions for anonymous functions and method definitions when `this`
+  binding is not required.
 - Use template literals for string interpolation.
 
 ### Naming Conventions
@@ -45,8 +49,10 @@ This document outlines the coding and documentation standards used in the Teach 
 
 ### JSDoc
 
-- Use JSDoc comments for documenting components, functions, and complex code blocks.
-- Include a brief description, `@param` tags for parameters, and `@returns` tag for return values.
+- Use JSDoc comments for documenting components, functions, and complex code
+  blocks.
+- Include a brief description, `@param` tags for parameters, and `@returns` tag
+  for return values.
 - For React components, document props using the `@param` tag.
 
 Example:

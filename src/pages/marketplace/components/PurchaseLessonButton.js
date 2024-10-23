@@ -42,7 +42,7 @@ const PurchaseLessonButton = ({ lessonId }) => {
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ lessonId }),
-        }
+        },
       );
 
       if (!response.ok) {

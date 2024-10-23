@@ -24,7 +24,7 @@ const ProfileForm = ({ profileData, onUpdate }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="form-control">
         <label className="label" htmlFor="fullName">
           <span className="label-text">Full Name</span>
@@ -34,13 +34,13 @@ const ProfileForm = ({ profileData, onUpdate }) => {
           id="fullName"
           name="fullName"
           placeholder="Full Name"
-          className="input input-bordered"
+          className="input input-bordered w-full"
           value={formData.fullName}
           onChange={handleChange}
           required
         />
       </div>
-      <div className="form-control mt-4">
+      <div className="form-control">
         <label className="label" htmlFor="socialMediaTag">
           <span className="label-text">Social Media Tag</span>
         </label>
@@ -49,12 +49,12 @@ const ProfileForm = ({ profileData, onUpdate }) => {
           id="socialMediaTag"
           name="socialMediaTag"
           placeholder="Social Media Tag"
-          className="input input-bordered"
+          className="input input-bordered w-full"
           value={formData.socialMediaTag}
           onChange={handleChange}
         />
       </div>
-      <div className="form-control mt-4">
+      <div className="form-control">
         <label className="label" htmlFor="bio">
           <span className="label-text">Bio</span>
         </label>
@@ -65,7 +65,8 @@ const ProfileForm = ({ profileData, onUpdate }) => {
           className="textarea textarea-bordered h-24"
           value={formData.bio}
           onChange={handleChange}
-        ></textarea>
+        >
+        </textarea>
       </div>
       <div className="form-control mt-6">
         <button className="btn btn-primary" type="submit">
