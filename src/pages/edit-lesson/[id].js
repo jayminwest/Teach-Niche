@@ -7,6 +7,7 @@ import supabase from "../../utils/supabaseClient";
 import AlertMessage from "../../components/AlertMessage";
 import LessonRating from "../../components/LessonRating";
 import LessonDiscussion from "../../components/LessonDiscussion";
+import { useAuth } from "../../context/AuthContext";
 
 /**
  * EditLesson Component
@@ -22,9 +23,9 @@ const EditLesson = () => {
     title: "",
     description: "",
     cost: "",
-    youtubeLink: "",
     content: "",
-    thumbnail_url: "", // Add this line
+    thumbnail_url: "",
+    vimeo_video_id: "",
   });
   const [categoryIds, setCategoryIds] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -35,6 +36,9 @@ const EditLesson = () => {
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("content");
+  const { user } = useAuth();
+  const [videoFile, setVideoFile] = useState(null);
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
 
   useEffect(() => {
     fetchLessonData();
@@ -55,9 +59,9 @@ const EditLesson = () => {
         title: data.title || "",
         description: data.description || "",
         cost: data.price || "",
-        youtubeLink: data.video_url || "",
         content: data.content || "",
         thumbnail_url: data.thumbnail_url || "",
+        vimeo_video_id: data.vimeo_video_id || "",
       });
       setThumbnailPreview(data.thumbnail_url || null);
 
@@ -113,16 +117,25 @@ const EditLesson = () => {
     }
   };
 
+  const handleVideoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setVideoFile(file);
+      setVideoUploadProgress(0); // Reset progress when a new file is selected
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
     setIsSubmitting(true);
+    setVideoUploadProgress(0);
 
     if (
-      !lessonData.title.trim() ||
-      !lessonData.description.trim() ||
-      lessonData.cost === "" ||
+      !lessonData.title.trim() || 
+      !lessonData.description.trim() || 
+      lessonData.cost === '' || 
       !lessonData.content.trim()
     ) {
       setError("Please fill in all required fields.");
@@ -131,6 +144,52 @@ const EditLesson = () => {
     }
 
     try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+
+      if (!session) {
+        throw new Error("No active session. Please log in and try again.");
+      }
+
+      let vimeo_video_id = lessonData.vimeo_video_id;
+
+      if (videoFile) {
+        const formData = new FormData();
+        formData.append('video', videoFile);
+        formData.append('title', lessonData.title);
+        formData.append('description', lessonData.description);
+
+        const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/upload-vimeo-video`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("Vimeo upload error:", errorData);
+          throw new Error(errorData.error || 'Failed to upload video to Vimeo');
+        }
+
+        // Simulate progress updates
+        const progressInterval = setInterval(() => {
+          setVideoUploadProgress((prev) => {
+            if (prev >= 100) {
+              clearInterval(progressInterval);
+              return 100;
+            }
+            return prev + 10;
+          });
+        }, 1000);
+
+        const { vimeo_video_id: new_vimeo_video_id } = await response.json();
+        vimeo_video_id = new_vimeo_video_id;
+
+        clearInterval(progressInterval);
+      }
+
       let thumbnailUrl = thumbnailPreview;
       if (thumbnail) {
         const fileExt = thumbnail.name.split(".").pop();
@@ -161,9 +220,9 @@ const EditLesson = () => {
           title: lessonData.title.trim(),
           description: lessonData.description.trim(),
           price: price,
-          video_url: lessonData.youtubeLink.trim() || null,
           content: lessonData.content.trim(),
           thumbnail_url: thumbnailUrl,
+          vimeo_video_id: vimeo_video_id,
         })
         .eq("id", id);
 
@@ -203,10 +262,7 @@ const EditLesson = () => {
         return (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label
-                htmlFor="title"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
                 Title
               </label>
               <input
@@ -216,16 +272,12 @@ const EditLesson = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 value={lessonData.title}
                 onChange={handleInputChange}
-                onBlur={handleInputChange}
                 required
               />
             </div>
 
             <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
                 Description
               </label>
               <textarea
@@ -235,17 +287,12 @@ const EditLesson = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 value={lessonData.description}
                 onChange={handleInputChange}
-                onBlur={handleInputChange}
                 required
-              >
-              </textarea>
+              ></textarea>
             </div>
 
             <div>
-              <label
-                htmlFor="cost"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
+              <label htmlFor="cost" className="block text-sm font-medium text-gray-700 mb-1">
                 Cost (USD)
               </label>
               <input
@@ -256,26 +303,7 @@ const EditLesson = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 value={lessonData.cost}
                 onChange={handleInputChange}
-                onBlur={handleInputChange}
                 required
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="youtubeLink"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                YouTube Link (optional)
-              </label>
-              <input
-                type="url"
-                id="youtubeLink"
-                name="youtubeLink"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={lessonData.youtubeLink}
-                onChange={handleInputChange}
-                onBlur={handleInputChange}
               />
             </div>
 
@@ -338,6 +366,26 @@ const EditLesson = () => {
                 </div>
               </div>
             )}
+
+            <div>
+              <label htmlFor="video" className="block text-sm font-medium text-gray-700 mb-1">
+                Upload New Video (optional)
+              </label>
+              <input
+                type="file"
+                id="video"
+                accept="video/*"
+                onChange={handleVideoChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+              />
+              {videoUploadProgress > 0 && (
+                <div className="mt-2">
+                  <div className="bg-blue-500 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={{ width: `${videoUploadProgress}%` }}>
+                    {videoUploadProgress}%
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div>
               <button

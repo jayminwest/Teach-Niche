@@ -7,6 +7,8 @@ export const allowedOrigins = [
   "http://localhost:3000",
   "https://teach-niche.com",
   "https://www.teach-niche.com",
+  "https://wcqpttujocyvueudlcnt.supabase.co",
+  // Add any other origins that should be allowed to make requests
 ];
 
 /**
@@ -15,12 +17,9 @@ export const allowedOrigins = [
  * @returns Object containing CORS headers
  */
 export const corsHeaders = (origin: string) => ({
-  "Access-Control-Allow-Origin": origin,
-  "Access-Control-Allow-Headers":
-    "Content-Type, Authorization, x-client-info, apikey",
+  "Access-Control-Allow-Origin": allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Credentials": "true",
-  Vary: "Origin",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 });
 
 /**
@@ -37,9 +36,6 @@ export const createCorsResponse = (
 ) => {
   return new Response(JSON.stringify(body), {
     status,
-    headers: {
-      "Content-Type": "application/json",
-      ...corsHeaders(origin),
-    },
+    headers: { ...corsHeaders(origin), "Content-Type": "application/json" },
   });
 };

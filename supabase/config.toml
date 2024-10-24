@@ -131,10 +131,10 @@ max_frequency = "1s"
 [auth.email.smtp]
 host = "smtp.gmail.com"
 port = 587
-user = "teach-niche-419806@appspot.gserviceaccount.com"
-pass = "1//04dtpwqRPbngZCgYIARAAGAQSNwF-L9Ir59LVzKnjn46q66ZiCWl41E0EECKmFJA3BHRWmCKrdU0zVZCqQfabOUrpCJkPRIqt0Mo"
-admin_email = "info@teach-niche.com"
-sender_name = "Teach Niche"
+user = "env(SUPABASE_SMTP_USER)"
+pass = "env(SUPABASE_SMTP_PASS)"
+admin_email = "env(SUPABASE_ADMIN_EMAIL)"
+sender_name = "env(SUPABASE_SENDER_NAME)"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

@@ -7,6 +7,7 @@ import Footer from "../../components/Footer";
 import TextEditor from "../../components/TextEditor";
 import supabase from "../../utils/supabaseClient";
 import AlertMessage from "../../components/AlertMessage";
+import { useAuth } from "../../context/AuthContext";
 
 /**
  * CreateLesson Component
@@ -20,10 +21,10 @@ const CreateLesson = () => {
     title: "",
     description: "",
     cost: "",
-    youtubeLink: "",
     content: "",
   });
-  const [categoryIds, setCategoryIds] = useState([]);
+  const [categoryIds, setCategoryIds] = 
+  useState([]);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -31,6 +32,9 @@ const CreateLesson = () => {
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [videoFile, setVideoFile] = useState(null);
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
 
   useEffect(() => {
     fetchCategories();
@@ -71,29 +75,76 @@ const CreateLesson = () => {
     }
   };
 
+  const handleVideoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setVideoFile(file);
+      setVideoUploadProgress(0); // Reset progress when a new file is selected
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
     setIsSubmitting(true);
+    setVideoUploadProgress(0);
 
     if (
-      !lessonData.title.trim() ||
-      !lessonData.description.trim() ||
-      !lessonData.cost ||
-      !lessonData.content.trim()
+      !lessonData.title.trim() || 
+      !lessonData.description.trim() || 
+      !lessonData.cost || 
+      !lessonData.content.trim() ||
+      !videoFile
     ) {
-      setError("Please fill in all required fields.");
+      setError("Please fill in all required fields and upload a video.");
       setIsSubmitting(false);
       return;
     }
 
     try {
-      const { data: sessionData, error: sessionError } = await supabase.auth
-        .getSession();
-      if (sessionError || !sessionData.session) {
-        throw new Error("User not authenticated");
+      // Get the session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+
+      if (!session) {
+        throw new Error("No active session. Please log in and try again.");
       }
+
+      // Upload video to Vimeo
+      const formData = new FormData();
+      formData.append('video', videoFile);
+      formData.append('title', lessonData.title);
+      formData.append('description', lessonData.description);
+
+      const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/upload-vimeo-video`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Vimeo upload error:", errorData);
+        throw new Error(errorData.error || 'Failed to upload video to Vimeo');
+      }
+
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setVideoUploadProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(progressInterval);
+            return 100;
+          }
+          return prev + 10;
+        });
+      }, 1000);
+
+      const { vimeo_video_id } = await response.json();
+
+      clearInterval(progressInterval);
 
       let thumbnailUrl = null;
       if (thumbnail) {
@@ -120,10 +171,10 @@ const CreateLesson = () => {
           title: lessonData.title,
           description: lessonData.description,
           price: parseFloat(lessonData.cost),
-          video_url: lessonData.youtubeLink || null,
           content: lessonData.content,
-          creator_id: sessionData.session.user.id,
+          creator_id: session.user.id,
           thumbnail_url: thumbnailUrl,
+          vimeo_video_id: vimeo_video_id,
         });
 
       if (error) throw error;
@@ -218,19 +269,26 @@ const CreateLesson = () => {
 
             <div>
               <label
-                htmlFor="youtubeLink"
+                htmlFor="video"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                YouTube Link (optional)
+                Upload Video (required)
               </label>
               <input
-                type="url"
-                id="youtubeLink"
-                name="youtubeLink"
+                type="file"
+                id="video"
+                accept="video/*"
+                onChange={handleVideoChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={lessonData.youtubeLink}
-                onChange={handleInputChange}
+                required
               />
+              {videoUploadProgress > 0 && (
+                <div className="mt-2">
+                  <div className="bg-blue-500 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={{ width: `${videoUploadProgress}%` }}>
+                    {videoUploadProgress}%
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
