@@ -79,6 +79,7 @@ const CreateLesson = () => {
     const file = e.target.files[0];
     if (file) {
       setVideoFile(file);
+      setVideoUploadProgress(0); // Reset progress when a new file is selected
     }
   };
 
@@ -130,15 +131,20 @@ const CreateLesson = () => {
         throw new Error(errorData.error || 'Failed to upload video to Vimeo');
       }
 
-      // Set up progress listener
-      const channel = new BroadcastChannel("vimeo-upload-progress");
-      channel.onmessage = (event) => {
-        setVideoUploadProgress(event.data.progress);
-      };
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setVideoUploadProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(progressInterval);
+            return 100;
+          }
+          return prev + 10;
+        });
+      }, 1000);
 
       const { vimeo_video_id } = await response.json();
 
-      channel.close();
+      clearInterval(progressInterval);
 
       let thumbnailUrl = null;
       if (thumbnail) {

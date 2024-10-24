@@ -11,33 +11,40 @@ const VIMEO_API_URL = "https://api.vimeo.com";
 serve(async (req) => {
   const origin = req.headers.get("origin") || "";
   console.log("Request origin:", origin);
+  console.log("Request method:", req.method);
+  console.log("All request headers:", JSON.stringify(Object.fromEntries(req.headers), null, 2));
 
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders(origin) });
   }
 
-  // Allow requests with no origin (like mobile apps or curl requests)
-  if (!origin && !allowedOrigins.includes(origin)) {
-    console.log("Request has no origin or origin is not in the allowed list");
-    // Proceed with the request, but log it for monitoring
-  } else if (!allowedOrigins.includes(origin)) {
-    console.log("Origin not allowed:", origin);
-    return createCorsResponse(403, { error: "Origin not allowed" }, origin);
-  }
-
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    if (!origin && !allowedOrigins.includes(origin)) {
+      console.log("Request has no origin or origin is not in the allowed list");
+    } else if (!allowedOrigins.includes(origin)) {
+      console.log("Origin not allowed:", origin);
+      return createCorsResponse(403, { error: "Origin not allowed" }, origin);
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!supabaseUrl || !supabaseServiceRoleKey) {
+      console.error("Missing Supabase environment variables");
+      return createCorsResponse(500, { error: "Server configuration error" }, origin);
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return createCorsResponse(401, { error: "Missing Authorization header" }, origin);
     }
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser(authHeader.replace("Bearer ", ""));
-    if (userError || !user) {
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
       return createCorsResponse(401, { error: "Unauthorized" }, origin);
     }
 
@@ -47,12 +54,11 @@ serve(async (req) => {
       .eq("id", user.id)
       .single();
 
-    if (profileError || !profile.vimeo_access_token) {
+    if (profileError || !profile?.vimeo_access_token) {
       return createCorsResponse(400, { error: "Vimeo account not connected" }, origin);
     }
 
     const vimeoAccessToken = profile.vimeo_access_token;
-
     const formData = await req.formData();
     const video = formData.get("video") as File;
     const title = formData.get("title") as string;
@@ -62,7 +68,6 @@ serve(async (req) => {
       return createCorsResponse(400, { error: "Missing required fields" }, origin);
     }
 
-    console.log("Creating video on Vimeo...");
     const createResponse = await fetch(`${VIMEO_API_URL}/me/videos`, {
       method: "POST",
       headers: {
@@ -82,13 +87,10 @@ serve(async (req) => {
 
     if (!createResponse.ok) {
       const errorData = await createResponse.json();
-      console.error("Vimeo API error:", errorData);
       return createCorsResponse(500, { error: 'Failed to create video on Vimeo', details: errorData }, origin);
     }
 
     const createData = await createResponse.json();
-    console.log("Vimeo API response:", createData);
-
     const uploadLink = createData.upload.upload_link;
     const vimeoVideoId = createData.uri.split("/").pop();
 
@@ -96,7 +98,6 @@ serve(async (req) => {
       return createCorsResponse(500, { error: "Failed to get upload link from Vimeo" }, origin);
     }
 
-    console.log("Uploading video to Vimeo...");
     const uploadResponse = await fetch(uploadLink, {
       method: "PATCH",
       headers: {
@@ -104,58 +105,37 @@ serve(async (req) => {
         "Upload-Offset": "0",
         "Content-Type": "application/offset+octet-stream",
       },
-      body: await video.arrayBuffer(),
+      body: video.stream(),
     });
 
     if (!uploadResponse.ok) {
-      console.error("Vimeo upload error:", await uploadResponse.text());
       return createCorsResponse(500, { error: "Failed to upload video to Vimeo" }, origin);
     }
 
-    console.log("Video uploaded successfully");
+    const { data: tutorialData, error: tutorialError } = await supabase
+      .from('tutorials')
+      .insert({
+        title: title,
+        description: description,
+        vimeo_video_url: `https://vimeo.com/${vimeoVideoId}`,
+        creator_id: user.id
+      })
+      .select();
 
-    // Wait for the video to be processed
-    let videoData;
-    let attempts = 0;
-    const maxAttempts = 10;
-    const delay = 5000; // 5 seconds
-
-    while (attempts < maxAttempts) {
-      const verifyResponse = await fetch(`${VIMEO_API_URL}/videos/${vimeoVideoId}`, {
-        headers: {
-          "Authorization": `bearer ${vimeoAccessToken}`,
-          "Content-Type": "application/json",
-          "Accept": "application/vnd.vimeo.*+json;version=3.4",
-        },
-      });
-
-      if (!verifyResponse.ok) {
-        console.error("Failed to verify video upload:", await verifyResponse.text());
-        return createCorsResponse(500, { error: "Failed to verify video upload" }, origin);
-      }
-
-      videoData = await verifyResponse.json();
-      console.log("Video data:", videoData);
-
-      if (videoData.status === "available") {
-        break;
-      }
-
-      await new Promise(resolve => setTimeout(resolve, delay));
-      attempts++;
+    if (tutorialError) {
+      return createCorsResponse(500, { error: "Failed to store tutorial data", details: tutorialError }, origin);
     }
 
-    if (videoData.status !== "available") {
-      console.error("Video processing timed out");
-      return createCorsResponse(500, { error: "Video processing timed out" }, origin);
-    }
+    return createCorsResponse(200, { 
+      vimeo_video_id: vimeoVideoId,
+      tutorial_id: tutorialData[0].id,
+      message: "Video uploaded successfully. Processing may take some time."
+    }, origin);
 
-    return createCorsResponse(200, { vimeo_video_id: vimeoVideoId }, origin);
   } catch (error) {
-    console.error("Error in upload-vimeo-video:", error);
     return createCorsResponse(500, { 
       error: error instanceof Error ? error.message : "An unexpected error occurred",
-      details: error
+      details: error instanceof Error ? error.stack : String(error)
     }, origin);
   }
 });
