@@ -17,9 +17,12 @@ export const allowedOrigins = [
  * @returns Object containing CORS headers
  */
 export const corsHeaders = (origin: string) => ({
-  "Access-Control-Allow-Origin": allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
+  "Access-Control-Allow-Origin": allowedOrigins.includes(origin)
+    ? origin
+    : allowedOrigins[0],
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 });
 
 /**

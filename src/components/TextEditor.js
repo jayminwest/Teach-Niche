@@ -6,17 +6,26 @@ import "easymde/dist/easymde.min.css";
 /**
  * TextEditor Component
  *
- * Provides a rich text editor using ReactQuill for creating and editing content.
+ * Provides a rich text editor using SimpleMDE for creating and editing content.
+ * Includes custom toolbar configuration and autosave functionality.
  *
  * @param {Object} props
  * @param {string} props.value - The current content of the editor.
  * @param {Function} props.onChange - Function to handle content changes.
+ * @param {string} [props.placeholder] - Placeholder text for the editor.
  * @returns {JSX.Element} The text editor component.
  */
-const TextEditor = ({ value, onChange }) => {
+const TextEditor = ({ value, onChange, placeholder = "Start writing..." }) => {
   const options = useMemo(() => ({
     autofocus: false,
-    spellChecker: false,
+    spellChecker: true,
+    placeholder,
+    status: ["lines", "words", "cursor"],
+    autosave: {
+      enabled: true,
+      delay: 1000,
+      uniqueId: "editor-autosave",
+    },
     toolbar: [
       "bold",
       "italic",
@@ -32,16 +41,28 @@ const TextEditor = ({ value, onChange }) => {
       "preview",
       "side-by-side",
       "fullscreen",
+      "|",
+      "guide",
     ],
-  }), []);
+    previewClass: ["editor-preview", "prose", "max-w-none"],
+    uploadImage: false, // Disable direct image uploads for security
+    promptURLs: true, // Prompt for URLs when adding links
+    renderingConfig: {
+      singleLineBreaks: false,
+      codeSyntaxHighlighting: true,
+    },
+  }), [placeholder]);
 
   return (
-    <SimpleMDE
-      key="simplemde-editor"
-      value={value}
-      onChange={onChange}
-      options={options}
-    />
+    <div className="prose max-w-none">
+      <SimpleMDE
+        key="simplemde-editor"
+        value={value}
+        onChange={onChange}
+        options={options}
+        className="min-h-[300px]"
+      />
+    </div>
   );
 };
 

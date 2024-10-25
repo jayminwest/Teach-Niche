@@ -11,15 +11,17 @@ import React from "react";
  * @returns {JSX.Element|null} The alert message component or null if no message.
  */
 const AlertMessage = ({ error, success }) => {
-  if (error) {
-    return <div className="alert alert-error mt-4" role="alert">{error}</div>;
-  }
-  if (success) {
-    return (
-      <div className="alert alert-success mt-4" role="alert">{success}</div>
-    );
-  }
-  return null;
+  if (!error && !success) return null;
+
+  return (
+    <div 
+      className={`alert ${error ? 'alert-error' : 'alert-success'} mt-4`}
+      role="alert"
+      aria-live="polite"
+    >
+      {error || success}
+    </div>
+  );
 };
 
 export default AlertMessage;

@@ -41,10 +41,16 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
 
         // Identify the welcome lesson
         const welcomeLessonId = process.env.REACT_APP_WELCOME_LESSON_ID;
-        const lessonsWithWelcomeFlag = allLessons.map((lesson) => ({
-          ...lesson,
-          isWelcomeLesson: lesson.id === welcomeLessonId,
-        }));
+        console.log("Welcome Lesson ID:", welcomeLessonId); // Log the welcome lesson ID
+
+        const lessonsWithWelcomeFlag = allLessons.map((lesson) => {
+          const isWelcome = lesson.id === welcomeLessonId;
+          console.log(`Lesson ID: ${lesson.id}, Is Welcome: ${isWelcome}`); // Log each lesson's welcome status
+          return {
+            ...lesson,
+            isWelcomeLesson: isWelcome,
+          };
+        });
 
         setLessons(lessonsWithWelcomeFlag);
 

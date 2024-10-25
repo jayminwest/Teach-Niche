@@ -3,92 +3,124 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import supabase from "../utils/supabaseClient";
 
-const Comment = ({ comment, onReply, onDelete, depth = 0 }) => {
+/**
+ * Comment Component
+ * 
+ * Renders an individual comment with reply functionality.
+ */
+const Comment = ({ comment, onReply, onDelete, depth = 0, handleSubmitPost }) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
 
-  const handleReply = (e) => {
+  const handleReply = async (e) => {
     e.preventDefault();
-    onReply(comment.id, replyContent);
-    setReplyContent("");
-    setShowReplyForm(false);
+    setIsSubmitting(true);
+    try {
+      await onReply(comment.id, replyContent);
+      setReplyContent("");
+      setShowReplyForm(false);
+    } catch (err) {
+      console.error("Error posting reply:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className={`ml-${depth * 4} mb-4`}>
-      <div className="bg-base-200 p-4 rounded-lg">
+      <div className="bg-base-200 p-4 rounded-lg shadow-sm">
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center">
-            {comment.profiles.avatar_url
-              ? (
-                <img
-                  src={comment.profiles.avatar_url}
-                  alt={comment.profiles.full_name}
-                  className="w-8 h-8 rounded-full mr-2"
-                />
-              )
-              : <div className="w-8 h-8 bg-gray-300 rounded-full mr-2" />}
+          <div className="flex items-center gap-2">
+            {comment.profiles.avatar_url ? (
+              <img
+                src={comment.profiles.avatar_url}
+                alt={comment.profiles.full_name}
+                className="w-8 h-8 rounded-full"
+              />
+            ) : (
+              <div className="w-8 h-8 bg-base-300 rounded-full flex items-center justify-center">
+                <span>{comment.profiles.full_name[0]}</span>
+              </div>
+            )}
             <span className="font-semibold">{comment.profiles.full_name}</span>
           </div>
           {user && user.id === comment.user_id && (
             <button
               onClick={() => onDelete(comment.id)}
-              className="text-red-500 hover:text-red-700"
+              className="btn btn-ghost btn-sm text-error"
               aria-label="Delete comment"
             >
               <i className="bi bi-trash"></i>
             </button>
           )}
         </div>
-        <p>{comment.content}</p>
+        <p className="whitespace-pre-wrap">{comment.content}</p>
         {user && (
           <button
             onClick={() => setShowReplyForm(!showReplyForm)}
-            className="text-primary mt-2 hover:underline flex items-center"
+            className="btn btn-ghost btn-sm mt-2"
           >
             <i className="bi bi-reply mr-1"></i> Reply
           </button>
         )}
       </div>
+
       {showReplyForm && (
-        <form onSubmit={handleReply} className="mt-2">
-          <div className="bg-base-100 p-2 rounded-lg mb-2">
-            <p className="text-sm text-gray-600">
-              Replying to {comment.profiles.full_name}:
+        <form onSubmit={handleReply} className="mt-2 space-y-2">
+          <div className="bg-base-100 p-2 rounded-lg">
+            <p className="text-sm opacity-70">
+              Replying to {comment.profiles.full_name}
             </p>
-            <p className="text-sm italic">{comment.content}</p>
           </div>
           <textarea
             value={replyContent}
             onChange={(e) => setReplyContent(e.target.value)}
-            className="w-full p-2 border rounded-lg mb-2"
+            className="textarea textarea-bordered w-full"
             placeholder="Write your reply..."
             rows="3"
           />
-          <button
-            type="submit"
-            className="btn btn-primary btn-sm"
-            disabled={!replyContent.trim()}
-          >
-            Post Reply
-          </button>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowReplyForm(false)}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary btn-sm"
+              disabled={!replyContent.trim() || isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  Posting...
+                </>
+              ) : (
+                "Post Reply"
+              )}
+            </button>
+          </div>
         </form>
       )}
-      {comment.replies &&
-        comment.replies.map((reply) => (
-          <Comment
-            key={reply.id}
-            comment={reply}
-            onReply={onReply}
-            onDelete={onDelete}
-            depth={depth + 1}
-          />
-        ))}
+
+      {comment.replies?.map((reply) => (
+        <Comment
+          key={reply.id}
+          comment={reply}
+          onReply={onReply}
+          onDelete={onDelete}
+          depth={depth + 1}
+        />
+      ))}
     </div>
   );
 };
 
+// Main component remains the same, just adding loading states
 const LessonDiscussion = ({ lessonId, isWelcomePage }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -96,6 +128,7 @@ const LessonDiscussion = ({ lessonId, isWelcomePage }) => {
   const [newPost, setNewPost] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchPosts();
@@ -230,7 +263,54 @@ const LessonDiscussion = ({ lessonId, isWelcomePage }) => {
     }
   };
 
-  if (loading) return <div>Loading discussions...</div>;
+  const handleReply = async (parentId, content) => {
+    if (!content.trim()) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("discussion_posts")
+        .insert([
+          {
+            tutorial_id: lessonId,
+            user_id: user?.id,
+            content: content.trim(),
+            parent_id: parentId,
+          },
+        ])
+        .select();
+
+      if (error) throw error;
+
+      // Fetch the user's profile data
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Create a new post object with the profile data included
+      const newReplyWithProfile = {
+        ...data[0],
+        profiles: profileData,
+      };
+
+      // Update the posts state to include the new reply
+      setPosts(posts.map(post => {
+        if (post.id === parentId) {
+          return {
+            ...post,
+            replies: [...(post.replies || []), newReplyWithProfile],
+          };
+        }
+        return post;
+      }));
+    } catch (err) {
+      console.error("Error posting reply:", err);
+      setError(err.message);
+    }
+  };
 
   return (
     <div className="mt-8">
@@ -240,40 +320,54 @@ const LessonDiscussion = ({ lessonId, isWelcomePage }) => {
         <form onSubmit={(e) => handleSubmitPost(e)} className="mb-6">
           <textarea
             value={newPost}
-            onChange={(e) =>
-              setNewPost(e.target.value)}
-            className="w-full p-2 border rounded-lg mb-2"
+            onChange={(e) => setNewPost(e.target.value)}
+            className="textarea textarea-bordered w-full"
             placeholder={isWelcomePage
               ? "Share your thoughts (as guest)..."
               : "Share your thoughts..."}
             rows="3"
           />
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={!newPost.trim()}
-          >
-            Post Comment
-          </button>
+          <div className="flex justify-end mt-2">
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={!newPost.trim() || isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  Posting...
+                </>
+              ) : (
+                "Post Comment"
+              )}
+            </button>
+          </div>
         </form>
       )}
 
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-
-      <div className="space-y-4">
-        {posts.map((post) => (
-          <Comment
-            key={post.id}
-            comment={post}
-            onReply={(parentId, content) =>
-              handleSubmitPost({
-                preventDefault: () => {},
-                target: { reply: { value: content } },
-              }, parentId)}
-            onDelete={handleDeletePost}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      ) : error ? (
+        <div className="alert alert-error">{error}</div>
+      ) : posts.length === 0 ? (
+        <p className="text-center py-8 opacity-70">No comments yet. Be the first to share your thoughts!</p>
+      ) : (
+        <div className="space-y-4">
+          {posts.map((post) => (
+            <Comment
+              key={post.id}
+              comment={post}
+              onReply={handleReply}
+              onDelete={handleDeletePost}
+              depth={0}
+              handleSubmitPost={handleSubmitPost}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

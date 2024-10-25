@@ -65,7 +65,8 @@ const ProfileForm = ({ profileData, onUpdate }) => {
           className="textarea textarea-bordered h-24"
           value={formData.bio}
           onChange={handleChange}
-        ></textarea>
+        >
+        </textarea>
       </div>
       <div className="form-control mt-6">
         <button className="btn btn-primary w-full" type="submit">

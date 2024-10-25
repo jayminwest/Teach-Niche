@@ -3,6 +3,32 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import supabase from "../utils/supabaseClient";
 
+/**
+ * StarRating Component
+ * 
+ * Renders an interactive or static star rating display.
+ */
+const StarRating = ({ rating, onRatingChange, interactive = true }) => {
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => interactive && onRatingChange(star)}
+          className={`text-2xl transition-colors ${
+            interactive ? 'cursor-pointer hover:text-yellow-400' : 'cursor-default'
+          } ${star <= rating ? 'text-yellow-400' : 'text-base-300'}`}
+          disabled={!interactive}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// Main component remains the same, just improving UI elements
 const LessonRating = ({ lessonId, isWelcomePage }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -13,6 +39,7 @@ const LessonRating = ({ lessonId, isWelcomePage }) => {
   const [userReview, setUserReview] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchReviews();
@@ -74,6 +101,7 @@ const LessonRating = ({ lessonId, isWelcomePage }) => {
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
 
     if (!user && !isWelcomePage) {
       navigate("/sign-in");
@@ -138,6 +166,8 @@ const LessonRating = ({ lessonId, isWelcomePage }) => {
     } catch (err) {
       console.error("Error submitting review:", err);
       setError(err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -166,118 +196,124 @@ const LessonRating = ({ lessonId, isWelcomePage }) => {
   if (loading) return <div>Loading reviews...</div>;
 
   return (
-    <div className="mt-8">
-      <h3 className="text-2xl font-bold mb-4">Reviews</h3>
-
-      <div className="mb-6">
-        <p className="text-xl">
-          Average Rating:{" "}
-          {averageRating ? `${averageRating.toFixed(1)} / 5` : "No ratings yet"}
-        </p>
-        <p className="text-sm text-gray-600">
-          {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
-        </p>
+    <div className="mt-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-2xl font-bold">Reviews</h3>
+        <div className="text-right">
+          <div className="text-3xl font-bold">
+            {averageRating ? averageRating.toFixed(1) : "0.0"}
+            <span className="text-base font-normal text-base-content/70"> / 5.0</span>
+          </div>
+          <p className="text-sm text-base-content/70">
+            {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
+          </p>
+        </div>
       </div>
 
       {(user || isWelcomePage) && !userReview && (
-        <form onSubmit={handleSubmitReview} className="mb-8">
-          <div className="mb-4">
-            <label className="block mb-2">Your Rating</label>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => setRating(star)}
-                  className={`text-2xl ${
-                    star <= rating ? "text-yellow-400" : "text-gray-300"
-                  }`}
-                >
-                  ★
-                </button>
-              ))}
+        <div className="card bg-base-200 p-6">
+          <h4 className="text-lg font-semibold mb-4">Write a Review</h4>
+          <form onSubmit={handleSubmitReview} className="space-y-4">
+            <div>
+              <label className="block mb-2">Your Rating</label>
+              <StarRating rating={rating} onRatingChange={setRating} />
             </div>
-          </div>
 
-          <textarea
-            value={comment}
-            onChange={(e) =>
-              setComment(e.target.value)}
-            className="w-full p-2 border rounded-lg mb-2"
-            placeholder="Share your experience..."
-            rows="3"
-          />
+            <div>
+              <label className="block mb-2">Your Review</label>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="textarea textarea-bordered w-full"
+                placeholder="Share your experience..."
+                rows="3"
+              />
+            </div>
 
-          <button
-            type="submit"
-            className="btn btn-primary"
-            disabled={!rating}
-          >
-            Submit Review
-          </button>
-        </form>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={!rating || isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  Submitting...
+                </>
+              ) : (
+                "Submit Review"
+              )}
+            </button>
+          </form>
+        </div>
       )}
 
       {userReview && (
-        <div className="mb-8">
-          <h4 className="text-xl font-semibold mb-2">Your Review</h4>
-          <div className="bg-base-200 p-4 rounded-lg">
-            <div className="text-yellow-400 mb-2">
-              {"★".repeat(userReview.rating)}
-              {"☆".repeat(5 - userReview.rating)}
-            </div>
-            <p>{userReview.comment}</p>
-            <div className="mt-4 flex gap-2">
+        <div className="card bg-base-200 p-6">
+          <div className="flex justify-between items-start mb-4">
+            <h4 className="text-lg font-semibold">Your Review</h4>
+            <div className="flex gap-2">
               <button
                 onClick={() => {
                   setRating(userReview.rating);
                   setComment(userReview.comment);
                   setUserReview(null);
                 }}
-                className="btn btn-sm btn-primary"
+                className="btn btn-ghost btn-sm"
               >
-                Edit Review
+                Edit
               </button>
               <button
                 onClick={handleDeleteReview}
-                className="btn btn-sm btn-error"
+                className="btn btn-ghost btn-sm text-error"
               >
-                Delete Review
+                Delete
               </button>
             </div>
           </div>
+          <StarRating rating={userReview.rating} interactive={false} />
+          <p className="mt-4 whitespace-pre-wrap">{userReview.comment}</p>
         </div>
       )}
 
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+      <div className="divider">Other Reviews</div>
 
-      <div className="space-y-4">
-        {reviews.filter((review) => review.user_id !== user?.id).map((
-          review,
-        ) => (
-          <div key={review.id} className="bg-base-200 p-4 rounded-lg">
-            <div className="flex items-center mb-2">
-              {review.profiles?.avatar_url
-                ? (
-                  <img
-                    src={review.profiles.avatar_url}
-                    alt={review.profiles.full_name}
-                    className="w-8 h-8 rounded-full mr-2"
-                  />
-                )
-                : <div className="w-8 h-8 bg-gray-300 rounded-full mr-2" />}
-              <span className="font-semibold">
-                {review.profiles?.full_name || "Anonymous"}
-              </span>
-            </div>
-            <div className="text-yellow-400 mb-2">
-              {"★".repeat(review.rating)}
-              {"☆".repeat(5 - review.rating)}
-            </div>
-            {review.comment && <p>{review.comment}</p>}
-          </div>
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      ) : reviews.filter(review => review.user_id !== user?.id).length === 0 ? (
+        <p className="text-center py-8 opacity-70">No reviews yet. Be the first to share your experience!</p>
+      ) : (
+        <div className="space-y-4">
+          {reviews
+            .filter(review => review.user_id !== user?.id)
+            .map((review) => (
+              <div key={review.id} className="card bg-base-200 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  {review.profiles?.avatar_url ? (
+                    <img
+                      src={review.profiles.avatar_url}
+                      alt={review.profiles.full_name}
+                      className="w-8 h-8 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 bg-base-300 rounded-full flex items-center justify-center">
+                      <span>{review.profiles?.full_name?.[0] || '?'}</span>
+                    </div>
+                  )}
+                  <span className="font-semibold">
+                    {review.profiles?.full_name || "Anonymous"}
+                  </span>
+                </div>
+                <StarRating rating={review.rating} interactive={false} />
+                {review.comment && (
+                  <p className="mt-2 whitespace-pre-wrap">{review.comment}</p>
+                )}
+              </div>
+            ))}
+        </div>
+      )}
     </div>
   );
 };

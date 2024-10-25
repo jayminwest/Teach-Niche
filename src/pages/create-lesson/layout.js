@@ -23,8 +23,7 @@ const CreateLesson = () => {
     cost: "",
     content: "",
   });
-  const [categoryIds, setCategoryIds] = 
-  useState([]);
+  const [categoryIds, setCategoryIds] = useState([]);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -91,9 +90,9 @@ const CreateLesson = () => {
     setVideoUploadProgress(0);
 
     if (
-      !lessonData.title.trim() || 
-      !lessonData.description.trim() || 
-      !lessonData.cost || 
+      !lessonData.title.trim() ||
+      !lessonData.description.trim() ||
+      !lessonData.cost ||
       !lessonData.content.trim() ||
       !videoFile
     ) {
@@ -104,7 +103,8 @@ const CreateLesson = () => {
 
     try {
       // Get the session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth
+        .getSession();
       if (sessionError) throw sessionError;
 
       if (!session) {
@@ -113,22 +113,25 @@ const CreateLesson = () => {
 
       // Upload video to Vimeo
       const formData = new FormData();
-      formData.append('video', videoFile);
-      formData.append('title', lessonData.title);
-      formData.append('description', lessonData.description);
+      formData.append("video", videoFile);
+      formData.append("title", lessonData.title);
+      formData.append("description", lessonData.description);
 
-      const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/upload-vimeo-video`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+      const response = await fetch(
+        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/upload-vimeo-video`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${session.access_token}`,
+          },
+          body: formData,
         },
-        body: formData,
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Vimeo upload error:", errorData);
-        throw new Error(errorData.error || 'Failed to upload video to Vimeo');
+        throw new Error(errorData.error || "Failed to upload video to Vimeo");
       }
 
       // Simulate progress updates
@@ -284,7 +287,10 @@ const CreateLesson = () => {
               />
               {videoUploadProgress > 0 && (
                 <div className="mt-2">
-                  <div className="bg-blue-500 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={{ width: `${videoUploadProgress}%` }}>
+                  <div
+                    className="bg-blue-500 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
+                    style={{ width: `${videoUploadProgress}%` }}
+                  >
                     {videoUploadProgress}%
                   </div>
                 </div>

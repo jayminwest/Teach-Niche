@@ -11,8 +11,8 @@ import AlertMessage from "../../components/AlertMessage";
 import LessonCard from "../marketplace/components/LessonCard";
 import LessonCreationGuide from "./components/LessonCreationGuide";
 import { useAuth } from "../../context/AuthContext";
-import ConnectVimeoButton from '../../components/ConnectVimeoButton';
-import ConnectStripeButton from '../../components/ConnectStripeButton';
+import ConnectVimeoButton from "../../components/ConnectVimeoButton";
+import ConnectStripeButton from "../../components/ConnectStripeButton";
 
 /**
  * Profile Component
@@ -68,7 +68,10 @@ const Profile = () => {
   }, []);
 
   useEffect(() => {
-    if (profileData.stripe_onboarding_complete && isVimeoConnected && activeTab === "become-teacher") {
+    if (
+      profileData.stripe_onboarding_complete && isVimeoConnected &&
+      activeTab === "become-teacher"
+    ) {
       setActiveTab("profile");
     }
   }, [profileData.stripe_onboarding_complete, isVimeoConnected, activeTab]);
@@ -111,20 +114,20 @@ const Profile = () => {
   const checkStripeConnection = async () => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('stripe_account_id, stripe_onboarding_complete')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("stripe_account_id, stripe_onboarding_complete")
+        .eq("id", user.id)
         .single();
 
       if (error) throw error;
 
-      setProfileData(prevData => ({
+      setProfileData((prevData) => ({
         ...prevData,
         stripe_account_id: data.stripe_account_id,
-        stripe_onboarding_complete: data.stripe_onboarding_complete
+        stripe_onboarding_complete: data.stripe_onboarding_complete,
       }));
     } catch (error) {
-      console.error('Error checking Stripe connection:', error);
+      console.error("Error checking Stripe connection:", error);
     }
   };
 
@@ -343,16 +346,16 @@ const Profile = () => {
   const checkVimeoConnection = async () => {
     try {
       const { data, error } = await supabase
-        .from('profiles')
-        .select('vimeo_access_token')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("vimeo_access_token")
+        .eq("id", user.id)
         .single();
 
       if (error) throw error;
 
       setIsVimeoConnected(!!data.vimeo_access_token);
     } catch (error) {
-      console.error('Error checking Vimeo connection:', error);
+      console.error("Error checking Vimeo connection:", error);
       setIsVimeoConnected(false);
     }
   };
@@ -392,7 +395,8 @@ const Profile = () => {
                   className="btn btn-primary w-full text-left flex justify-between items-center"
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 >
-                  {tabOptions.find(option => option.value === activeTab)?.label}
+                  {tabOptions.find((option) => option.value === activeTab)
+                    ?.label}
                   <svg
                     className="w-5 h-5 ml-2"
                     fill="none"
@@ -414,7 +418,9 @@ const Profile = () => {
                       <button
                         key={option.value}
                         className={`block w-full text-left px-4 py-2 hover:bg-base-200 ${
-                          activeTab === option.value ? 'bg-primary text-white' : ''
+                          activeTab === option.value
+                            ? "bg-primary text-white"
+                            : ""
                         }`}
                         onClick={() => {
                           setActiveTab(option.value);
@@ -456,14 +462,26 @@ const Profile = () => {
                     <div className="mt-6 space-y-4">
                       <div className="flex items-center justify-between">
                         <span className="font-semibold">Stripe Account:</span>
-                        <span className={`badge ${profileData.stripe_onboarding_complete ? 'badge-success' : 'badge-warning'}`}>
-                          {profileData.stripe_onboarding_complete ? 'Connected' : 'Not Connected'}
+                        <span
+                          className={`badge ${
+                            profileData.stripe_onboarding_complete
+                              ? "badge-success"
+                              : "badge-warning"
+                          }`}
+                        >
+                          {profileData.stripe_onboarding_complete
+                            ? "Connected"
+                            : "Not Connected"}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="font-semibold">Vimeo Account:</span>
-                        <span className={`badge ${isVimeoConnected ? 'badge-success' : 'badge-warning'}`}>
-                          {isVimeoConnected ? 'Connected' : 'Not Connected'}
+                        <span
+                          className={`badge ${
+                            isVimeoConnected ? "badge-success" : "badge-warning"
+                          }`}
+                        >
+                          {isVimeoConnected ? "Connected" : "Not Connected"}
                         </span>
                       </div>
                     </div>
@@ -485,7 +503,10 @@ const Profile = () => {
                           </svg>
                           <span>Connect Stripe to sell lessons.</span>
                         </div>
-                        <ConnectStripeButton onConnect={checkStripeConnection} className="btn btn-sm btn-neutral w-full mt-2" />
+                        <ConnectStripeButton
+                          onConnect={checkStripeConnection}
+                          className="btn btn-sm btn-neutral w-full mt-2"
+                        />
                       </div>
                     )}
                     {!isVimeoConnected && (
@@ -506,7 +527,10 @@ const Profile = () => {
                           </svg>
                           <span>Connect Vimeo to upload video lessons.</span>
                         </div>
-                        <ConnectVimeoButton onConnect={checkVimeoConnection} className="btn btn-sm btn-neutral w-full mt-2" />
+                        <ConnectVimeoButton
+                          onConnect={checkVimeoConnection}
+                          className="btn btn-sm btn-neutral w-full mt-2"
+                        />
                       </div>
                     )}
                   </div>
@@ -532,8 +556,11 @@ const Profile = () => {
             {activeTab === "become-teacher" && (
               <>
                 <h2 className="card-title text-3xl mb-6">Become A Teacher</h2>
-                <p className="mb-6">To start creating and selling lessons, you need to connect your Stripe and Vimeo accounts.</p>
-                
+                <p className="mb-6">
+                  To start creating and selling lessons, you need to connect
+                  your Stripe and Vimeo accounts.
+                </p>
+
                 <div className="space-y-6">
                   <div className="alert alert-warning p-4 flex flex-col items-start">
                     <div className="flex items-center mb-2">
@@ -550,9 +577,16 @@ const Profile = () => {
                           d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                         />
                       </svg>
-                      <span>{profileData.stripe_onboarding_complete ? 'Stripe account connected' : 'Connect Stripe to receive payments'}</span>
+                      <span>
+                        {profileData.stripe_onboarding_complete
+                          ? "Stripe account connected"
+                          : "Connect Stripe to receive payments"}
+                      </span>
                     </div>
-                    <ConnectStripeButton onConnect={checkStripeConnection} className="btn btn-sm btn-primary w-full mt-2" />
+                    <ConnectStripeButton
+                      onConnect={checkStripeConnection}
+                      className="btn btn-sm btn-primary w-full mt-2"
+                    />
                   </div>
 
                   <div className="alert alert-warning p-4 flex flex-col items-start">
@@ -570,9 +604,16 @@ const Profile = () => {
                           d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                         />
                       </svg>
-                      <span>{isVimeoConnected ? 'Vimeo account connected' : 'Connect Vimeo to upload video lessons'}</span>
+                      <span>
+                        {isVimeoConnected
+                          ? "Vimeo account connected"
+                          : "Connect Vimeo to upload video lessons"}
+                      </span>
                     </div>
-                    <ConnectVimeoButton onConnect={checkVimeoConnection} className="btn btn-sm btn-primary w-full mt-2" />
+                    <ConnectVimeoButton
+                      onConnect={checkVimeoConnection}
+                      className="btn btn-sm btn-primary w-full mt-2"
+                    />
                   </div>
                 </div>
 

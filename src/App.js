@@ -23,8 +23,15 @@ const App = () => {
       <Header />
       <div className="alert alert-warning shadow-lg mx-auto my-4 max-w-6xl">
         <div className="flex justify-center items-center space-x-2">
-          <i className="bi bi-exclamation-triangle-fill text-sm" aria-hidden="true"></i>
-          <span className="text-sm font-semibold">Welcome to Teach Niche! The site is currently in Beta, so be please patient as the site improves.</span>
+          <i
+            className="bi bi-exclamation-triangle-fill text-sm"
+            aria-hidden="true"
+          >
+          </i>
+          <span className="text-sm font-semibold">
+            Welcome to Teach Niche! The site is currently in Beta, so be please
+            patient as the site improves.
+          </span>
         </div>
       </div>
       <main className="flex-grow">

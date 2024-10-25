@@ -133,9 +133,9 @@ const EditLesson = () => {
     setVideoUploadProgress(0);
 
     if (
-      !lessonData.title.trim() || 
-      !lessonData.description.trim() || 
-      lessonData.cost === '' || 
+      !lessonData.title.trim() ||
+      !lessonData.description.trim() ||
+      lessonData.cost === "" ||
       !lessonData.content.trim()
     ) {
       setError("Please fill in all required fields.");
@@ -144,7 +144,8 @@ const EditLesson = () => {
     }
 
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth
+        .getSession();
       if (sessionError) throw sessionError;
 
       if (!session) {
@@ -155,22 +156,25 @@ const EditLesson = () => {
 
       if (videoFile) {
         const formData = new FormData();
-        formData.append('video', videoFile);
-        formData.append('title', lessonData.title);
-        formData.append('description', lessonData.description);
+        formData.append("video", videoFile);
+        formData.append("title", lessonData.title);
+        formData.append("description", lessonData.description);
 
-        const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/upload-vimeo-video`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
+        const response = await fetch(
+          `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/upload-vimeo-video`,
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${session.access_token}`,
+            },
+            body: formData,
           },
-          body: formData,
-        });
+        );
 
         if (!response.ok) {
           const errorData = await response.json();
           console.error("Vimeo upload error:", errorData);
-          throw new Error(errorData.error || 'Failed to upload video to Vimeo');
+          throw new Error(errorData.error || "Failed to upload video to Vimeo");
         }
 
         // Simulate progress updates
@@ -262,7 +266,10 @@ const EditLesson = () => {
         return (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="title"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Title
               </label>
               <input
@@ -277,7 +284,10 @@ const EditLesson = () => {
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="description"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Description
               </label>
               <textarea
@@ -288,11 +298,15 @@ const EditLesson = () => {
                 value={lessonData.description}
                 onChange={handleInputChange}
                 required
-              ></textarea>
+              >
+              </textarea>
             </div>
 
             <div>
-              <label htmlFor="cost" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="cost"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Cost (USD)
               </label>
               <input
@@ -368,7 +382,10 @@ const EditLesson = () => {
             )}
 
             <div>
-              <label htmlFor="video" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="video"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Upload New Video (optional)
               </label>
               <input
@@ -380,7 +397,10 @@ const EditLesson = () => {
               />
               {videoUploadProgress > 0 && (
                 <div className="mt-2">
-                  <div className="bg-blue-500 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={{ width: `${videoUploadProgress}%` }}>
+                  <div
+                    className="bg-blue-500 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
+                    style={{ width: `${videoUploadProgress}%` }}
+                  >
                     {videoUploadProgress}%
                   </div>
                 </div>

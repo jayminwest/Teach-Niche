@@ -129,6 +129,9 @@ const LessonCard = ({
               {loading ? "Processing..." : "Purchase Lesson"}
             </button>
           )}
+        {console.log(
+          `Lesson ID: ${id}, Is Purchased: ${isPurchased}, Is Welcome: ${isWelcomeLesson}`,
+        )} {/* Log button logic */}
       </div>
     </div>
   );
