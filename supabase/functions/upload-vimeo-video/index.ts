@@ -7,12 +7,12 @@ import {
 } from "../_shared/config.ts";
 
 const VIMEO_API_URL = "https://api.vimeo.com";
+const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks for client-side handling
 
-serve(async (req) => {
+serve(async (req: Request): Promise<Response> => {
   const origin = req.headers.get("origin") || "";
   console.log("Request origin:", origin);
   console.log("Request method:", req.method);
-  console.log("All request headers:", JSON.stringify(Object.fromEntries(req.headers), null, 2));
 
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders(origin) });
@@ -59,80 +59,72 @@ serve(async (req) => {
     }
 
     const vimeoAccessToken = profile.vimeo_access_token;
-    const formData = await req.formData();
-    const video = formData.get("video") as File;
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
 
-    if (!video || !title) {
-      return createCorsResponse(400, { error: "Missing required fields" }, origin);
-    }
+    const url = new URL(req.url);
+    
+    // Initialize upload endpoint
+    if (url.pathname.endsWith('/initialize')) {
+      console.log("Initializing upload...");
+      const formData = await req.formData();
+      const title = formData.get("title") as string;
+      const description = formData.get("description") as string;
+      const fileSize = parseInt(formData.get("fileSize") as string);
+      const fileName = formData.get("fileName") as string;
 
-    const createResponse = await fetch(`${VIMEO_API_URL}/me/videos`, {
-      method: "POST",
-      headers: {
-        "Authorization": `bearer ${vimeoAccessToken}`,
-        "Content-Type": "application/json",
-        "Accept": "application/vnd.vimeo.*+json;version=3.4",
-      },
-      body: JSON.stringify({
-        upload: {
-          approach: "tus",
-          size: video.size,
+      if (!title || !fileSize || !fileName) {
+        return createCorsResponse(400, { error: "Missing required fields" }, origin);
+      }
+
+      console.log(`Creating video on Vimeo: ${title}, size: ${fileSize} bytes`);
+
+      // Create video on Vimeo
+      const createResponse = await fetch(`${VIMEO_API_URL}/me/videos`, {
+        method: "POST",
+        headers: {
+          "Authorization": `bearer ${vimeoAccessToken}`,
+          "Content-Type": "application/json",
+          "Accept": "application/vnd.vimeo.*+json;version=3.4",
         },
-        name: title,
-        description: description,
-      }),
-    });
+        body: JSON.stringify({
+          upload: {
+            approach: "tus",
+            size: fileSize,
+          },
+          name: title,
+          description: description,
+        }),
+      });
 
-    if (!createResponse.ok) {
-      const errorData = await createResponse.json();
-      return createCorsResponse(500, { error: 'Failed to create video on Vimeo', details: errorData }, origin);
+      if (!createResponse.ok) {
+        const errorData = await createResponse.json();
+        console.error("Vimeo creation error:", errorData);
+        throw new Error(`Failed to create video on Vimeo: ${JSON.stringify(errorData)}`);
+      }
+
+      const createData = await createResponse.json();
+      console.log("Vimeo creation response:", createData);
+
+      // Extract the numeric ID and construct the proper URL
+      const vimeoId = createData.uri.split("/").pop();
+      const vimeoUrl = `https://vimeo.com/${vimeoId}`;
+
+      return new Response(JSON.stringify({
+        upload_link: createData.upload.upload_link,
+        vimeo_video_id: vimeoId,
+        vimeo_url: vimeoUrl,  // Add the full URL
+        chunk_size: CHUNK_SIZE,
+        access_token: vimeoAccessToken
+      }), {
+        headers: {
+          ...corsHeaders(origin),
+          'Content-Type': 'application/json'
+        }
+      });
     }
 
-    const createData = await createResponse.json();
-    const uploadLink = createData.upload.upload_link;
-    const vimeoVideoId = createData.uri.split("/").pop();
-
-    if (!uploadLink) {
-      return createCorsResponse(500, { error: "Failed to get upload link from Vimeo" }, origin);
-    }
-
-    const uploadResponse = await fetch(uploadLink, {
-      method: "PATCH",
-      headers: {
-        "Tus-Resumable": "1.0.0",
-        "Upload-Offset": "0",
-        "Content-Type": "application/offset+octet-stream",
-      },
-      body: video.stream(),
-    });
-
-    if (!uploadResponse.ok) {
-      return createCorsResponse(500, { error: "Failed to upload video to Vimeo" }, origin);
-    }
-
-    const { data: tutorialData, error: tutorialError } = await supabase
-      .from('tutorials')
-      .insert({
-        title: title,
-        description: description,
-        vimeo_video_url: `https://vimeo.com/${vimeoVideoId}`,
-        creator_id: user.id
-      })
-      .select();
-
-    if (tutorialError) {
-      return createCorsResponse(500, { error: "Failed to store tutorial data", details: tutorialError }, origin);
-    }
-
-    return createCorsResponse(200, { 
-      vimeo_video_id: vimeoVideoId,
-      tutorial_id: tutorialData[0].id,
-      message: "Video uploaded successfully. Processing may take some time."
-    }, origin);
-
+    return createCorsResponse(405, { error: "Method not allowed" }, origin);
   } catch (error) {
+    console.error("Error in upload handler:", error);
     return createCorsResponse(500, { 
       error: error instanceof Error ? error.message : "An unexpected error occurred",
       details: error instanceof Error ? error.stack : String(error)

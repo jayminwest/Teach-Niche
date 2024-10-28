@@ -40,9 +40,17 @@ const Header = () => {
                   <Link to="/about">About</Link>
                 </li>
                 {user && (
-                  <li>
-                    <Link to="/my-purchases">My Purchased Lessons</Link>
-                  </li>
+                  <>
+                    <li>
+                      <Link to="/my-purchases">My Purchased Lessons</Link>
+                    </li>
+                    <li className="lg:hidden">
+                      <Link to="/profile">Profile</Link>
+                    </li>
+                    <li className="lg:hidden">
+                      <Link to="/logout">Logout</Link>
+                    </li>
+                  </>
                 )}
               </ul>
             </div>
@@ -69,23 +77,29 @@ const Header = () => {
             </ul>
           </div>
           <div className="navbar-end">
-            {user
-              ? (
-                <>
-                  <Link className="btn mr-2" to="/profile">View Profile</Link>
-                  <Link
-                    className="btn btn-primary hidden md:inline-flex"
-                    to="/logout"
-                  >
-                    Logout
-                  </Link>
-                </>
-              )
-              : (
-                <Link className="btn btn-accent" to="/sign-up">
-                  Get Started
-                </Link>
-              )}
+            {user ? (
+              <>
+                <div className="dropdown dropdown-end">
+                  <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                      <i className="bi bi-person-circle text-2xl" aria-hidden="true"></i>
+                    </div>
+                  </label>
+                  <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-200 rounded-box w-52">
+                    <li>
+                      <Link to="/profile">Profile</Link>
+                    </li>
+                    <li>
+                      <Link to="/logout">Logout</Link>
+                    </li>
+                  </ul>
+                </div>
+              </>
+            ) : (
+              <Link className="btn btn-accent" to="/sign-up">
+                Get Started
+              </Link>
+            )}
           </div>
         </nav>
       </div>

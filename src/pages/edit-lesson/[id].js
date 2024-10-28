@@ -39,6 +39,8 @@ const EditLesson = () => {
   const { user } = useAuth();
   const [videoFile, setVideoFile] = useState(null);
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     fetchLessonData();
@@ -132,6 +134,9 @@ const EditLesson = () => {
     setIsSubmitting(true);
     setVideoUploadProgress(0);
 
+    let vimeo_video_id = lessonData.vimeo_video_id;
+    let videoUrl = null;  // Declare videoUrl here
+
     if (
       !lessonData.title.trim() || 
       !lessonData.description.trim() || 
@@ -151,43 +156,74 @@ const EditLesson = () => {
         throw new Error("No active session. Please log in and try again.");
       }
 
-      let vimeo_video_id = lessonData.vimeo_video_id;
-
       if (videoFile) {
-        const formData = new FormData();
-        formData.append('video', videoFile);
-        formData.append('title', lessonData.title);
-        formData.append('description', lessonData.description);
+        setIsUploading(true);
+        setUploadStatus('Preparing video upload...');
+        
+        const initFormData = new FormData();
+        initFormData.append('video', videoFile);
+        initFormData.append('title', lessonData.title);
+        initFormData.append('description', lessonData.description);
 
-        const response = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/upload-vimeo-video`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: formData,
-        });
+        setUploadStatus('Initializing upload...');
+        
+        const initResponse = await fetch(
+          `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/upload-vimeo-video/initialize`, 
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: initFormData,
+          }
+        );
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.error("Vimeo upload error:", errorData);
-          throw new Error(errorData.error || 'Failed to upload video to Vimeo');
+        if (!initResponse.ok) {
+          const errorData = await initResponse.json();
+          throw new Error(errorData.error || 'Failed to initialize video upload');
         }
 
-        // Simulate progress updates
-        const progressInterval = setInterval(() => {
-          setVideoUploadProgress((prev) => {
-            if (prev >= 100) {
-              clearInterval(progressInterval);
-              return 100;
-            }
-            return prev + 10;
+        const { 
+          upload_link, 
+          vimeo_video_id: newVimeoId, 
+          vimeo_url,  // Get from response
+          chunk_size, 
+          access_token 
+        } = await initResponse.json();
+        vimeo_video_id = newVimeoId;
+        videoUrl = vimeo_url;  // Assign the value
+
+        // Upload video in chunks
+        const totalSize = videoFile.size;
+        let uploadedBytes = 0;
+        
+        while (uploadedBytes < totalSize) {
+          const chunk = videoFile.slice(uploadedBytes, uploadedBytes + chunk_size);
+          
+          const chunkResponse = await fetch(upload_link, {
+            method: 'PATCH',
+            headers: {
+              'Tus-Resumable': '1.0.0',
+              'Upload-Offset': uploadedBytes.toString(),
+              'Content-Type': 'application/offset+octet-stream',
+              'Authorization': `Bearer ${access_token}`,
+            },
+            body: chunk,
           });
-        }, 1000);
 
-        const { vimeo_video_id: new_vimeo_video_id } = await response.json();
-        vimeo_video_id = new_vimeo_video_id;
+          if (!chunkResponse.ok) {
+            throw new Error(`Failed to upload chunk at offset ${uploadedBytes}`);
+          }
 
-        clearInterval(progressInterval);
+          uploadedBytes = parseInt(chunkResponse.headers.get('Upload-Offset') || '0');
+          const progress = (uploadedBytes / totalSize) * 100;
+          setVideoUploadProgress(Math.round(progress));
+          setUploadStatus(`Uploading: ${Math.round(progress)}%`);
+
+          console.log(`Upload progress: ${progress.toFixed(2)}%`);
+        }
+
+        setUploadStatus('Upload complete! Processing...');
       }
 
       let thumbnailUrl = thumbnailPreview;
@@ -223,6 +259,7 @@ const EditLesson = () => {
           content: lessonData.content.trim(),
           thumbnail_url: thumbnailUrl,
           vimeo_video_id: vimeo_video_id,
+          vimeo_url: videoUrl,  // Use the renamed variable
         })
         .eq("id", id);
 
@@ -253,6 +290,7 @@ const EditLesson = () => {
       console.error("Error updating lesson:", err);
     } finally {
       setIsSubmitting(false);
+      setIsUploading(false);
     }
   };
 
@@ -369,22 +407,51 @@ const EditLesson = () => {
 
             <div>
               <label htmlFor="video" className="block text-sm font-medium text-gray-700 mb-1">
-                Upload New Video (optional)
+                Video
               </label>
-              <input
-                type="file"
-                id="video"
-                accept="video/*"
-                onChange={handleVideoChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              />
-              {videoUploadProgress > 0 && (
-                <div className="mt-2">
-                  <div className="bg-blue-500 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={{ width: `${videoUploadProgress}%` }}>
-                    {videoUploadProgress}%
+              
+              {lessonData.vimeo_video_id ? (
+                <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">Current Video:</p>
+                      <p className="font-medium">
+                        <i className="bi bi-play-circle mr-2" aria-hidden="true"></i>
+                        Video ID: {lessonData.vimeo_video_id}
+                      </p>
+                    </div>
+                    <a 
+                      href={`https://vimeo.com/${lessonData.vimeo_video_id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-indigo-600 hover:text-indigo-800 text-sm"
+                    >
+                      View on Vimeo
+                    </a>
                   </div>
                 </div>
+              ) : (
+                <p className="mb-4 text-sm text-gray-500">No video currently uploaded</p>
               )}
+
+              <div className="mt-2">
+                <p className="text-sm text-gray-500 mb-2">
+                  {lessonData.vimeo_video_id ? "Replace current video:" : "Upload a video:"}
+                </p>
+                <input
+                  type="file"
+                  id="video"
+                  accept="video/*,.mov,.mp4"  // Updated to explicitly accept iPhone formats
+                  capture="environment"  // Allows direct camera access on mobile
+                  onChange={handleVideoChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                />
+                {videoFile && (
+                  <p className="mt-2 text-sm text-gray-600">
+                    Selected video: {videoFile.name} ({(videoFile.size / (1024 * 1024)).toFixed(2)} MB)
+                  </p>
+                )}
+              </div>
             </div>
 
             <div>
@@ -441,6 +508,25 @@ const EditLesson = () => {
           {renderTabContent()}
           <AlertMessage error={error} success={success} />
         </div>
+        {isUploading && (
+          <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 max-w-sm w-full">
+            <div className="mb-2">
+              <div className="flex justify-between mb-1">
+                <span className="text-sm font-medium">{uploadStatus}</span>
+                <span className="text-sm font-medium">{videoUploadProgress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div 
+                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                  style={{ width: `${videoUploadProgress}%` }}
+                ></div>
+              </div>
+            </div>
+            {error && (
+              <p className="text-red-500 text-sm mt-2">{error}</p>
+            )}
+          </div>
+        )}
       </main>
       <Footer />
     </div>
