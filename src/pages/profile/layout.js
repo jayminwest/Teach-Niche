@@ -78,33 +78,73 @@ const Profile = () => {
 
   const fetchUserProfile = async () => {
     try {
+      if (!user || !user.id) {
+        throw new Error('No authenticated user found');
+      }
+
       const { data, error } = await supabase
-        .from("profiles")
-        .select(
-          "full_name, email, bio, avatar_url, social_media_tag, stripe_account_id, stripe_onboarding_complete",
-        )
-        .eq("id", user.id)
+        .from('profiles')
+        .select(`
+          full_name,
+          email,
+          bio,
+          avatar_url,
+          social_media_tag,
+          stripe_account_id,
+          stripe_onboarding_complete
+        `)
+        .eq('id', user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === 'PGRST116') {
+          const newProfile = {
+            id: user.id,
+            full_name: '',
+            email: user.email || '',
+            bio: '',
+            avatar_url: '',
+            social_media_tag: '',
+            updated_at: new Date(),
+          };
 
-      setProfileData({
-        fullName: data.full_name || "",
-        email: data.email || "",
-        bio: data.bio || "",
-        profilePicture: data.avatar_url || "",
-        socialMediaTag: data.social_media_tag || "",
-        stripe_account_id: data.stripe_account_id,
-        stripe_onboarding_complete: data.stripe_onboarding_complete,
-      });
-      setStripeConnected(data.stripe_onboarding_complete);
+          const { error: insertError } = await supabase
+            .from('profiles')
+            .insert([newProfile]);
+
+          if (insertError) throw insertError;
+
+          setProfileData({
+            fullName: '',
+            email: user.email || '',
+            bio: '',
+            profilePicture: '',
+            socialMediaTag: '',
+            stripe_account_id: null,
+            stripe_onboarding_complete: false,
+          });
+        } else {
+          throw error;
+        }
+      } else {
+        setProfileData({
+          fullName: data.full_name || '',
+          email: data.email || '',
+          bio: data.bio || '',
+          profilePicture: data.avatar_url || '',
+          socialMediaTag: data.social_media_tag || '',
+          stripe_account_id: data.stripe_account_id,
+          stripe_onboarding_complete: data.stripe_onboarding_complete,
+        });
+        setStripeConnected(data.stripe_onboarding_complete);
+      }
 
       await Promise.all([
         fetchCreatedLessons(user.id),
         fetchPurchasedLessons(user.id),
       ]);
     } catch (error) {
-      console.error("Error fetching user profile:", error.message);
+      console.error('Error fetching user profile:', error.message);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -636,38 +676,21 @@ const Profile = () => {
             {activeTab === "created" && (
               <>
                 <h2 className="card-title text-2xl mb-4">Created Lessons</h2>
-                {createdLessons.length > 0
-                  ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {createdLessons.map((lesson) => (
-                        <div key={lesson.id} className="relative">
-                          <LessonCard
-                            {...lesson}
-                            creator_id={user.id}
-                            isCreated={true}
-                            isPurchased={false}
-                          />
-                          <div className="absolute top-2 right-2 flex gap-2">
-                            <button
-                              className="btn btn-primary btn-sm"
-                              onClick={() =>
-                                navigate(`/edit-lesson/${lesson.id}`)}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              className="btn btn-error btn-sm"
-                              onClick={() =>
-                                handleDeleteLesson(lesson.id)}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )
-                  : <p>You haven't created any lessons yet.</p>}
+                {createdLessons.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {createdLessons.map((lesson) => (
+                      <LessonCard
+                        key={lesson.id}
+                        {...lesson}
+                        creator_id={user.id}
+                        isCreated={true}
+                        isPurchased={false}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p>You haven't created any lessons yet.</p>
+                )}
               </>
             )}
 

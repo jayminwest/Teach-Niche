@@ -23,7 +23,8 @@ const CreateLesson = () => {
     cost: "",
     content: "",
   });
-  const [categoryIds, setCategoryIds] = useState([]);
+  const [categoryIds, setCategoryIds] = 
+  useState([]);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [categories, setCategories] = useState([]);
@@ -34,6 +35,8 @@ const CreateLesson = () => {
   const { user } = useAuth();
   const [videoFile, setVideoFile] = useState(null);
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const [uploadStatus, setUploadStatus] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -88,66 +91,98 @@ const CreateLesson = () => {
     setSuccess(null);
     setIsSubmitting(true);
     setVideoUploadProgress(0);
+    setIsUploading(true);
+    setUploadStatus('Preparing video upload...');
 
-    if (
-      !lessonData.title.trim() ||
-      !lessonData.description.trim() ||
-      !lessonData.cost ||
-      !lessonData.content.trim() ||
-      !videoFile
-    ) {
+    if (!lessonData.title.trim() || !lessonData.description.trim() || !lessonData.cost || !lessonData.content.trim() || !videoFile) {
       setError("Please fill in all required fields and upload a video.");
       setIsSubmitting(false);
       return;
     }
 
     try {
-      // Get the session
-      const { data: { session }, error: sessionError } = await supabase.auth
-        .getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw sessionError;
 
       if (!session) {
         throw new Error("No active session. Please log in and try again.");
       }
 
-      // Upload video to Vimeo
-      const formData = new FormData();
-      formData.append("video", videoFile);
-      formData.append("title", lessonData.title);
-      formData.append("description", lessonData.description);
+      let vimeo_video_id = null;
+      let videoUrl = null;  // Declare videoUrl here
 
-      const response = await fetch(
-        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/upload-vimeo-video`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${session.access_token}`,
-          },
-          body: formData,
-        },
-      );
+      if (videoFile) {
+        setIsUploading(true);
+        setUploadStatus('Preparing video upload...');
+        
+        // Only send metadata for initialization
+        const initFormData = new FormData();
+        initFormData.append('title', lessonData.title);
+        initFormData.append('description', lessonData.description);
+        initFormData.append('fileSize', videoFile.size.toString());
+        initFormData.append('fileName', videoFile.name);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Vimeo upload error:", errorData);
-        throw new Error(errorData.error || "Failed to upload video to Vimeo");
-      }
-
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        setVideoUploadProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(progressInterval);
-            return 100;
+        setUploadStatus('Initializing upload...');
+        
+        const initResponse = await fetch(
+          `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/upload-vimeo-video/initialize`, 
+          {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: initFormData,
           }
-          return prev + 10;
-        });
-      }, 1000);
+        );
 
-      const { vimeo_video_id } = await response.json();
+        if (!initResponse.ok) {
+          const errorData = await initResponse.json();
+          throw new Error(errorData.error || 'Failed to initialize video upload');
+        }
 
-      clearInterval(progressInterval);
+        const { 
+          upload_link, 
+          vimeo_video_id: newVimeoId, 
+          vimeo_url,  // Get from response
+          chunk_size, 
+          access_token 
+        } = await initResponse.json();
+
+        vimeo_video_id = newVimeoId;
+        videoUrl = vimeo_url;  // Assign the value
+
+        // Upload video in chunks
+        const totalSize = videoFile.size;
+        let uploadedBytes = 0;
+        
+        while (uploadedBytes < totalSize) {
+          const chunk = videoFile.slice(uploadedBytes, uploadedBytes + chunk_size);
+          
+          const chunkResponse = await fetch(upload_link, {
+            method: 'PATCH',
+            headers: {
+              'Tus-Resumable': '1.0.0',
+              'Upload-Offset': uploadedBytes.toString(),
+              'Content-Type': 'application/offset+octet-stream',
+              'Authorization': `Bearer ${access_token}`,
+            },
+            body: chunk,
+          });
+
+          if (!chunkResponse.ok) {
+            throw new Error(`Failed to upload chunk at offset ${uploadedBytes}`);
+          }
+
+          uploadedBytes = parseInt(chunkResponse.headers.get('Upload-Offset') || '0');
+          const progress = (uploadedBytes / totalSize) * 100;
+          setVideoUploadProgress(Math.round(progress));
+          setUploadStatus(`Uploading: ${Math.round(progress)}%`);
+
+          console.log(`Upload progress: ${progress.toFixed(2)}%`);
+        }
+
+        setUploadStatus('Upload complete! Processing...');
+      }
 
       let thumbnailUrl = null;
       if (thumbnail) {
@@ -178,6 +213,7 @@ const CreateLesson = () => {
           creator_id: session.user.id,
           thumbnail_url: thumbnailUrl,
           vimeo_video_id: vimeo_video_id,
+          vimeo_url: videoUrl,  // Use the renamed variable
         });
 
       if (error) throw error;
@@ -202,6 +238,7 @@ const CreateLesson = () => {
       console.error("Error creating lesson:", err);
     } finally {
       setIsSubmitting(false);
+      setIsUploading(false);
     }
   };
 
@@ -280,17 +317,20 @@ const CreateLesson = () => {
               <input
                 type="file"
                 id="video"
-                accept="video/*"
+                accept="video/*,.mov,.mp4"  // Updated to explicitly accept iPhone formats
+                capture="environment"  // Allows direct camera access on mobile
                 onChange={handleVideoChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 required
               />
+              {videoFile && (
+                <p className="mt-2 text-sm text-gray-600">
+                  Selected video: {videoFile.name} ({(videoFile.size / (1024 * 1024)).toFixed(2)} MB)
+                </p>
+              )}
               {videoUploadProgress > 0 && (
                 <div className="mt-2">
-                  <div
-                    className="bg-blue-500 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
-                    style={{ width: `${videoUploadProgress}%` }}
-                  >
+                  <div className="bg-blue-500 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={{ width: `${videoUploadProgress}%` }}>
                     {videoUploadProgress}%
                   </div>
                 </div>
@@ -370,6 +410,24 @@ const CreateLesson = () => {
         </div>
       </main>
       <Footer />
+      {isUploading && (
+        <div className="fixed bottom-4 right-4 left-4 md:left-auto bg-white shadow-lg rounded-lg p-4 max-w-sm">
+          <div className="mb-2">
+            <div className="flex flex-col mb-2">
+              <span className="text-sm font-medium text-gray-700 mb-1">{uploadStatus}</span>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                <div 
+                  className="bg-blue-600 h-full rounded-full transition-all duration-300" 
+                  style={{ width: `${videoUploadProgress}%` }}
+                />
+              </div>
+            </div>
+          </div>
+          {error && (
+            <p className="text-red-500 text-sm mt-2">{error}</p>
+          )}
+        </div>
+      )}
     </div>
   );
 };

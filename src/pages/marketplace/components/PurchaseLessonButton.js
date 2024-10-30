@@ -41,7 +41,7 @@ const PurchaseLessonButton = ({ lessonId }) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify({ lessonId }),
+          body: JSON.stringify({ tutorialId: lessonId }),
         },
       );
 
@@ -51,6 +51,13 @@ const PurchaseLessonButton = ({ lessonId }) => {
       }
 
       const data = await response.json();
+      
+      if (data.isFree) {
+        // For free lessons, redirect directly to the lesson page
+        navigate(`/lesson/${data.lessonId}`);
+        return;
+      }
+
       if (data.sessionUrl) {
         window.location.href = data.sessionUrl;
       } else {
