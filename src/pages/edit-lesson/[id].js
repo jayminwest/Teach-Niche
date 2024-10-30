@@ -294,6 +294,43 @@ const EditLesson = () => {
     }
   };
 
+  const handleDeleteLesson = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this lesson? This action cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setIsSubmitting(true);
+      setError(null);
+
+      // Delete tutorial categories
+      const { error: categoryError } = await supabase
+        .from("tutorial_categories")
+        .delete()
+        .eq("tutorial_id", id);
+
+      if (categoryError) throw categoryError;
+
+      // Delete the tutorial
+      const { error: deleteError } = await supabase
+        .from("tutorials")
+        .delete()
+        .eq("id", id);
+
+      if (deleteError) throw deleteError;
+
+      setSuccess("Lesson deleted successfully!");
+      setTimeout(() => navigate("/profile"), 2000);
+    } catch (err) {
+      setError(err.message || "Failed to delete lesson");
+      console.error("Error deleting lesson:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case "content":
@@ -487,7 +524,17 @@ const EditLesson = () => {
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-          <h2 className="text-3xl font-bold mb-6 text-center">Edit Lesson</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-3xl font-bold">Edit Lesson</h2>
+            <button
+              onClick={handleDeleteLesson}
+              className="btn btn-error"
+              disabled={isSubmitting}
+            >
+              Delete Lesson
+            </button>
+          </div>
+          
           <div className="mb-6">
             <div className="flex border-b">
               {["content", "reviews", "discussion"].map((tab) => (

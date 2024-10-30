@@ -74,6 +74,11 @@ const fetchTutorial = async (tutorialId: string) => {
  * @returns Stripe checkout session URL
  */
 const createStripeCheckoutSession = async (tutorial: any, userId: string) => {
+  // If the lesson is free, return null to indicate no checkout needed
+  if (tutorial.price === 0) {
+    return null;
+  }
+
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     line_items: [{ price: tutorial.stripe_price_id, quantity: 1 }],
@@ -139,6 +144,31 @@ serve(async (req) => {
     }
 
     const sessionUrl = await createStripeCheckoutSession(tutorial, user.id);
+
+    if (!sessionUrl && tutorial.price === 0) {
+      // Handle free lesson
+      const { error: purchaseError } = await supabase
+        .from("purchases")
+        .insert([
+          {
+            user_id: user.id,
+            tutorial_id: tutorial.id,
+            purchase_date: new Date().toISOString(),
+          },
+        ]);
+
+      if (purchaseError) {
+        return createCorsResponse(500, {
+          error: "Failed to grant access to free lesson",
+        }, origin);
+      }
+
+      return createCorsResponse(200, { 
+        isFree: true,
+        lessonId: tutorial.id 
+      }, origin);
+    }
+
     return createCorsResponse(200, { sessionUrl }, origin);
   } catch (error) {
     console.error("Error in create-checkout-session:", error);

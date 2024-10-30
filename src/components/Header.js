@@ -80,10 +80,12 @@ const Header = () => {
             {user ? (
               <>
                 <div className="dropdown dropdown-end">
-                  <label tabIndex={0} className="btn btn-ghost btn-circle avatar">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center">
-                      <i className="bi bi-person-circle text-2xl" aria-hidden="true"></i>
-                    </div>
+                  <label 
+                    tabIndex={0} 
+                    className="btn btn-ghost btn-circle avatar flex items-center justify-center"
+                    aria-label="Open profile menu"
+                  >
+                    <i className="bi bi-person-circle text-2xl" aria-hidden="true"></i>
                   </label>
                   <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-200 rounded-box w-52">
                     <li>

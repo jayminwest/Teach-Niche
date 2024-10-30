@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
+import supabase from "../../../utils/supabaseClient";
 
 /**
  * LessonCard Component
@@ -53,8 +54,27 @@ const LessonCard = ({
       return;
     }
 
-    if (isWelcomeLesson) {
-      handleAccess();
+    if (price === 0 || isWelcomeLesson) {
+      // Handle free lesson access directly
+      try {
+        const { error } = await supabase
+          .from("purchases")
+          .insert([
+            {
+              user_id: user.id,
+              tutorial_id: id,
+              purchase_date: new Date().toISOString(),
+            },
+          ]);
+
+        if (error) throw error;
+        
+        // Redirect to lesson page after granting access
+        navigate(`/lesson/${id}`);
+      } catch (err) {
+        console.error("Error granting access to free lesson:", err);
+        setError("Failed to access free lesson. Please try again.");
+      }
       return;
     }
 
@@ -105,7 +125,9 @@ const LessonCard = ({
       <div className="card-body">
         <h2 className="card-title">{title}</h2>
         <p>Creator: {creatorName}</p>
-        <p>Price: ${price}</p>
+        <p className="text-lg font-semibold">
+          {price === 0 ? "Free" : `$${price.toFixed(2)}`}
+        </p>
         <p>{description}</p>
         {error && <p className="text-red-500">{error}</p>}
         {isCreator
