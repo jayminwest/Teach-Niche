@@ -203,6 +203,31 @@ const CreateLesson = () => {
         thumbnailUrl = publicUrl;
       }
 
+      // Create lesson in Stripe first
+      const response = await fetch(`${process.env.REACT_APP_SUPABASE_FUNCTIONS_URL}/create-lesson`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          title: lessonData.title,
+          description: lessonData.description,
+          price: parseFloat(lessonData.cost),
+          vimeo_url: videoUrl,
+          content: lessonData.content,
+          category_ids: categoryIds,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create lesson');
+      }
+
+      const { lesson } = await response.json();
+
+      // Update the tutorial insert to include Stripe IDs
       const { data, error } = await supabase
         .from("tutorials")
         .insert({
@@ -213,7 +238,9 @@ const CreateLesson = () => {
           creator_id: session.user.id,
           thumbnail_url: thumbnailUrl,
           vimeo_video_id: vimeo_video_id,
-          vimeo_url: videoUrl,  // Use the renamed variable
+          vimeo_url: videoUrl,
+          stripe_product_id: lesson.stripe_product_id,    // Add these fields
+          stripe_price_id: lesson.stripe_price_id,        // Add these fields
         });
 
       if (error) throw error;

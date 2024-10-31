@@ -33,28 +33,28 @@ serve(async (req) => {
 
   // Check if the origin is allowed
   if (!allowedOrigins.includes(origin)) {
-    return new Response("Forbidden", { status: 403 });
+    return createCorsResponse(403, { error: "Forbidden" }, origin);
   }
 
   if (req.method !== "POST") {
-    return new Response("Method Not Allowed", { status: 405 });
+    return createCorsResponse(405, { error: "Method not allowed" }, origin);
   }
 
   const token = req.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) {
-    return createCorsResponse(401, { error: "Unauthorized token" }, origin);
-  }
-
-  // Authenticate user
-  const { data: { user }, error: authError } = await supabase.auth.getUser(
-    token,
-  );
-  if (authError || !user) {
-    return createCorsResponse(401, { error: "Unauthorized user" }, origin);
+    return createCorsResponse(401, { error: "Unauthorized" }, origin);
   }
 
   try {
-    const { title, description, price, video_url, content, category_ids } =
+    // Authenticate user
+    const { data: { user }, error: authError } = await supabase.auth.getUser(
+      token,
+    );
+    if (authError || !user) {
+      return createCorsResponse(401, { error: "Unauthorized" }, origin);
+    }
+
+    const { title, description, price, vimeo_url, content, category_ids } =
       await req.json();
 
     if (!title || !price || !content) {
@@ -101,7 +101,7 @@ serve(async (req) => {
           title,
           description,
           price: parseFloat(price),
-          video_url: video_url || null,
+          vimeo_url: vimeo_url || null,
           content,
           creator_id: user.id,
           stripe_product_id: product.id,
