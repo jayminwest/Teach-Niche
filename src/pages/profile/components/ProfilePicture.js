@@ -20,18 +20,30 @@ const ProfilePicture = ({ profilePicture, onUpdate }) => {
         const fileName = `${Date.now()}.${fileExt}`;
         const filePath = `${fileName}`;
 
-        const { data, error } = await supabase.storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
           .from("avatars")
           .upload(filePath, file);
 
-        if (error) throw error;
+        if (uploadError) throw uploadError;
 
         const { data: publicURL } = supabase
           .storage
           .from("avatars")
           .getPublicUrl(filePath);
 
-        console.log("Uploaded file public URL:", publicURL.publicUrl);
+        // Get current user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+
+        // Update user profile with new avatar URL
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: publicURL.publicUrl })
+          .eq('id', user.id);
+
+        if (updateError) throw updateError;
+
+        console.log("Profile picture updated successfully");
         onUpdate(publicURL.publicUrl);
       } catch (error) {
         console.error("Error uploading profile picture:", error.message);
