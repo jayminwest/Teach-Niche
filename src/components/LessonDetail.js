@@ -1,6 +1,8 @@
 // src/components/LessonDetail.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import supabase from '../utils/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 
@@ -101,19 +103,19 @@ const LessonDetail = () => {
         <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1>
         
         {hasPurchased ? (
-          // Show video content for users who have purchased or if it's free
-          <div className="aspect-w-16 aspect-h-9 mb-6">
-            <iframe
-              src={`https://player.vimeo.com/video/${lesson.vimeo_video_id}`}
-              className="w-full h-full rounded-lg"
-              frameBorder="0"
-              allow="autoplay; fullscreen; picture-in-picture"
-              allowFullScreen
-              title={lesson.title}
-            />
+          <div className="w-full h-auto mb-8">
+            <div className="relative w-full aspect-video">
+              <iframe
+                src={`https://player.vimeo.com/video/${lesson.vimeo_video_id}`}
+                className="absolute top-0 left-0 w-full h-full rounded-lg shadow-lg"
+                frameBorder="0"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                title={lesson.title}
+              />
+            </div>
           </div>
         ) : (
-          // Show preview/purchase UI for users who haven't purchased
           <div className="bg-base-200 p-8 rounded-lg text-center mb-6">
             <h2 className="text-xl font-semibold mb-4">
               Purchase this lesson to access the full content
@@ -130,12 +132,36 @@ const LessonDetail = () => {
           </div>
         )}
 
-        <div className="prose max-w-none">
+        <div className="prose prose-slate max-w-none dark:prose-invert">
           <h2 className="text-2xl font-semibold mb-4">Description</h2>
-          <div dangerouslySetInnerHTML={{ __html: lesson.description }} />
+          <ReactMarkdown 
+            remarkPlugins={[remarkGfm]}
+            className="markdown-content"
+          >
+            {lesson.description}
+          </ReactMarkdown>
           
           <h2 className="text-2xl font-semibold mt-8 mb-4">Content</h2>
-          <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+          <ReactMarkdown 
+            remarkPlugins={[remarkGfm]}
+            className="markdown-content"
+            components={{
+              // Custom components for markdown elements
+              h1: ({node, ...props}) => <h1 className="text-2xl font-bold my-4" {...props} />,
+              h2: ({node, ...props}) => <h2 className="text-xl font-bold my-3" {...props} />,
+              h3: ({node, ...props}) => <h3 className="text-lg font-bold my-2" {...props} />,
+              p: ({node, ...props}) => <p className="my-2" {...props} />,
+              ul: ({node, ...props}) => <ul className="list-disc list-inside my-2" {...props} />,
+              ol: ({node, ...props}) => <ol className="list-decimal list-inside my-2" {...props} />,
+              code: ({node, inline, ...props}) => (
+                inline 
+                  ? <code className="bg-base-200 px-1 rounded" {...props} />
+                  : <code className="block bg-base-200 p-4 rounded-lg my-2 overflow-x-auto" {...props} />
+              ),
+            }}
+          >
+            {lesson.content}
+          </ReactMarkdown>
         </div>
 
         {lesson.creator && (
