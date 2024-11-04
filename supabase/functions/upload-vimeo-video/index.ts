@@ -7,34 +7,30 @@ import {
 } from "../_shared/config.ts";
 
 const VIMEO_API_URL = "https://api.vimeo.com";
-const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks for client-side handling
+const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks
 
 serve(async (req: Request): Promise<Response> => {
   const origin = req.headers.get("origin") || "";
-  console.log("Request origin:", origin);
-  console.log("Request method:", req.method);
-  console.log(
-    "All request headers:",
-    JSON.stringify(Object.fromEntries(req.headers), null, 2),
-  );
-
+  
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders(origin) });
   }
 
   try {
+    // Origin checks...
     if (!origin && !allowedOrigins.includes(origin)) {
       console.log("Request has no origin or origin is not in the allowed list");
     } else if (!allowedOrigins.includes(origin)) {
-      console.log("Origin not allowed:", origin);
       return createCorsResponse(403, { error: "Origin not allowed" }, origin);
     }
 
+    // Supabase setup...
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const vimeoAccessToken = Deno.env.get("VIMEO_ACCESS_TOKEN"); // Add this to your env variables
 
-    if (!supabaseUrl || !supabaseServiceRoleKey) {
-      console.error("Missing Supabase environment variables");
+    if (!supabaseUrl || !supabaseServiceRoleKey || !vimeoAccessToken) {
+      console.error("Missing environment variables");
       return createCorsResponse(
         500,
         { error: "Server configuration error" },
@@ -44,6 +40,7 @@ serve(async (req: Request): Promise<Response> => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
+    // Auth check...
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return createCorsResponse(
@@ -62,22 +59,6 @@ serve(async (req: Request): Promise<Response> => {
       return createCorsResponse(401, { error: "Unauthorized" }, origin);
     }
 
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("vimeo_access_token")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError || !profile?.vimeo_access_token) {
-      return createCorsResponse(
-        400,
-        { error: "Vimeo account not connected" },
-        origin,
-      );
-    }
-
-    const vimeoAccessToken = profile.vimeo_access_token;
-
     const url = new URL(req.url);
     
     // Initialize upload endpoint
@@ -95,7 +76,7 @@ serve(async (req: Request): Promise<Response> => {
 
       console.log(`Creating video on Vimeo: ${title}, size: ${fileSize} bytes`);
 
-      // Create video on Vimeo
+      // Create video on Vimeo using platform account
       const createResponse = await fetch(`${VIMEO_API_URL}/me/videos`, {
         method: "POST",
         headers: {
@@ -110,6 +91,10 @@ serve(async (req: Request): Promise<Response> => {
           },
           name: title,
           description: description,
+          privacy: {
+            view: "disable",  // Makes video private by default
+            embed: "public"   // Allows embedding
+          }
         }),
       });
 
@@ -122,14 +107,13 @@ serve(async (req: Request): Promise<Response> => {
       const createData = await createResponse.json();
       console.log("Vimeo creation response:", createData);
 
-      // Extract the numeric ID and construct the proper URL
       const vimeoId = createData.uri.split("/").pop();
       const vimeoUrl = `https://vimeo.com/${vimeoId}`;
 
       return new Response(JSON.stringify({
         upload_link: createData.upload.upload_link,
         vimeo_video_id: vimeoId,
-        vimeo_url: vimeoUrl,  // Add the full URL
+        vimeo_url: vimeoUrl,
         chunk_size: CHUNK_SIZE,
         access_token: vimeoAccessToken
       }), {

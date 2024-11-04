@@ -41,11 +41,19 @@ const EditLesson = () => {
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [customPrice, setCustomPrice] = useState(false);
+  const priceOptions = [0, 5, 10, 15, 20];
 
   useEffect(() => {
     fetchLessonData();
     fetchCategories();
   }, [id]);
+
+  useEffect(() => {
+    if (lessonData.cost && !priceOptions.includes(parseFloat(lessonData.cost))) {
+      setCustomPrice(true);
+    }
+  }, [lessonData.cost]);
 
   const fetchLessonData = async () => {
     try {
@@ -135,7 +143,7 @@ const EditLesson = () => {
     setVideoUploadProgress(0);
 
     let vimeo_video_id = lessonData.vimeo_video_id;
-    let videoUrl = null;  // Declare videoUrl here
+    let videoUrl = null;
 
     if (
       !lessonData.title.trim() || 
@@ -156,6 +164,69 @@ const EditLesson = () => {
         throw new Error("No active session. Please log in and try again.");
       }
 
+      // Get the current lesson data to check if it was previously free
+      const { data: currentLesson, error: lessonError } = await supabase
+        .from("tutorials")
+        .select("price, stripe_product_id, stripe_price_id")
+        .eq("id", id)
+        .single();
+
+      if (lessonError) throw lessonError;
+
+      const newPrice = parseFloat(lessonData.cost);
+      const wasFreePreviously = currentLesson.price === 0;
+      const willBePaid = newPrice > 0;
+
+      // Check if Stripe account is required (changing to paid lesson)
+      if (wasFreePreviously && willBePaid) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('stripe_account_id, stripe_onboarding_complete')
+          .eq('id', session.user.id)
+          .single();
+
+        if (!profile?.stripe_account_id || !profile?.stripe_onboarding_complete) {
+          setError("Please connect your Stripe account before making this lesson paid.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Create new Stripe product and price
+        const response = await fetch(`${process.env.REACT_APP_SUPABASE_FUNCTIONS_URL}/create-lesson`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            title: lessonData.title,
+            description: lessonData.description,
+            price: newPrice,
+            content: lessonData.content,
+            create_stripe_only: true, // Add this flag to indicate we only need Stripe products
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create Stripe product');
+        }
+
+        const { stripe_product_id, stripe_price_id } = await response.json();
+
+        // Update the lesson with the new Stripe IDs
+        const { error: updateError } = await supabase
+          .from("tutorials")
+          .update({
+            stripe_product_id,
+            stripe_price_id
+          })
+          .eq("id", id);
+
+        if (updateError) throw updateError;
+      }
+
+      // Handle video upload if there's a new video
       if (videoFile) {
         setIsUploading(true);
         setUploadStatus('Preparing video upload...');
@@ -226,6 +297,7 @@ const EditLesson = () => {
         setUploadStatus('Upload complete! Processing...');
       }
 
+      // Handle thumbnail upload if there's a new thumbnail
       let thumbnailUrl = thumbnailPreview;
       if (thumbnail) {
         const fileExt = thumbnail.name.split(".").pop();
@@ -245,26 +317,23 @@ const EditLesson = () => {
         thumbnailUrl = publicUrl;
       }
 
-      const price = parseFloat(lessonData.cost);
-      if (isNaN(price) || price < 0) {
-        throw new Error("Price must be a non-negative number.");
-      }
-
-      const { data, error } = await supabase
+      // Update the lesson
+      const { error } = await supabase
         .from("tutorials")
         .update({
           title: lessonData.title.trim(),
           description: lessonData.description.trim(),
-          price: price,
+          price: newPrice,
           content: lessonData.content.trim(),
           thumbnail_url: thumbnailUrl,
           vimeo_video_id: vimeo_video_id,
-          vimeo_url: videoUrl,  // Use the renamed variable
+          vimeo_url: videoUrl,
         })
         .eq("id", id);
 
       if (error) throw error;
 
+      // Handle categories update
       await supabase
         .from("tutorial_categories")
         .delete()
@@ -368,18 +437,47 @@ const EditLesson = () => {
 
             <div>
               <label htmlFor="cost" className="block text-sm font-medium text-gray-700 mb-1">
-                Cost (USD)
+                Price (USD)
               </label>
-              <input
-                type="number"
-                step="0.01"
-                id="cost"
-                name="cost"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={lessonData.cost}
-                onChange={handleInputChange}
-                required
-              />
+              <div className="flex gap-2">
+                <select
+                  id="cost"
+                  name="cost"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  value={customPrice ? "custom" : lessonData.cost}
+                  onChange={(e) => {
+                    if (e.target.value === "custom") {
+                      setCustomPrice(true);
+                      setLessonData(prev => ({ ...prev, cost: "" }));
+                    } else {
+                      setCustomPrice(false);
+                      setLessonData(prev => ({ ...prev, cost: e.target.value }));
+                    }
+                  }}
+                  required
+                >
+                  {priceOptions.map((price) => (
+                    <option key={price} value={price}>
+                      ${price}
+                    </option>
+                  ))}
+                  <option value="custom">Custom</option>
+                </select>
+                {customPrice && (
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    value={lessonData.cost}
+                    onChange={(e) => handleInputChange({
+                      target: { name: "cost", value: e.target.value }
+                    })}
+                    placeholder="Enter custom price"
+                    required
+                  />
+                )}
+              </div>
             </div>
 
             <div>
@@ -448,23 +546,35 @@ const EditLesson = () => {
               </label>
               
               {lessonData.vimeo_video_id ? (
-                <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Current Video:</p>
-                      <p className="font-medium">
-                        <i className="bi bi-play-circle mr-2" aria-hidden="true"></i>
-                        Video ID: {lessonData.vimeo_video_id}
-                      </p>
+                <div className="mb-4">
+                  <div className="aspect-w-16 aspect-h-9 mb-4">
+                    <iframe
+                      src={`https://player.vimeo.com/video/${lessonData.vimeo_video_id}`}
+                      className="w-full h-full rounded-lg"
+                      frameBorder="0"
+                      allow="autoplay; fullscreen; picture-in-picture"
+                      allowFullScreen
+                      title={lessonData.title}
+                    />
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-600">Current Video:</p>
+                        <p className="font-medium">
+                          <i className="bi bi-play-circle mr-2" aria-hidden="true"></i>
+                          Video ID: {lessonData.vimeo_video_id}
+                        </p>
+                      </div>
+                      <a 
+                        href={`https://vimeo.com/${lessonData.vimeo_video_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-indigo-600 hover:text-indigo-800 text-sm"
+                      >
+                        View on Vimeo
+                      </a>
                     </div>
-                    <a 
-                      href={`https://vimeo.com/${lessonData.vimeo_video_id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-indigo-600 hover:text-indigo-800 text-sm"
-                    >
-                      View on Vimeo
-                    </a>
                   </div>
                 </div>
               ) : (
@@ -478,8 +588,8 @@ const EditLesson = () => {
                 <input
                   type="file"
                   id="video"
-                  accept="video/*,.mov,.mp4"  // Updated to explicitly accept iPhone formats
-                  capture="environment"  // Allows direct camera access on mobile
+                  accept="video/*,.mov,.mp4"
+                  capture="environment"
                   onChange={handleVideoChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 />
