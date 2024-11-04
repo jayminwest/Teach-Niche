@@ -16,6 +16,7 @@ const Footer = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [subscriptionMessage, setSubscriptionMessage] = useState(null);
   const [subscriptionError, setSubscriptionError] = useState(null);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const handleSubscribe = async (e) => {
     e.preventDefault();
@@ -51,6 +52,19 @@ const Footer = () => {
     }
   };
 
+  const handleCopyEmail = async (e) => {
+    e.preventDefault();
+    const email = "jaymin@teach-niche.com";
+    
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy email:', err);
+    }
+  };
+
   return (
     <footer className="bottom-0 bg-base-200 text-base-content">
       <div className="container mx-auto px-4">
@@ -82,13 +96,14 @@ const Footer = () => {
             >
               About us
             </Link>
-            <Link 
-              className="link link-hover" 
-              to="/about"
-              aria-label="Contact us"
+            <a 
+              href="mailto:jaymin@teach-niche.com"
+              className="link link-hover relative"
+              onClick={handleCopyEmail}
+              aria-label="Contact via email"
             >
-              Contact
-            </Link>
+              {copySuccess ? "Email copied!" : "Contact"}
+            </a>
           </nav>
 
           <nav aria-label="Legal">

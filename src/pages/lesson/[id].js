@@ -77,14 +77,14 @@ const LessonPage = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        Loading...
+        <div className="prose">Loading...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center mt-10 text-red-500 px-4">
+      <div className="prose text-center mt-10 text-red-500 px-4">
         {error === "PGRST116: No rows found"
           ? "You do not have access to this lesson. Please purchase it first."
           : `An error occurred: ${error}`}
@@ -93,7 +93,7 @@ const LessonPage = () => {
   }
 
   if (!lesson) {
-    return <div className="text-center mt-10">Lesson not found.</div>;
+    return <div className="prose text-center mt-10">Lesson not found.</div>;
   }
 
   if (!user) {
@@ -117,7 +117,7 @@ const LessonPage = () => {
         return hasAccess
           ? <LessonDiscussion lessonId={id} />
           : (
-            <div className="text-center mt-10">
+            <div className="prose text-center mt-10">
               Please purchase this lesson to access the discussion.
             </div>
           );
@@ -130,7 +130,7 @@ const LessonPage = () => {
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-6">{lesson.title}</h1>
+        <h1 className="prose text-2xl md:text-3xl font-bold mb-6">{lesson.title}</h1>
         <div className="flex flex-col md:flex-row">
           <aside className="w-full md:w-64 mb-6 md:mb-0 md:mr-8">
             <nav className="bg-base-200 rounded-lg p-4">

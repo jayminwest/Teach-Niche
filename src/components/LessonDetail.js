@@ -1,121 +1,156 @@
 // src/components/LessonDetail.js
-import React, { useEffect, useState } from "react";
-import Player from "@vimeo/player";
-import ReactMarkdown from "react-markdown";
-import { useAuth } from "../context/AuthContext";
-import supabase from "../utils/supabaseClient";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import supabase from '../utils/supabaseClient';
+import { useAuth } from '../context/AuthContext';
 
-/**
- * LessonDetail Component
- *
- * Displays the details of a lesson including video content and description.
- *
- * @param {Object} props
- * @param {Object} props.lesson - The lesson data
- * @param {Object} props.creator - The creator's data
- * @param {boolean} props.hasAccess - Whether the user has access to the lesson
- * @param {string} props.lessonId - The ID of the lesson
- * @returns {JSX.Element} The lesson detail component
- */
-const LessonDetail = ({ lesson, creator, hasAccess, lessonId }) => {
+const LessonDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const [vimeoPlayer, setVimeoPlayer] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [lesson, setLesson] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [hasPurchased, setHasPurchased] = useState(false);
+  const [isCreator, setIsCreator] = useState(false);
 
   useEffect(() => {
-    if (hasAccess && lesson.vimeo_video_id) {
-      const player = new Player("vimeo-player", {
-        id: lesson.vimeo_video_id,
-        width: 640,
-        responsive: true,
-      });
-      setVimeoPlayer(player);
-    }
-  }, [hasAccess, lesson.vimeo_video_id]);
+    fetchLessonDetails();
+  }, [id, user]);
 
-  const handleAccessLesson = async () => {
-    if (!user) {
-      window.location.href = "/sign-in";
-      return;
-    }
-
-    setIsLoading(true);
+  const fetchLessonDetails = async () => {
     try {
-      const { error } = await supabase
-        .from("purchases")
-        .insert([
-          {
-            user_id: user.id,
-            tutorial_id: lessonId,
-            purchase_date: new Date().toISOString(),
-          },
-        ]);
+      if (!user) {
+        navigate('/sign-in');
+        return;
+      }
 
-      if (error) throw error;
-      window.location.reload();
+      // Fetch lesson details
+      const { data: lessonData, error: lessonError } = await supabase
+        .from('tutorials')
+        .select(`
+          *,
+          creator:creator_id (
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (lessonError) throw lessonError;
+      if (!lessonData) throw new Error('Lesson not found');
+
+      setLesson(lessonData);
+      setIsCreator(lessonData.creator_id === user.id);
+
+      // Check if user has purchased this lesson
+      const { data: purchaseData, error: purchaseError } = await supabase
+        .from('purchases')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('tutorial_id', id)
+        .single();
+
+      if (purchaseError && purchaseError.code !== 'PGRST116') {
+        throw purchaseError;
+      }
+
+      // Set hasPurchased to true if the lesson is free, user is creator, or has purchased
+      setHasPurchased(
+        lessonData.price === 0 || 
+        lessonData.creator_id === user.id || 
+        !!purchaseData
+      );
+
     } catch (error) {
-      console.error("Error granting access to free lesson:", error);
-      alert("An error occurred. Please try again.");
+      console.error('Error fetching lesson details:', error);
+      setError(error.message);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <span className="loading loading-spinner loading-lg"></span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="alert alert-error">
+        <p>{error}</p>
+      </div>
+    );
+  }
+
+  if (!lesson) {
+    return (
+      <div className="alert alert-error">
+        <p>Lesson not found</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-base-100 shadow-lg rounded-lg overflow-hidden">
-      <div className="p-6">
-        {/* Creator Info */}
-        <div className="flex items-center mb-6">
-          {creator?.avatar_url ? (
-            <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
-              <img
-                src={creator.avatar_url}
-                alt={`${creator.full_name}'s avatar`}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ) : (
-            <div className="w-12 h-12 rounded-full bg-base-300 mr-4 flex items-center justify-center">
-              <span className="text-xl">{creator?.full_name?.[0] || '?'}</span>
-            </div>
-          )}
-          <div>
-            <h3 className="text-lg font-semibold">
-              {creator?.full_name || "Unknown Creator"}
-            </h3>
-          </div>
-        </div>
-
-        {/* Description */}
-        <div className="prose max-w-none mb-6">
-          <p>{lesson.description}</p>
-        </div>
-
-        {/* Content */}
-        {hasAccess ? (
-          <div className="lesson-content space-y-6">
-            <div id="vimeo-player" className="aspect-video w-full rounded-lg overflow-hidden"></div>
-            <div className="prose max-w-none">
-              <ReactMarkdown>{lesson.content}</ReactMarkdown>
-            </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1>
+        
+        {hasPurchased ? (
+          // Show video content for users who have purchased or if it's free
+          <div className="aspect-w-16 aspect-h-9 mb-6">
+            <iframe
+              src={`https://player.vimeo.com/video/${lesson.vimeo_video_id}`}
+              className="w-full h-full rounded-lg"
+              frameBorder="0"
+              allow="autoplay; fullscreen; picture-in-picture"
+              allowFullScreen
+              title={lesson.title}
+            />
           </div>
         ) : (
-          <div className="text-center py-8">
-            <p className="text-lg mb-4">Purchase this lesson to access the content.</p>
+          // Show preview/purchase UI for users who haven't purchased
+          <div className="bg-base-200 p-8 rounded-lg text-center mb-6">
+            <h2 className="text-xl font-semibold mb-4">
+              Purchase this lesson to access the full content
+            </h2>
+            <p className="mb-4">
+              Price: ${lesson.price}
+            </p>
             <button
-              className="btn btn-primary btn-lg"
-              onClick={handleAccessLesson}
-              disabled={isLoading}
+              className="btn btn-primary"
+              onClick={() => navigate(`/checkout/${id}`)}
             >
-              {isLoading ? (
-                <>
-                  <span className="loading loading-spinner loading-sm mr-2"></span>
-                  Processing...
-                </>
-              ) : (
-                user ? "Access Free Lesson" : "Sign In to Access Free Lesson"
-              )}
+              Purchase Lesson
             </button>
+          </div>
+        )}
+
+        <div className="prose max-w-none">
+          <h2 className="text-2xl font-semibold mb-4">Description</h2>
+          <div dangerouslySetInnerHTML={{ __html: lesson.description }} />
+          
+          <h2 className="text-2xl font-semibold mt-8 mb-4">Content</h2>
+          <div dangerouslySetInnerHTML={{ __html: lesson.content }} />
+        </div>
+
+        {lesson.creator && (
+          <div className="mt-8 p-4 bg-base-200 rounded-lg">
+            <h3 className="text-xl font-semibold mb-2">Created by</h3>
+            <div className="flex items-center">
+              {lesson.creator.avatar_url && (
+                <img
+                  src={lesson.creator.avatar_url}
+                  alt={lesson.creator.full_name}
+                  className="w-12 h-12 rounded-full mr-4"
+                />
+              )}
+              <span className="text-lg">{lesson.creator.full_name}</span>
+            </div>
           </div>
         )}
       </div>

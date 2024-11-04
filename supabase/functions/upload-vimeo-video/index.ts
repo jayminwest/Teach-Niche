@@ -7,37 +7,30 @@ import {
 } from "../_shared/config.ts";
 
 const VIMEO_API_URL = "https://api.vimeo.com";
-const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks for client-side handling
+const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks
 
 serve(async (req: Request): Promise<Response> => {
   const origin = req.headers.get("origin") || "";
-  console.log("Request origin:", origin);
-  console.log("Request method:", req.method);
-<<<<<<< HEAD
-  console.log(
-    "All request headers:",
-    JSON.stringify(Object.fromEntries(req.headers), null, 2),
-  );
-=======
->>>>>>> dev
-
+  
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders(origin) });
   }
 
   try {
+    // Origin checks...
     if (!origin && !allowedOrigins.includes(origin)) {
       console.log("Request has no origin or origin is not in the allowed list");
     } else if (!allowedOrigins.includes(origin)) {
-      console.log("Origin not allowed:", origin);
       return createCorsResponse(403, { error: "Origin not allowed" }, origin);
     }
 
+    // Supabase setup...
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const vimeoAccessToken = Deno.env.get("VIMEO_ACCESS_TOKEN"); // Add this to your env variables
 
-    if (!supabaseUrl || !supabaseServiceRoleKey) {
-      console.error("Missing Supabase environment variables");
+    if (!supabaseUrl || !supabaseServiceRoleKey || !vimeoAccessToken) {
+      console.error("Missing environment variables");
       return createCorsResponse(
         500,
         { error: "Server configuration error" },
@@ -47,6 +40,7 @@ serve(async (req: Request): Promise<Response> => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
+    // Auth check...
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return createCorsResponse(
@@ -65,31 +59,6 @@ serve(async (req: Request): Promise<Response> => {
       return createCorsResponse(401, { error: "Unauthorized" }, origin);
     }
 
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("vimeo_access_token")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError || !profile?.vimeo_access_token) {
-      return createCorsResponse(
-        400,
-        { error: "Vimeo account not connected" },
-        origin,
-      );
-    }
-
-    const vimeoAccessToken = profile.vimeo_access_token;
-
-<<<<<<< HEAD
-    if (!video || !title) {
-      return createCorsResponse(
-        400,
-        { error: "Missing required fields" },
-        origin,
-      );
-    }
-=======
     const url = new URL(req.url);
     
     // Initialize upload endpoint
@@ -100,7 +69,6 @@ serve(async (req: Request): Promise<Response> => {
       const description = formData.get("description") as string;
       const fileSize = parseInt(formData.get("fileSize") as string);
       const fileName = formData.get("fileName") as string;
->>>>>>> dev
 
       if (!title || !fileSize || !fileName) {
         return createCorsResponse(400, { error: "Missing required fields" }, origin);
@@ -108,7 +76,7 @@ serve(async (req: Request): Promise<Response> => {
 
       console.log(`Creating video on Vimeo: ${title}, size: ${fileSize} bytes`);
 
-      // Create video on Vimeo
+      // Create video on Vimeo using platform account
       const createResponse = await fetch(`${VIMEO_API_URL}/me/videos`, {
         method: "POST",
         headers: {
@@ -123,73 +91,13 @@ serve(async (req: Request): Promise<Response> => {
           },
           name: title,
           description: description,
+          privacy: {
+            view: "disable",  // Makes video private by default
+            embed: "public"   // Allows embedding
+          }
         }),
       });
 
-<<<<<<< HEAD
-    if (!createResponse.ok) {
-      const errorData = await createResponse.json();
-      return createCorsResponse(500, {
-        error: "Failed to create video on Vimeo",
-        details: errorData,
-      }, origin);
-    }
-
-    const createData = await createResponse.json();
-    const uploadLink = createData.upload.upload_link;
-    const vimeoVideoId = createData.uri.split("/").pop();
-
-    if (!uploadLink) {
-      return createCorsResponse(500, {
-        error: "Failed to get upload link from Vimeo",
-      }, origin);
-    }
-
-    const uploadResponse = await fetch(uploadLink, {
-      method: "PATCH",
-      headers: {
-        "Tus-Resumable": "1.0.0",
-        "Upload-Offset": "0",
-        "Content-Type": "application/offset+octet-stream",
-      },
-      body: video.stream(),
-    });
-
-    if (!uploadResponse.ok) {
-      return createCorsResponse(500, {
-        error: "Failed to upload video to Vimeo",
-      }, origin);
-    }
-
-    const { data: tutorialData, error: tutorialError } = await supabase
-      .from("tutorials")
-      .insert({
-        title: title,
-        description: description,
-        vimeo_video_url: `https://vimeo.com/${vimeoVideoId}`,
-        creator_id: user.id,
-      })
-      .select();
-
-    if (tutorialError) {
-      return createCorsResponse(500, {
-        error: "Failed to store tutorial data",
-        details: tutorialError,
-      }, origin);
-    }
-
-    return createCorsResponse(200, {
-      vimeo_video_id: vimeoVideoId,
-      tutorial_id: tutorialData[0].id,
-      message: "Video uploaded successfully. Processing may take some time.",
-    }, origin);
-  } catch (error) {
-    return createCorsResponse(500, {
-      error: error instanceof Error
-        ? error.message
-        : "An unexpected error occurred",
-      details: error instanceof Error ? error.stack : String(error),
-=======
       if (!createResponse.ok) {
         const errorData = await createResponse.json();
         console.error("Vimeo creation error:", errorData);
@@ -199,14 +107,13 @@ serve(async (req: Request): Promise<Response> => {
       const createData = await createResponse.json();
       console.log("Vimeo creation response:", createData);
 
-      // Extract the numeric ID and construct the proper URL
       const vimeoId = createData.uri.split("/").pop();
       const vimeoUrl = `https://vimeo.com/${vimeoId}`;
 
       return new Response(JSON.stringify({
         upload_link: createData.upload.upload_link,
         vimeo_video_id: vimeoId,
-        vimeo_url: vimeoUrl,  // Add the full URL
+        vimeo_url: vimeoUrl,
         chunk_size: CHUNK_SIZE,
         access_token: vimeoAccessToken
       }), {
@@ -223,7 +130,6 @@ serve(async (req: Request): Promise<Response> => {
     return createCorsResponse(500, { 
       error: error instanceof Error ? error.message : "An unexpected error occurred",
       details: error instanceof Error ? error.stack : String(error)
->>>>>>> dev
     }, origin);
   }
 });

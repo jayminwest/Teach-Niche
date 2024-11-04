@@ -20,7 +20,7 @@ const CreateLesson = () => {
   const [lessonData, setLessonData] = useState({
     title: "",
     description: "",
-    cost: "",
+    cost: "0",
     content: "",
   });
   const [categoryIds, setCategoryIds] = 
@@ -37,6 +37,8 @@ const CreateLesson = () => {
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [customPrice, setCustomPrice] = useState(false);
+  const priceOptions = [0, 5, 10, 15, 20];
 
   useEffect(() => {
     fetchCategories();
@@ -94,8 +96,24 @@ const CreateLesson = () => {
     setIsUploading(true);
     setUploadStatus('Preparing video upload...');
 
-    if (!lessonData.title.trim() || !lessonData.description.trim() || !lessonData.cost || !lessonData.content.trim() || !videoFile) {
-      setError("Please fill in all required fields and upload a video.");
+    // Validate form data
+    if (!lessonData.title.trim() || !lessonData.description.trim() || lessonData.cost === "" || !lessonData.content.trim() || !videoFile) {
+      const missingFields = [];
+      if (!lessonData.title.trim()) missingFields.push('title');
+      if (!lessonData.description.trim()) missingFields.push('description');
+      if (lessonData.cost === "") missingFields.push('cost');
+      if (!lessonData.content.trim()) missingFields.push('content');
+      if (!videoFile) missingFields.push('video');
+
+      const errorMessage = `Please fill in all required fields: ${missingFields.join(', ')}`;
+      console.error('Form validation failed:', errorMessage);
+      setError(errorMessage);
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (parseFloat(lessonData.cost) < 0) {
+      setError("Price cannot be negative");
       setIsSubmitting(false);
       return;
     }
@@ -104,18 +122,15 @@ const CreateLesson = () => {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw sessionError;
 
-      if (!session) {
-        throw new Error("No active session. Please log in and try again.");
-      }
-
+      // Initialize video-related variables
       let vimeo_video_id = null;
-      let videoUrl = null;  // Declare videoUrl here
+      let vimeo_url = null;
 
+      // Handle video upload if there's a video file
       if (videoFile) {
         setIsUploading(true);
         setUploadStatus('Preparing video upload...');
         
-        // Only send metadata for initialization
         const initFormData = new FormData();
         initFormData.append('title', lessonData.title);
         initFormData.append('description', lessonData.description);
@@ -143,13 +158,13 @@ const CreateLesson = () => {
         const { 
           upload_link, 
           vimeo_video_id: newVimeoId, 
-          vimeo_url,  // Get from response
+          vimeo_url: newVimeoUrl,
           chunk_size, 
           access_token 
         } = await initResponse.json();
 
         vimeo_video_id = newVimeoId;
-        videoUrl = vimeo_url;  // Assign the value
+        vimeo_url = newVimeoUrl;
 
         // Upload video in chunks
         const totalSize = videoFile.size;
@@ -177,13 +192,40 @@ const CreateLesson = () => {
           const progress = (uploadedBytes / totalSize) * 100;
           setVideoUploadProgress(Math.round(progress));
           setUploadStatus(`Uploading: ${Math.round(progress)}%`);
-
-          console.log(`Upload progress: ${progress.toFixed(2)}%`);
         }
 
         setUploadStatus('Upload complete! Processing...');
       }
 
+      // Get Stripe IDs if needed
+      let stripe_product_id = null;
+      let stripe_price_id = null;
+
+      if (parseFloat(lessonData.cost) > 0) {
+        const response = await fetch(`${process.env.REACT_APP_SUPABASE_FUNCTIONS_URL}/create-lesson`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            title: lessonData.title,
+            description: lessonData.description,
+            price: parseFloat(lessonData.cost),
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create Stripe product');
+        }
+
+        const { stripe_product_id: productId, stripe_price_id: priceId } = await response.json();
+        stripe_product_id = productId;
+        stripe_price_id = priceId;
+      }
+
+      // Handle thumbnail upload
       let thumbnailUrl = null;
       if (thumbnail) {
         const fileExt = thumbnail.name.split(".").pop();
@@ -203,6 +245,7 @@ const CreateLesson = () => {
         thumbnailUrl = publicUrl;
       }
 
+      // Create the lesson directly in Supabase
       const { data, error } = await supabase
         .from("tutorials")
         .insert({
@@ -212,15 +255,20 @@ const CreateLesson = () => {
           content: lessonData.content,
           creator_id: session.user.id,
           thumbnail_url: thumbnailUrl,
-          vimeo_video_id: vimeo_video_id,
-          vimeo_url: videoUrl,  // Use the renamed variable
-        });
+          vimeo_video_id,
+          vimeo_url,
+          stripe_product_id,
+          stripe_price_id,
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
+      // Handle category assignments
       if (categoryIds.length > 0) {
         const categoryInserts = categoryIds.map((categoryId) => ({
-          tutorial_id: data[0].id,
+          tutorial_id: data.id,
           category_id: categoryId,
         }));
 
@@ -234,8 +282,24 @@ const CreateLesson = () => {
       setSuccess("Lesson created successfully!");
       setTimeout(() => navigate("/marketplace"), 2000);
     } catch (err) {
-      setError(err.message || "An unexpected error occurred.");
-      console.error("Error creating lesson:", err);
+      const errorMessage = err.message || "An unexpected error occurred.";
+      console.error("Error creating lesson:", {
+        error: err,
+        message: errorMessage,
+        stack: err.stack,
+        state: {
+          lessonData,
+          videoFile: videoFile ? {
+            name: videoFile.name,
+            size: videoFile.size,
+            type: videoFile.type
+          } : null,
+          isUploading,
+          videoUploadProgress,
+          uploadStatus
+        }
+      });
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
       setIsUploading(false);
@@ -293,18 +357,47 @@ const CreateLesson = () => {
                 htmlFor="cost"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Cost (USD)
+                Price (USD)
               </label>
-              <input
-                type="number"
-                step="0.01"
-                id="cost"
-                name="cost"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={lessonData.cost}
-                onChange={handleInputChange}
-                required
-              />
+              <div className="flex gap-2">
+                <select
+                  id="cost"
+                  name="cost"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  value={customPrice ? "custom" : lessonData.cost.toString()}
+                  onChange={(e) => {
+                    if (e.target.value === "custom") {
+                      setCustomPrice(true);
+                      setLessonData(prev => ({ ...prev, cost: "" }));
+                    } else {
+                      setCustomPrice(false);
+                      setLessonData(prev => ({ ...prev, cost: e.target.value }));
+                    }
+                  }}
+                  required
+                >
+                  {priceOptions.map((price) => (
+                    <option key={price} value={price.toString()}>
+                      ${price}
+                    </option>
+                  ))}
+                  <option value="custom">Custom</option>
+                </select>
+                {customPrice && (
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    value={lessonData.cost}
+                    onChange={(e) => handleInputChange({
+                      target: { name: "cost", value: e.target.value }
+                    })}
+                    placeholder="Enter custom price"
+                    required
+                  />
+                )}
+              </div>
             </div>
 
             <div>

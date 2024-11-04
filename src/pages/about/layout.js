@@ -83,7 +83,7 @@ const AboutUs = () => {
                 The mission of <strong>Teach Niche</strong>{" "}
                 is to create a space within the kendama community for players of
                 all skill levels to share knowledge, support one another, and
-                hone their skills. Teach Niche places the community first and is
+                hone their abilities. Teach Niche places the community first and is
                 dedicated to fostering growth, creating connections, and
                 promoting more financial sustainability for the kendama
                 community.
@@ -95,10 +95,10 @@ const AboutUs = () => {
               <h2 className="card-title text-2xl mb-4">Story</h2>
               <p className="text-lg mb-4">
                 Hello! I'm Jaymin West, the founder of{" "}
-                <strong>Teach Niche</strong>. I've been passionately playing
-                kendama for over seven years. I've been fortunate enough to sesh
+                <strong>Teach Niche</strong>. I've played
+                kendama for over seven years, and in that time, I've been fortunate enough to sesh
                 with players from all over the world and have tried to form
-                Teach Niche around these shared values.
+                Teach Niche to fit the values of the kendama community as a whole.
               </p>
               <p className="text-lg">
                 Teach Niche was born from a simple idea: to help kendama players
