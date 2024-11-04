@@ -16,7 +16,39 @@ module.exports = {
     },
     extend: {
       colors: {
-        accent: "#ffffff", // Replace with your desired accent color
+        accent: "#ffffff",
+      },
+      typography: {
+        DEFAULT: {
+          css: {
+            maxWidth: 'none',
+            color: 'inherit',
+            a: {
+              color: '#3b82f6',
+              '&:hover': {
+                color: '#2563eb',
+              },
+            },
+            code: {
+              color: 'inherit',
+              padding: '0.2em 0.4em',
+              borderRadius: '0.25rem',
+              backgroundColor: 'hsl(var(--b2))',
+            },
+            'code::before': {
+              content: '""',
+            },
+            'code::after': {
+              content: '""',
+            },
+            pre: {
+              backgroundColor: 'hsl(var(--b2))',
+              padding: '1rem',
+              borderRadius: '0.5rem',
+              overflow: 'auto',
+            },
+          },
+        },
       },
     },
   },
