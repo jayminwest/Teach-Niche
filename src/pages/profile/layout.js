@@ -70,61 +70,54 @@ const Profile = () => {
         throw new Error('No authenticated user found');
       }
 
-      const { data, error } = await supabase
+      // First check if profile exists
+      const { data: existingProfile, error: queryError } = await supabase
         .from('profiles')
-        .select(`
-          full_name,
-          email,
-          bio,
-          avatar_url,
-          social_media_tag,
-          stripe_account_id,
-          stripe_onboarding_complete
-        `)
+        .select()
         .eq('id', user.id)
         .single();
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          const newProfile = {
+      if (queryError && queryError.code !== 'PGRST116') {
+        throw queryError;
+      }
+
+      // If profile exists, use it
+      if (existingProfile) {
+        setProfileData({
+          fullName: existingProfile.full_name || '',
+          email: existingProfile.email || '',
+          bio: existingProfile.bio || '',
+          profilePicture: existingProfile.avatar_url || '',
+          socialMediaTag: existingProfile.social_media_tag || '',
+          stripe_account_id: existingProfile.stripe_account_id,
+          stripe_onboarding_complete: existingProfile.stripe_onboarding_complete,
+        });
+      } else {
+        // If profile doesn't exist, create a new one
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert([{
             id: user.id,
             full_name: '',
-            email: user.email || '',
+            email: user.email,
             bio: '',
             avatar_url: '',
             social_media_tag: '',
             updated_at: new Date(),
-          };
+          }]);
 
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert([newProfile]);
+        if (insertError) throw insertError;
 
-          if (insertError) throw insertError;
-
-          setProfileData({
-            fullName: '',
-            email: user.email || '',
-            bio: '',
-            profilePicture: '',
-            socialMediaTag: '',
-            stripe_account_id: null,
-            stripe_onboarding_complete: false,
-          });
-        } else {
-          throw error;
-        }
-      } else {
+        // Set initial profile data
         setProfileData({
-          fullName: data.full_name || '',
-          email: data.email || '',
-          bio: data.bio || '',
-          profilePicture: data.avatar_url || '',
-          socialMediaTag: data.social_media_tag || '',
-          stripe_account_id: data.stripe_account_id,
-          stripe_onboarding_complete: data.stripe_onboarding_complete,
+          fullName: '',
+          email: user.email || '',
+          bio: '',
+          profilePicture: '',
+          socialMediaTag: '',
+          stripe_account_id: null,
+          stripe_onboarding_complete: false,
         });
-        setStripeConnected(data.stripe_onboarding_complete);
       }
 
       await Promise.all([
@@ -204,19 +197,25 @@ const Profile = () => {
       const updates = {
         id: user.id,
         full_name: updatedData.fullName,
-        email: updatedData.email,
         bio: updatedData.bio,
-        avatar_url: updatedData.profilePicture,
         social_media_tag: updatedData.socialMediaTag,
         updated_at: new Date(),
       };
 
-      const { error } = await supabase.from("profiles").upsert(updates);
+      const { error } = await supabase
+        .from("profiles")
+        .update(updates)
+        .eq("id", user.id);
 
       if (error) throw error;
 
       setSuccessMessage("Profile updated successfully!");
-      setProfileData(updatedData);
+      setProfileData(prev => ({
+        ...prev,
+        fullName: updatedData.fullName,
+        bio: updatedData.bio,
+        socialMediaTag: updatedData.socialMediaTag,
+      }));
     } catch (error) {
       console.error("Error updating profile:", error.message);
       setError(error.message);
