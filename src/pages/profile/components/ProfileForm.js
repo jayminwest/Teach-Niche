@@ -11,7 +11,11 @@ import React, { useState } from "react";
  * @returns {JSX.Element} The Profile Form component.
  */
 const ProfileForm = ({ profileData, onUpdate }) => {
-  const [formData, setFormData] = useState(profileData);
+  const [formData, setFormData] = useState({
+    fullName: profileData.fullName || '',
+    socialMediaTag: profileData.socialMediaTag || '',
+    bio: profileData.bio || '',
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -65,8 +69,7 @@ const ProfileForm = ({ profileData, onUpdate }) => {
           className="textarea textarea-bordered h-24"
           value={formData.bio}
           onChange={handleChange}
-        >
-        </textarea>
+        />
       </div>
       <div className="form-control mt-6">
         <button className="btn btn-primary w-full" type="submit">
