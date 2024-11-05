@@ -68,11 +68,9 @@ const SignUpLayout = () => {
   };
 
   const handleGoogleSignUp = async () => {
-    setError(null);
     setIsSubmitting(true);
-
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
@@ -80,6 +78,20 @@ const SignUpLayout = () => {
       });
 
       if (error) throw error;
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        await supabase.from("profiles").upsert([
+          {
+            id: user.id,
+            email: user.email,
+            updated_at: new Date(),
+          },
+        ]);
+      }
     } catch (error) {
       setError(error.message);
     } finally {
@@ -94,74 +106,25 @@ const SignUpLayout = () => {
         <div className="card w-full max-w-sm shadow-2xl bg-base-100">
           <div className="card-body">
             <h2 className="card-title text-2xl mb-4">Sign Up</h2>
-            <form onSubmit={handleSignUp}>
-              <div className="form-control">
-                <label className="label" htmlFor="name">
-                  <span className="label-text">Full Name</span>
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  placeholder="Full Name"
-                  className="input input-bordered"
-                  value={formData.name}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="form-control mt-4">
-                <label className="label" htmlFor="email">
-                  <span className="label-text">Email</span>
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder="Email"
-                  className="input input-bordered"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="form-control mt-4">
-                <label className="label" htmlFor="password">
-                  <span className="label-text">Password</span>
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  placeholder="Password"
-                  className="input input-bordered"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div className="form-control mt-6">
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Signing Up..." : "Sign Up"}
-                </button>
-              </div>
-            </form>
-            <div className="divider">OR</div>
             <button
-              className="btn btn-outline flex items-center justify-center"
+              className="btn btn-primary w-full h-14 text-lg"
               onClick={handleGoogleSignUp}
               disabled={isSubmitting}
+              aria-label="Sign up with Google"
             >
-              <FcGoogle className="mr-2" size={24} />
-              Sign Up with Google
+              <FcGoogle className="mr-2" size={28} />
+              {isSubmitting ? "Signing up..." : "Sign up with Google"}
             </button>
+            
             <AlertMessage error={error} />
+            
             <div className="mt-6 text-center">
               <p>Already have an account?</p>
-              <Link to="/sign-in" className="btn btn-link">
+              <Link 
+                to="/sign-in" 
+                className="btn btn-link"
+                aria-label="Go to sign in page"
+              >
                 Sign In
               </Link>
             </div>

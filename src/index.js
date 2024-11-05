@@ -20,6 +20,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import MyPurchasesLayout from "./pages/my-purchases/layout";
 import Logout from "./pages/logout/layout";
 import NotFound from "./pages/not-found/layout";
+import ResetPasswordLayout from "./pages/reset-password/layout";
 import AuthCallback from "./pages/auth/callback";
 
 /**
@@ -39,6 +40,7 @@ root.render(
           <Route path="/forgot-password" element={<ForgotPasswordLayout />} />
           <Route path="/about" element={<AboutLayout />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/reset-password" element={<ResetPasswordLayout />} />
           <Route
             path="/profile"
             element={

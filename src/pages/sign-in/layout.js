@@ -16,50 +16,42 @@ import AlertMessage from "../../components/AlertMessage";
  */
 const SignInLayout = () => {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  /**
-   * Handles sign-in with email and password.
-   *
-   * @param {Event} event - The form submission event.
-   */
-  const handleSignIn = async (event) => {
-    event.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      navigate("/profile");
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   /**
    * Handles sign-in with Google OAuth.
    */
   const handleGoogleSignIn = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    setIsSubmitting(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
-    if (error) {
+      if (error) throw error;
+
+      // Store user email in profiles after successful Google sign-in
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        await supabase.from("profiles").upsert([
+          {
+            id: user.id,
+            email: user.email,
+            updated_at: new Date(),
+          },
+        ]);
+      }
+    } catch (error) {
       setError(error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -70,59 +62,17 @@ const SignInLayout = () => {
         <div className="card w-full max-w-sm shadow-2xl bg-base-100">
           <div className="card-body">
             <h2 className="card-title text-2xl mb-4">Sign In</h2>
-            <form onSubmit={handleSignIn}>
-              <div className="form-control">
-                <label className="label" htmlFor="email">
-                  <span className="label-text">Email</span>
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  placeholder="Email"
-                  className="input input-bordered"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-control mt-4">
-                <label className="label" htmlFor="password">
-                  <span className="label-text">Password</span>
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  placeholder="Password"
-                  className="input input-bordered"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="form-control mt-6">
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Signing In..." : "Sign In"}
-                </button>
-              </div>
-            </form>
-            <div className="divider">OR</div>
+            
             <button
-              className="btn btn-outline flex items-center justify-center"
+              className="btn btn-primary w-full h-14 text-lg"
               onClick={handleGoogleSignIn}
               disabled={isSubmitting}
+              aria-label="Sign in with Google"
             >
-              <FcGoogle className="mr-2" size={24} />
-              Sign In with Google
+              <FcGoogle className="mr-2" size={28} />
+              {isSubmitting ? "Signing in..." : "Sign in with Google"}
             </button>
-            <div className="mt-6 text-center">
-              <Link to="/forgot-password" className="link link-primary">
-                Forgot Password?
-              </Link>
-            </div>
+
             <AlertMessage error={error} />
           </div>
         </div>

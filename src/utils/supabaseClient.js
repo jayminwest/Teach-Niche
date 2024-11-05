@@ -1,22 +1,15 @@
 // src/utils/supabaseClient.js
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js'
 
-/**
- * Supabase URL from environment variables.
- * @type {string}
- */
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_KEY
 
-/**
- * Supabase anonymous key from environment variables.
- * @type {string}
- */
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+})
 
-/**
- * Initialized Supabase client for client-side operations.
- * @type {SupabaseClient}
- */
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-export default supabase;
+export default supabase
