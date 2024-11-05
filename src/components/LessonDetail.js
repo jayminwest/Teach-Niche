@@ -102,7 +102,19 @@ const LessonDetail = () => {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1>
         
-        {hasPurchased ? (
+        {!hasPurchased ? (
+          <div className="mb-8">
+            <p className="mb-4">
+              Price: ${lesson.price}
+            </p>
+            <button
+              className="btn btn-primary"
+              onClick={() => navigate(`/checkout/${id}`)}
+            >
+              Purchase Lesson
+            </button>
+          </div>
+        ) : (
           <div className="w-full h-auto mb-8">
             <div className="relative w-full aspect-video">
               <iframe
@@ -114,21 +126,6 @@ const LessonDetail = () => {
                 title={lesson.title}
               />
             </div>
-          </div>
-        ) : (
-          <div className="bg-base-200 p-8 rounded-lg text-center mb-6">
-            <h2 className="text-xl font-semibold mb-4">
-              Purchase this lesson to access the full content
-            </h2>
-            <p className="mb-4">
-              Price: ${lesson.price}
-            </p>
-            <button
-              className="btn btn-primary"
-              onClick={() => navigate(`/checkout/${id}`)}
-            >
-              Purchase Lesson
-            </button>
           </div>
         )}
 

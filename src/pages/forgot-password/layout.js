@@ -15,18 +15,25 @@ const ForgotPasswordLayout = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handlePasswordReset = async (event) => {
     event.preventDefault();
     setMessage(null);
     setError(null);
+    setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
       if (error) throw error;
       setMessage("Password reset link has been sent to your email.");
     } catch (error) {
-      setError(error.message);
+      setError(error.message || "An error occurred while sending reset link");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -50,11 +57,16 @@ const ForgotPasswordLayout = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="form-control mt-6">
-                <button className="btn btn-primary" type="submit">
-                  Send Reset Link
+                <button 
+                  className="btn btn-primary"
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Sending..." : "Send Reset Link"}
                 </button>
               </div>
             </form>
