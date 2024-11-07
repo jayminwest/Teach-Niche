@@ -22,6 +22,8 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
   const { user } = useAuth();
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchLessons = async () => {
       try {
         let query = supabase
@@ -69,11 +71,17 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
       } catch (error) {
         console.error("Error fetching lessons or purchases:", error.message);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchLessons();
+
+    return () => {
+      isMounted = false;
+    };
   }, [user, limit]);
 
   const sortLessons = (lessonsToSort) => {
@@ -97,8 +105,16 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div 
+          data-testid="loading-spinner"
+          role="status"
+          aria-busy="true"
+          className="loading loading-spinner loading-lg"
+          aria-label="Loading lessons"
+        >
+          <span className="sr-only">Loading lessons...</span>
+        </div>
       </div>
     );
   }

@@ -314,7 +314,7 @@ const CreateLesson = () => {
           <h2 className="text-3xl font-bold mb-6 text-center">
             Create New Lesson
           </h2>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" role="form">
             <div>
               <label
                 htmlFor="title"

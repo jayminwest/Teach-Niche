@@ -18,7 +18,10 @@ const CancelPage = () => {
     <div>
       <Header />
       <main className="flex flex-col justify-center items-center min-h-screen py-10">
-        <div className="card w-full max-w-md shadow-2xl bg-base-100 p-6 text-center">
+        <div 
+          className="card w-full max-w-md shadow-2xl bg-base-100 p-6 text-center"
+          data-testid="cancel-card"
+        >
           <h2 className="text-3xl font-bold mb-4">Purchase Canceled</h2>
           <p className="mb-6">
             Your purchase was canceled. You can try purchasing again from the

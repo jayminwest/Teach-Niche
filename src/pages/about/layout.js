@@ -3,6 +3,7 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { useCallback } from "react";
 
 // Move static data outside component
 const VALUES = [
@@ -37,6 +38,22 @@ const JOIN_OPTIONS = [
   },
 ];
 
+// Extract navigation logic to a separate file for better reusability
+// src/hooks/useAboutUsNavigation.js
+export const useAboutUsNavigation = (user) => {
+  const navigate = useNavigate();
+
+  const handleTeachersClick = useCallback(() => {
+    navigate(user ? "/profile" : "/sign-up");
+  }, [navigate, user]);
+
+  const handleMarketplaceClick = useCallback(() => {
+    navigate("/marketplace");
+  }, [navigate]);
+
+  return { handleTeachersClick, handleMarketplaceClick };
+};
+
 /**
  * AboutUs Component
  *
@@ -45,12 +62,8 @@ const JOIN_OPTIONS = [
  * @returns {JSX.Element} The About Us page.
  */
 const AboutUs = () => {
-  const navigate = useNavigate();
   const { user } = useAuth();
-
-  const handleTeachersClick = () => {
-    navigate(user ? "/profile" : "/sign-up");
-  };
+  const { handleTeachersClick, handleMarketplaceClick } = useAboutUsNavigation(user);
 
   return (
     <div className="bg-base-200 min-h-screen">
@@ -308,8 +321,10 @@ const AboutUs = () => {
                   <p>{option.description}</p>
                   <div className="card-actions justify-end">
                     <button 
-                      onClick={option.title === "For Teachers" ? handleTeachersClick : () => navigate("/marketplace")} 
+                      onClick={option.title === "For Teachers" ? handleTeachersClick : handleMarketplaceClick} 
                       className="btn btn-primary"
+                      data-testid={option.title === "For Teachers" ? "teacher-button" : "marketplace-button"}
+                      aria-label={option.buttonText}
                     >
                       {option.buttonText}
                     </button>
