@@ -584,42 +584,46 @@ const Profile = () => {
 
             {activeTab === "created" && (
               <>
-                <h2 className="card-title text-2xl mb-4">Created Lessons</h2>
+                <h2 className="card-title text-2xl mb-6">Created Lessons</h2>
                 {createdLessons.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 justify-items-center">
                     {createdLessons.map((lesson) => (
-                      <LessonCard
-                        key={lesson.id}
-                        {...lesson}
-                        creator_id={user.id}
-                        isCreated={true}
-                        isPurchased={false}
-                      />
+                      <div key={lesson.id} className="w-full max-w-sm">
+                        <LessonCard
+                          {...lesson}
+                          creator_id={user.id}
+                          isCreated={true}
+                          isPurchased={false}
+                          creatorName={profileData.fullName}
+                        />
+                      </div>
                     ))}
                   </div>
                 ) : (
-                  <p>You haven't created any lessons yet.</p>
+                  <p className="text-center text-gray-600">You haven't created any lessons yet.</p>
                 )}
               </>
             )}
 
             {activeTab === "purchased" && (
               <>
-                <h2 className="card-title text-2xl mb-4">Purchased Lessons</h2>
-                {purchasedLessons.length > 0
-                  ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {purchasedLessons.map((lesson) => (
+                <h2 className="card-title text-2xl mb-6">Purchased Lessons</h2>
+                {purchasedLessons.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 justify-items-center">
+                    {purchasedLessons.map((lesson) => (
+                      <div key={lesson.id} className="w-full max-w-sm">
                         <LessonCard
-                          key={lesson.id}
                           {...lesson}
                           isPurchased={true}
                           purchaseDate={lesson.purchaseDate}
+                          creatorName={lesson.creator_name || 'Unknown Creator'}
                         />
-                      ))}
-                    </div>
-                  )
-                  : <p>You haven't purchased any lessons yet.</p>}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-center text-gray-600">You haven't purchased any lessons yet.</p>
+                )}
               </>
             )}
           </div>

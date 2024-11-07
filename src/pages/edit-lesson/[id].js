@@ -404,7 +404,7 @@ const EditLesson = () => {
     switch (activeTab) {
       case "content":
         return (
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" role="form">
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
                 Title
@@ -650,6 +650,7 @@ const EditLesson = () => {
               {["content", "reviews", "discussion"].map((tab) => (
                 <button
                   key={tab}
+                  role="tab"
                   className={`py-2 px-4 ${
                     activeTab === tab
                       ? "border-b-2 border-indigo-500 text-indigo-600"

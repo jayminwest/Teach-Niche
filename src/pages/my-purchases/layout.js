@@ -15,16 +15,26 @@ import { useAuth } from "../../context/AuthContext";
 const MyPurchasesLayout = () => {
   const { user } = useAuth();
   const [sortOption, setSortOption] = useState("default");
+  const [isMobile, setIsMobile] = useState(false);
 
-  const handleSortChange = (e) => {
-    setSortOption(e.target.value);
-  };
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   if (!user) {
     return (
-      <div className="flex flex-col min-h-screen">
+      <div className="min-h-screen flex flex-col">
         <Header />
-        <main className="flex-grow flex justify-center items-center">
+        <main className="flex-1 flex justify-center items-center">
           <p className="text-center">
             Please{" "}
             <a href="/sign-in" className="text-blue-500 hover:underline">
@@ -33,34 +43,52 @@ const MyPurchasesLayout = () => {
             to view your purchased lessons.
           </p>
         </main>
-        <Footer />
+        <Footer className="mt-auto" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">My Purchased Lessons</h1>
-          <div className="form-control w-full max-w-xs">
-            <select
-              className="select select-bordered"
-              value={sortOption}
-              onChange={handleSortChange}
-            >
-              <option value="default">Sort by</option>
-              <option value="price_asc">Price: Low to High</option>
-              <option value="price_desc">Price: High to Low</option>
-              <option value="creator_asc">Creator: A to Z</option>
-              <option value="creator_desc">Creator: Z to A</option>
-            </select>
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row gap-8 h-full">
+          {/* Left Sidebar with Filters */}
+          <div className="md:w-64 space-y-6">
+            <h1 className="font-bold text-2xl md:text-3xl">
+              My Lessons
+            </h1>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Sort By</label>
+                <select
+                  className="select select-bordered w-full"
+                  value={sortOption}
+                  onChange={(e) => setSortOption(e.target.value)}
+                >
+                  <option value="default">Default</option>
+                  <option value="price_asc">Price: Low to High</option>
+                  <option value="price_desc">Price: High to Low</option>
+                  <option value="creator_asc">Creator: A to Z</option>
+                  <option value="creator_desc">Creator: Z to A</option>
+                  <option value="popular">Most Popular</option>
+                  <option value="rating">Highest Rated</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            <LessonsGrid 
+              showPurchasedOnly={true}
+              sortOption={sortOption}
+            />
           </div>
         </div>
-        <LessonsGrid showPurchasedOnly sortOption={sortOption} />
       </main>
-      <Footer />
+      <Footer className="mt-auto" />
     </div>
   );
 };

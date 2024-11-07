@@ -60,7 +60,7 @@ const ProfileForm = ({ profileData, onUpdate }) => {
       </div>
       <div className="form-control">
         <label className="label" htmlFor="bio">
-          <span className="label-text text-lg">Bio</span>
+          <span className="label-text text-lg">Bio / Country / Team Affiliation</span>
         </label>
         <textarea
           id="bio"

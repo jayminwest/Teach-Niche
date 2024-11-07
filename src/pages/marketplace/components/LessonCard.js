@@ -1,8 +1,9 @@
 // src/pages/marketplace/components/LessonCard.js
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import supabase from "../../../utils/supabaseClient";
+import { StarIcon, UserGroupIcon } from '@heroicons/react/24/solid';
 
 /**
  * LessonCard Component
@@ -31,13 +32,35 @@ const LessonCard = ({
   thumbnail_url,
   isPurchased,
   isWelcomeLesson,
+  averageRating = 0,
 }) => {
   const navigate = useNavigate();
   const { user, session } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [imageError, setImageError] = useState(false);
+  const [purchaseCount, setPurchaseCount] = useState(0);
   const isCreator = user && user.id === creator_id;
+
+  // Fetch purchase count when component mounts
+  useEffect(() => {
+    const fetchPurchaseCount = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('purchases')
+          .select('id', { count: 'exact' })
+          .eq('tutorial_id', id);
+
+        if (error) return;
+
+        setPurchaseCount(data?.length || 0);
+      } catch (err) {
+        setPurchaseCount(0);
+      }
+    };
+
+    fetchPurchaseCount();
+  }, [id]);
 
   const handleAccess = () => navigate(`/lesson/${id}`);
 
@@ -110,50 +133,94 @@ const LessonCard = ({
     }
   };
 
+  const truncateDescription = (text, maxLength = 100) => {
+    if (text.length <= maxLength) return text;
+    return text.substr(0, maxLength).trim() + '...';
+  };
+
+  const renderStars = (rating) => {
+    const numericRating = Number(rating) || 0;
+    
+    return (
+      <div className="flex items-center gap-1">
+        <StarIcon className="w-5 h-5 text-yellow-400" />
+        <span className="text-sm font-medium">
+          {numericRating === 0 ? '-' : numericRating.toFixed(1)}
+        </span>
+      </div>
+    );
+  };
+
+  const renderPurchaseCount = () => {
+    return (
+      <div className="flex items-center gap-1">
+        <UserGroupIcon className="w-4 h-4" />
+        <span className="text-sm">
+          {purchaseCount > 0 ? purchaseCount : '-'}
+        </span>
+      </div>
+    );
+  };
+
   return (
-    <div className="card w-80 h-auto bg-base-100 shadow-xl overflow-hidden">
-      <figure className="h-48 overflow-hidden">
+    <div className="w-full bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden">
+      <div className="relative aspect-video overflow-hidden">
         <img
-          src={imageError
-            ? placeholderImage
-            : (thumbnail_url || placeholderImage)}
+          src={imageError ? placeholderImage : (thumbnail_url || placeholderImage)}
           alt={`Lesson: ${title}`}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
           onError={handleImageError}
         />
-      </figure>
-      <div className="card-body">
-        <h2 className="card-title">{title}</h2>
-        <p>Creator: {creatorName}</p>
-        <p className="text-lg font-semibold">
-          {price === 0 ? "Free" : `$${price.toFixed(2)}`}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <p className="text-white text-sm font-medium">
+            {price === 0 ? "Free" : `$${price.toFixed(2)}`}
+          </p>
+        </div>
+      </div>
+      
+      <div className="p-4 space-y-3">
+        <h2 className="font-bold text-lg line-clamp-1">{title}</h2>
+        
+        <div className="flex items-center justify-between text-sm text-gray-600">
+          <p className="font-medium truncate">By {creatorName}</p>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            {renderStars(averageRating)}
+            {renderPurchaseCount()}
+          </div>
+        </div>
+
+        <p className="text-gray-600 text-sm min-h-[3rem]">
+          {truncateDescription(description)}
         </p>
-        <p>{description}</p>
-        {error && <p className="text-red-500">{error}</p>}
-        {isCreator
-          ? (
-            <button className="btn btn-primary" onClick={handleEdit}>
+
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+        
+        <div className="pt-2">
+          {isCreator ? (
+            <button 
+              className="w-full btn btn-outline btn-primary"
+              onClick={handleEdit}
+            >
               Edit Lesson
             </button>
-          )
-          : isPurchased || isWelcomeLesson
-          ? (
-            <button className="btn btn-success" onClick={handleAccess}>
+          ) : isPurchased || isWelcomeLesson ? (
+            <button 
+              className="w-full btn btn-success"
+              onClick={handleAccess}
+            >
               Access Lesson
             </button>
-          )
-          : (
+          ) : (
             <button
-              className={`btn btn-primary ${loading ? "loading" : ""}`}
+              className={`w-full btn btn-primary ${loading ? "loading" : ""}`}
               onClick={handlePurchase}
               disabled={loading}
             >
               {loading ? "Processing..." : "Purchase Lesson"}
             </button>
           )}
-        {console.log(
-          `Lesson ID: ${id}, Is Purchased: ${isPurchased}, Is Welcome: ${isWelcomeLesson}`,
-        )} {/* Log button logic */}
+        </div>
       </div>
     </div>
   );

@@ -12,24 +12,32 @@ import { useAuth } from "../../../context/AuthContext";
  * @param {Object} props - The component props.
  * @param {boolean} [props.showPurchasedOnly=false] - Whether to show only purchased lessons.
  * @param {string} props.sortOption - The current sort option.
+ * @param {string} props.priceFilter - The current price filter.
  * @param {number} [props.limit] - The maximum number of lessons to display.
  * @returns {JSX.Element} The Lessons Grid.
  */
-const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
+const LessonsGrid = ({ showPurchasedOnly = false, sortOption, priceFilter, limit, isFeatured }) => {
   const [lessons, setLessons] = useState([]);
   const [purchasedLessons, setPurchasedLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchLessons = async () => {
       try {
         let query = supabase
           .from("tutorials")
           .select(`
             *,
-            profiles:creator_id (full_name)
+            profiles:creator_id (full_name),
+            reviews!tutorial_id(rating)
           `);
+
+        if (isFeatured) {
+          query = query.eq('is_featured', true);
+        }
 
         if (limit) {
           query = query.limit(limit);
@@ -39,42 +47,68 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
 
         if (lessonsError) throw lessonsError;
 
-        // Identify the welcome lesson
-        const welcomeLessonId = process.env.REACT_APP_WELCOME_LESSON_ID;
-        console.log("Welcome Lesson ID:", welcomeLessonId); // Log the welcome lesson ID
+        const { data: purchaseCounts, error: purchaseError } = await supabase
+          .from('purchases')
+          .select('tutorial_id');
 
-        const lessonsWithWelcomeFlag = allLessons.map((lesson) => {
-          const isWelcome = lesson.id === welcomeLessonId;
-          console.log(`Lesson ID: ${lesson.id}, Is Welcome: ${isWelcome}`); // Log each lesson's welcome status
+        if (purchaseError) throw purchaseError;
+
+        const purchaseCountMap = {};
+        purchaseCounts?.forEach(purchase => {
+          purchaseCountMap[purchase.tutorial_id] = (purchaseCountMap[purchase.tutorial_id] || 0) + 1;
+        });
+
+        const processedLessons = allLessons.map(lesson => {
+          const reviews = lesson.reviews || [];
+          let averageRating = 0;
+          if (reviews.length > 0) {
+            const totalRating = reviews.reduce((acc, curr) => {
+              return acc + (curr.rating || 0);
+            }, 0);
+            averageRating = totalRating / reviews.length;
+          }
+
+          const isWelcome = lesson.id === process.env.REACT_APP_WELCOME_LESSON_ID;
+
           return {
             ...lesson,
+            averageRating,
+            purchaseCount: purchaseCountMap[lesson.id] || 0,
             isWelcomeLesson: isWelcome,
           };
         });
 
-        setLessons(lessonsWithWelcomeFlag);
+        if (isMounted) {
+          setLessons(processedLessons);
+        }
 
         if (user) {
-          const { data: purchases, error: purchasesError } = await supabase
+          const { data: purchases, error: userPurchasesError } = await supabase
             .from("purchases")
             .select("tutorial_id")
             .eq("user_id", user.id);
 
-          if (purchasesError) throw purchasesError;
+          if (userPurchasesError) throw userPurchasesError;
 
           setPurchasedLessons(
-            purchases.map((purchase) => purchase.tutorial_id),
+            purchases.map((purchase) => purchase.tutorial_id)
           );
         }
       } catch (error) {
-        console.error("Error fetching lessons or purchases:", error.message);
+        setLessons([]);
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchLessons();
-  }, [user, limit]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user, limit, isFeatured]);
 
   const sortLessons = (lessonsToSort) => {
     switch (sortOption) {
@@ -90,42 +124,77 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, limit }) => {
         return [...lessonsToSort].sort((a, b) =>
           b.profiles.full_name.localeCompare(a.profiles.full_name)
         );
+      case "popular":
+        return [...lessonsToSort].sort((a, b) => {
+          const aCount = a.purchaseCount || 0;
+          const bCount = b.purchaseCount || 0;
+          return bCount - aCount;
+        });
+      case "rating":
+        return [...lessonsToSort].sort((a, b) => {
+          const aRating = a.averageRating || 0;
+          const bRating = b.averageRating || 0;
+          return bRating - aRating;
+        });
       default:
         return lessonsToSort;
     }
   };
 
+  const filterLessons = (lessonsToFilter) => {
+    let filtered = lessonsToFilter;
+
+    // Apply price filter
+    if (priceFilter === 'free') {
+      filtered = filtered.filter(lesson => lesson.price === 0);
+    } else if (priceFilter === 'paid') {
+      filtered = filtered.filter(lesson => lesson.price > 0);
+    }
+
+    return filtered;
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <span className="loading loading-spinner loading-lg"></span>
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div 
+          data-testid="loading-spinner"
+          role="status"
+          aria-busy="true"
+          className="loading loading-spinner loading-lg"
+          aria-label="Loading lessons"
+        >
+          <span className="sr-only">Loading lessons...</span>
+        </div>
       </div>
     );
   }
 
   const displayLessons = showPurchasedOnly
     ? lessons.filter((lesson) => purchasedLessons.includes(lesson.id))
-    : lessons;
+    : filterLessons(lessons);
 
   const sortedLessons = sortLessons(displayLessons);
 
   return (
-    <div className="container p-4 mx-auto">
-      {showPurchasedOnly && sortedLessons.length === 0
-        ? <p>You haven't purchased any lessons yet.</p>
-        : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
-            {sortedLessons.map((lesson) => (
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+      {showPurchasedOnly && sortedLessons.length === 0 ? (
+        <p className="text-center text-gray-600">You haven't purchased any lessons yet.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 justify-items-center">
+          {sortedLessons.map((lesson) => (
+            <div key={lesson.id} className="w-full max-w-sm">
               <LessonCard
-                key={lesson.id}
                 {...lesson}
                 creatorName={lesson.profiles.full_name}
                 isPurchased={purchasedLessons.includes(lesson.id)}
                 isWelcomeLesson={lesson.isWelcomeLesson}
+                averageRating={lesson.averageRating}
               />
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

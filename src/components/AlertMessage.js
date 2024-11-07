@@ -14,12 +14,17 @@ const AlertMessage = ({ error, success }) => {
   if (!error && !success) return null;
 
   return (
-    <div 
-      className={`alert ${error ? 'alert-error' : 'alert-success'} mt-4`}
-      role="alert"
-      aria-live="polite"
-    >
-      {error || success}
+    <div className="mt-4">
+      {error && (
+        <div role="alert" className="text-red-500">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div role="status" className="text-green-500">
+          {success}
+        </div>
+      )}
     </div>
   );
 };

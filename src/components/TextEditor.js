@@ -31,22 +31,12 @@ const TextEditor = ({ value, onChange, placeholder = "Start writing..." }) => {
       "italic",
       "heading",
       "|",
-      "quote",
       "unordered-list",
       "ordered-list",
-      "|",
-      "link",
-      "image",
-      "|",
-      "preview",
-      "side-by-side",
-      "fullscreen",
       "|",
       "guide",
     ],
     previewClass: ["editor-preview", "prose", "max-w-none"],
-    uploadImage: false, // Disable direct image uploads for security
-    promptURLs: true, // Prompt for URLs when adding links
     renderingConfig: {
       singleLineBreaks: false,
       codeSyntaxHighlighting: true,
