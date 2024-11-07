@@ -87,6 +87,35 @@ const CreateLesson = () => {
     }
   };
 
+  // Load saved form data on component mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('lessonDraft');
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      setLessonData(parsed.lessonData);
+      setCategoryIds(parsed.categoryIds);
+      if (parsed.thumbnailPreview) {
+        setThumbnailPreview(parsed.thumbnailPreview);
+      }
+      // Note: We can't restore File objects from localStorage
+    }
+  }, []);
+
+  // Save form data on changes
+  useEffect(() => {
+    const draftData = {
+      lessonData,
+      categoryIds,
+      thumbnailPreview
+    };
+    localStorage.setItem('lessonDraft', JSON.stringify(draftData));
+  }, [lessonData, categoryIds, thumbnailPreview]);
+
+  // Clear saved data after successful submission
+  const clearSavedDraft = () => {
+    localStorage.removeItem('lessonDraft');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -280,6 +309,7 @@ const CreateLesson = () => {
       }
 
       setSuccess("Lesson created successfully!");
+      clearSavedDraft(); // Clear the draft after successful submission
       setTimeout(() => navigate("/marketplace"), 2000);
     } catch (err) {
       const errorMessage = err.message || "An unexpected error occurred.";
@@ -307,218 +337,280 @@ const CreateLesson = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
-      <main className="flex-grow container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-          <h2 className="text-3xl font-bold mb-6 text-center">
-            Create New Lesson
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-6" role="form">
-            <div>
-              <label
-                htmlFor="title"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Title
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={lessonData.title}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
+      <main className="flex-grow container mx-auto px-4 py-6">
+        <div className="max-w-3xl mx-auto">
+          {/* Friendlier Header */}
+          <div className="mb-6 text-center">
+            <h2 className="text-2xl font-bold text-gray-900">
+              Create Your Lesson
+            </h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Note: Lesson drafts will not be saved and refreshing will clear your progress!
+            </p>
+          </div>
 
-            <div>
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Description
-              </label>
-              <textarea
-                id="description"
-                name="description"
-                rows="3"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                value={lessonData.description}
-                onChange={handleInputChange}
-                required
-              >
-              </textarea>
-            </div>
-
-            <div>
-              <label
-                htmlFor="cost"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Price (USD)
-              </label>
-              <div className="flex gap-2">
-                <select
-                  id="cost"
-                  name="cost"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  value={customPrice ? "custom" : lessonData.cost.toString()}
-                  onChange={(e) => {
-                    if (e.target.value === "custom") {
-                      setCustomPrice(true);
-                      setLessonData(prev => ({ ...prev, cost: "" }));
-                    } else {
-                      setCustomPrice(false);
-                      setLessonData(prev => ({ ...prev, cost: e.target.value }));
-                    }
-                  }}
-                  required
-                >
-                  {priceOptions.map((price) => (
-                    <option key={price} value={price.toString()}>
-                      ${price}
-                    </option>
-                  ))}
-                  <option value="custom">Custom</option>
-                </select>
-                {customPrice && (
+          {/* Main Form - More compact and friendly */}
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <form onSubmit={handleSubmit} className="space-y-6" role="form">
+              {/* Basic Info Section */}
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="title" className="text-sm font-medium text-gray-700">
+                    What's your lesson called?
+                  </label>
                   <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    value={lessonData.cost}
-                    onChange={(e) => handleInputChange({
-                      target: { name: "cost", value: e.target.value }
-                    })}
-                    placeholder="Enter custom price"
+                    type="text"
+                    id="title"
+                    name="title"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    value={lessonData.title}
+                    onChange={handleInputChange}
                     required
+                    placeholder="Big Cup To Spike, How To Film POV, etc."
                   />
-                )}
-              </div>
-            </div>
+                </div>
 
-            <div>
-              <label
-                htmlFor="video"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Upload Video (required)
-              </label>
-              <input
-                type="file"
-                id="video"
-                accept="video/*,.mov,.mp4"  // Updated to explicitly accept iPhone formats
-                capture="environment"  // Allows direct camera access on mobile
-                onChange={handleVideoChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                required
-              />
-              {videoFile && (
-                <p className="mt-2 text-sm text-gray-600">
-                  Selected video: {videoFile.name} ({(videoFile.size / (1024 * 1024)).toFixed(2)} MB)
-                </p>
-              )}
-              {videoUploadProgress > 0 && (
-                <div className="mt-2">
-                  <div className="bg-blue-500 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full" style={{ width: `${videoUploadProgress}%` }}>
-                    {videoUploadProgress}%
+                <div>
+                  <label htmlFor="description" className="text-sm font-medium text-gray-700">
+                    A short description of your lesson:
+                  </label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    rows="3"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    value={lessonData.description}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="What will people learn from your lesson?"
+                  />
+                </div>
+              </div>
+
+              {/* Price Section - Simplified */}
+              <div className="pt-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Set your price
+                  </label>
+                  <div className="relative group">
+                    <div className="cursor-help text-gray-400 hover:text-gray-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 112.871 5.026v.345a.75.75 0 01-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 108.94 6.94zM10 15a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                      Suggested pricing: $1 for every 2 minutes of video content
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-1 flex gap-3">
+                  <select
+                    id="cost"
+                    name="cost"
+                    className="block w-32 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    value={customPrice ? "custom" : lessonData.cost.toString()}
+                    onChange={(e) => {
+                      if (e.target.value === "custom") {
+                        setCustomPrice(true);
+                        setLessonData(prev => ({ ...prev, cost: "" }));
+                      } else {
+                        setCustomPrice(false);
+                        setLessonData(prev => ({ ...prev, cost: e.target.value }));
+                      }
+                    }}
+                    required
+                  >
+                    {priceOptions.map((price) => (
+                      <option key={price} value={price.toString()}>
+                        ${price}
+                      </option>
+                    ))}
+                    <option value="custom">Custom</option>
+                  </select>
+                  {customPrice && (
+                    <div className="relative flex-1">
+                      <span className="absolute inset-y-0 left-3 flex items-center text-gray-500">$</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        className="block w-full rounded-md border border-gray-300 pl-7 pr-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        value={lessonData.cost}
+                        onChange={(e) => handleInputChange({
+                          target: { name: "cost", value: e.target.value }
+                        })}
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Media Section - Mobile-friendly upload */}
+              <div className="pt-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Upload your video
+                  </label>
+                  <div className="relative group">
+                    <div className="cursor-help text-gray-400 hover:text-gray-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 112.871 5.026v.345a.75.75 0 01-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 108.94 6.94zM10 15a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                      Videos should be:
+                      <ul className="list-disc ml-4 mt-1">
+                        <li>Maximum 25 minutes long</li>
+                        <li>1080p quality</li>
+                        <li>Landscape mode (horizontal)</li>
+                      </ul>
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-1 flex justify-center rounded-lg border-2 border-dashed border-gray-300 px-6 py-4">
+                  <div className="text-center">
+                    <label
+                      htmlFor="video"
+                      className="cursor-pointer text-sm text-blue-500 hover:text-blue-600"
+                    >
+                      <span>Choose a video</span>
+                      <input
+                        id="video"
+                        name="video"
+                        type="file"
+                        accept="video/*"
+                        capture={false} // Remove capture attribute to allow both camera and library
+                        className="sr-only"
+                        onChange={handleVideoChange}
+                        required
+                      />
+                    </label>
+                    {!videoFile && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Select from your photo library or record a new video
+                      </p>
+                    )}
+                    {videoFile && (
+                      <div className="mt-2 text-xs text-gray-500">
+                        {videoFile.name} ({(videoFile.size / (1024 * 1024)).toFixed(2)} MB)
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Content Section */}
+              <div className="border-t border-gray-900/10 pt-8">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-semibold leading-7 text-gray-900">Lesson Content</h3>
+                  <div className="relative group">
+                    <div className="cursor-help text-gray-400 hover:text-gray-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 112.871 5.026v.345a.75.75 0 01-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 108.94 6.94zM10 15a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                      <p className="mb-2">TeachNiche doesn't auto-save content. We recommend:</p>
+                      <ul className="list-disc ml-4">
+                        <li>Writing your content in a separate document first</li>
+                        <li>Using Markdown formatting for better presentation (you can ask ChatGPT to help)</li>
+                        <li>Copying and pasting your final text here</li>
+                      </ul>
+                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-2 mb-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs text-gray-500">Supports Markdown</span>
+                    <a 
+                      href="https://www.markdownguide.org/basic-syntax/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-500 hover:text-blue-600 hover:underline"
+                    >
+                      View formatting guide
+                    </a>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <TextEditor
+                    value={lessonData.content}
+                    onChange={(content) => setLessonData((prev) => ({ ...prev, content }))}
+                    options={{
+                      hideIcons: ['side-by-side', 'fullscreen'],
+                      status: false, // Hides the status bar
+                      spellChecker: true,
+                      minHeight: "200px",
+                      maxHeight: "400px"
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Categories Section */}
+              {categories.length > 0 && (
+                <div className="border-t border-gray-900/10 pt-8">
+                  <h3 className="text-base font-semibold leading-7 text-gray-900">Categories</h3>
+                  <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                    {categories.map((category) => (
+                      <div key={category.id} className="relative flex items-start">
+                        <div className="flex h-6 items-center">
+                          <input
+                            type="checkbox"
+                            id={`category-${category.id}`}
+                            value={category.id}
+                            onChange={handleCategoryChange}
+                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                          />
+                        </div>
+                        <div className="ml-3 text-sm leading-6">
+                          <label htmlFor={`category-${category.id}`} className="text-gray-900">
+                            {category.name}
+                          </label>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Thumbnail
-              </label>
-              <div className="mt-1 flex items-center">
-                {thumbnailPreview && (
-                  <img
-                    src={thumbnailPreview}
-                    alt="Thumbnail preview"
-                    className="w-32 h-32 object-cover mr-4"
-                  />
-                )}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleThumbnailChange}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Content
-              </label>
-              <TextEditor
-                value={lessonData.content}
-                onChange={(content) =>
-                  setLessonData((prev) => ({ ...prev, content }))}
-              />
-            </div>
-
-            {categories.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Categories
-                </label>
-                <div className="mt-2 space-y-2">
-                  {categories.map((category) => (
-                    <div key={category.id} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`category-${category.id}`}
-                        value={category.id}
-                        onChange={handleCategoryChange}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                      />
-                      <label
-                        htmlFor={`category-${category.id}`}
-                        className="ml-2 block text-sm text-gray-900"
-                      >
-                        {category.name}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div>
+              {/* Submit Button - More friendly */}
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 disabled={isSubmitting}
+                className="w-full rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? "Creating Lesson..." : "Create Lesson"}
+                {isSubmitting ? "Creating your lesson..." : "Share your lesson"}
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
+
           <AlertMessage error={error} success={success} />
         </div>
       </main>
       <Footer />
+
+      {/* Upload Progress Overlay - More compact */}
       {isUploading && (
-        <div className="fixed bottom-4 right-4 left-4 md:left-auto bg-white shadow-lg rounded-lg p-4 max-w-sm">
-          <div className="mb-2">
-            <div className="flex flex-col mb-2">
-              <span className="text-sm font-medium text-gray-700 mb-1">{uploadStatus}</span>
-              <div className="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                <div 
-                  className="bg-blue-600 h-full rounded-full transition-all duration-300" 
-                  style={{ width: `${videoUploadProgress}%` }}
-                />
-              </div>
+        <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-md p-4 max-w-xs">
+          <div className="text-sm">
+            <p className="font-medium">Uploading...</p>
+            <p className="text-gray-500 text-xs mt-1">{uploadStatus}</p>
+            <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-blue-500 transition-all duration-300"
+                style={{ width: `${videoUploadProgress}%` }}
+              />
             </div>
           </div>
-          {error && (
-            <p className="text-red-500 text-sm mt-2">{error}</p>
-          )}
         </div>
       )}
     </div>

@@ -63,7 +63,13 @@ jest.mock('../../components/LessonCard', () => {
   };
 });
 
-
+const renderWithRouter = (ui) => {
+  return render(
+    <BrowserRouter>
+      {ui}
+    </BrowserRouter>
+  );
+};
 
 describe('LessonsGrid Component', () => {
   beforeEach(() => {

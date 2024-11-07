@@ -64,7 +64,6 @@ const PurchaseLessonButton = ({ lessonId }) => {
         throw new Error("Checkout session URL not returned");
       }
     } catch (err) {
-      console.error("Error during purchase:", err);
       setError(err.message || "An unexpected error occurred");
     } finally {
       setLoading(false);

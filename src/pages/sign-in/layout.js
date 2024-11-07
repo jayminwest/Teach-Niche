@@ -56,24 +56,48 @@ const SignInLayout = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
-      <main className="flex-grow flex justify-center items-center py-10">
-        <div className="card w-full max-w-sm shadow-2xl bg-base-100">
-          <div className="card-body">
-            <h2 className="card-title text-2xl mb-4">Sign In</h2>
+      <main className="flex-grow container mx-auto px-4 py-16 sm:py-24">
+        <div className="max-w-md mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Welcome Back!</h1>
+            <p className="mt-3 text-gray-600">
+              Sign in to access your purchased lessons and continue learning
+            </p>
+          </div>
+          
+          <div className="bg-white shadow-lg rounded-lg px-6 py-8 sm:px-10">
+            <div className="sm:mx-auto sm:w-full sm:max-w-md">
+              <h2 className="text-xl font-semibold text-center text-gray-900 mb-6">
+                Sign in to your account
+              </h2>
+            </div>
             
             <button
-              className="btn btn-primary w-full h-14 text-lg"
+              className="w-full flex items-center justify-center px-6 py-4 bg-white hover:bg-gray-50 border-2 border-gray-300 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg"
               onClick={handleGoogleSignIn}
               disabled={isSubmitting}
               aria-label="Sign in with Google"
             >
-              <FcGoogle className="mr-2" size={28} />
-              {isSubmitting ? "Signing in..." : "Sign in with Google"}
+              <FcGoogle className="mr-3" size={24} />
+              <span className="text-gray-700 font-medium text-lg">
+                {isSubmitting ? "Signing in..." : "Continue with Google"}
+              </span>
             </button>
 
             <AlertMessage error={error} />
+            
+            <div className="mt-6 text-center text-sm">
+              <p className="text-gray-600">New to TeachNiche?</p>
+              <Link 
+                to="/sign-up" 
+                className="font-medium text-blue-600 hover:text-blue-500 mt-1 block"
+                aria-label="Go to sign up page"
+              >
+                Create an account
+              </Link>
+            </div>
           </div>
         </div>
       </main>
