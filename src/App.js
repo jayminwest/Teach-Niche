@@ -29,7 +29,7 @@ const App = () => {
           >
           </i>
           <span className="text-sm font-semibold">
-            Welcome to Teach Niche! The site is currently in Beta, so be please
+            Welcome to Teach Niche! The site is currently in Beta, so please be
             patient as the site improves.
           </span>
         </div>
