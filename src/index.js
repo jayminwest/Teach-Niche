@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { AuthProvider } from "./context/AuthContext";
 import App from "./App";
 import MarketplaceLayout from "./pages/marketplace/layout";
@@ -81,6 +82,7 @@ root.render(
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Analytics />
+        <SpeedInsights />
       </BrowserRouter>
     </AuthProvider>
   </React.StrictMode>,
