@@ -125,30 +125,29 @@ const CreateLesson = () => {
     setIsUploading(true);
     setUploadStatus('Preparing video upload...');
 
-    // Validate form data
-    if (!lessonData.title.trim() || !lessonData.description.trim() || lessonData.cost === "" || !lessonData.content || !videoFile) {
-      const missingFields = [];
-      if (!lessonData.title.trim()) missingFields.push('title');
-      if (!lessonData.description.trim()) missingFields.push('description');
-      if (lessonData.cost === "") missingFields.push('cost');
-      if (!lessonData.content) missingFields.push('content');
-      if (!videoFile) missingFields.push('video');
-
-      const errorMessage = `Please fill in all required fields: ${missingFields.join(', ')}`;
-      console.error('Form validation failed:', errorMessage);
-      setError(errorMessage);
-      setIsSubmitting(false);
-      setIsUploading(false);
-      return;
-    }
-
-    if (parseFloat(lessonData.cost) < 0) {
-      setError("Price cannot be negative");
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
+      // Validate form data - Modified content validation
+      if (!lessonData.title.trim() || 
+          !lessonData.description.trim() || 
+          lessonData.cost === "" || 
+          !lessonData.content?.trim() || // Added trim() check for content
+          !videoFile) {
+        const missingFields = [];
+        if (!lessonData.title.trim()) missingFields.push('title');
+        if (!lessonData.description.trim()) missingFields.push('description');
+        if (lessonData.cost === "") missingFields.push('cost');
+        if (!lessonData.content?.trim()) missingFields.push('content');
+        if (!videoFile) missingFields.push('video');
+
+        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+      }
+
+      if (parseFloat(lessonData.cost) < 0) {
+        setError("Price cannot be negative");
+        setIsSubmitting(false);
+        return;
+      }
+
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw sessionError;
 
@@ -242,6 +241,8 @@ const CreateLesson = () => {
             title: lessonData.title,
             description: lessonData.description,
             price: parseFloat(lessonData.cost),
+            content: lessonData.content,
+            create_stripe_only: true
           }),
         });
 

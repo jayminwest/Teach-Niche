@@ -86,7 +86,7 @@ const LessonCreationGuide = () => {
           <h3 className="text-xl font-semibold mb-2">Requirements:</h3>
           <ul className="list-disc pl-5 space-y-2">
             <li>
-              <strong>Resolution:</strong> Minimum 800x1200 pixels (portrait).
+              <strong>Resolution:</strong> Minimum 800x1200 pixels.
             </li>
             <li>
               <strong>Content:</strong> Visually represent the trick or topic.
@@ -96,10 +96,6 @@ const LessonCreationGuide = () => {
             </li>
             <li>
               <strong>Simplicity:</strong> Avoid cluttered backgrounds.
-            </li>
-            <li>
-              <strong>No Text Overlays:</strong>{" "}
-              Platform branding will be applied as needed.
             </li>
           </ul>
         </>
