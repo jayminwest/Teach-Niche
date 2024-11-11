@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
 import supabase from "../../utils/supabaseClient";
 import AlertMessage from "../../components/AlertMessage";
 
@@ -107,7 +105,6 @@ const ResetPasswordLayout = () => {
   if (!isValidSession) {
     return (
       <div className="flex flex-col min-h-screen">
-        <Header />
         <main className="flex-grow flex justify-center items-center">
           <div className="card w-full max-w-sm shadow-2xl bg-base-100">
             <div className="card-body">
@@ -121,14 +118,12 @@ const ResetPasswordLayout = () => {
             </div>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="flex-grow flex justify-center items-center">
         <div className="card w-full max-w-sm shadow-2xl bg-base-100">
           <div className="card-body">
@@ -180,7 +175,6 @@ const ResetPasswordLayout = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

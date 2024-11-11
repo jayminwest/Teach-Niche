@@ -1,24 +1,15 @@
 // src/utils/supabaseClient.js
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
+import config from './config';
 
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_KEY
+/**
+ * Supabase client instance
+ * @type {SupabaseClient}
+ */
+const supabase = createClient(
+  config.supabase.url,
+  config.supabase.key,
+  config.supabase.options
+);
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    'Missing Supabase environment variables. Please check .env file.'
-  )
-}
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-    'Prefer': 'return=representation'
-  },
-  db: {
-    schema: 'public'
-  }
-})
-
-export default supabase
+export default supabase;

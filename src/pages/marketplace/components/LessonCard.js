@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import supabase from "../../../utils/supabaseClient";
 import { StarIcon, UserGroupIcon } from '@heroicons/react/24/solid';
+import { usePurchaseLesson } from '../hooks/usePurchaseLesson';
 
 /**
  * LessonCard Component
@@ -35,11 +36,10 @@ const LessonCard = ({
   averageRating = 0,
 }) => {
   const navigate = useNavigate();
-  const { user, session } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const { user } = useAuth();
   const [imageError, setImageError] = useState(false);
   const [purchaseCount, setPurchaseCount] = useState(0);
+  const { purchaseLesson, loading, error: purchaseError } = usePurchaseLesson();
   const isCreator = user && user.id === creator_id;
 
   // Fetch purchase count when component mounts
@@ -68,71 +68,28 @@ const LessonCard = ({
 
   const handleImageError = () => setImageError(true);
 
-  const placeholderImage =
-    "https://via.placeholder.com/400x300?text=Lesson+Image";
+  const getThumbnailUrl = (url) => {
+    if (!url) return null;
+    
+    // If it's already a full URL, return it
+    if (url.startsWith('http')) return url;
+    
+    // Get public URL from Supabase
+    const { data: { publicUrl } } = supabase.storage
+      .from('lesson-thumbnails')
+      .getPublicUrl(url);
+      
+    return publicUrl;
+  };
+
+  const placeholderImage = "https://via.placeholder.com/400x300?text=No+Thumbnail";
 
   const handlePurchase = async () => {
-    if (!user) {
-      navigate("/sign-in");
-      return;
-    }
-
-    if (price === 0 || isWelcomeLesson) {
-      // Handle free lesson access directly
-      try {
-        const { error } = await supabase
-          .from("purchases")
-          .insert([
-            {
-              user_id: user.id,
-              tutorial_id: id,
-              purchase_date: new Date().toISOString(),
-              status: 'completed',
-              amount: 0,
-              creator_id: creator_id
-            },
-          ]);
-
-        if (error) throw error;
-        
-        // Redirect to lesson page after granting access
-        navigate(`/lesson/${id}`);
-      } catch (err) {
-        console.error("Error granting access to free lesson:", err);
-        setError("Failed to access free lesson. Please try again.");
-      }
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
     try {
-      const functionsUrl = process.env.REACT_APP_SUPABASE_FUNCTIONS_URL;
-      if (!functionsUrl) {
-        throw new Error("Functions URL not set in environment variables.");
-      }
-
-      const response = await fetch(`${functionsUrl}/create-checkout-session`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify({ tutorialId: id }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.sessionUrl) {
-        window.location.href = data.sessionUrl;
-      } else {
-        throw new Error(data.error || "Failed to create checkout session.");
-      }
-    } catch (error) {
-      setError(error.message || "An unexpected error occurred.");
-    } finally {
-      setLoading(false);
+      await purchaseLesson(id, price, isWelcomeLesson);
+    } catch (err) {
+      // Error is handled by the hook
+      console.error('Purchase failed:', err);
     }
   };
 
@@ -169,7 +126,7 @@ const LessonCard = ({
     <div className="w-full bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden">
       <div className="relative aspect-video overflow-hidden">
         <img
-          src={imageError ? placeholderImage : (thumbnail_url || placeholderImage)}
+          src={imageError ? placeholderImage : getThumbnailUrl(thumbnail_url) || placeholderImage}
           alt={`Lesson: ${title}`}
           className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-300"
           onError={handleImageError}
@@ -197,7 +154,7 @@ const LessonCard = ({
           {truncateDescription(description)}
         </p>
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+        {purchaseError && <p className="text-red-500 text-sm">{purchaseError}</p>}
         
         <div className="pt-2">
           {isCreator ? (
@@ -214,13 +171,15 @@ const LessonCard = ({
             >
               Access Lesson
             </button>
+          ) : loading ? (
+            <p className="text-center text-gray-600">Processing purchase...</p>
           ) : (
             <button
-              className={`w-full btn btn-primary ${loading ? "loading" : ""}`}
+              className="w-full btn btn-primary"
               onClick={handlePurchase}
               disabled={loading}
             >
-              {loading ? "Processing..." : "Purchase Lesson"}
+              Purchase Lesson
             </button>
           )}
         </div>

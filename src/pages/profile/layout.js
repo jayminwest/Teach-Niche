@@ -1,8 +1,6 @@
 // src/pages/profile/layout.js
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
 import supabase from "../../utils/supabaseClient";
 import ProfilePicture from "./components/ProfilePicture";
 import ProfileForm from "./components/ProfileForm";
@@ -12,6 +10,7 @@ import LessonCard from "../marketplace/components/LessonCard";
 import LessonCreationGuide from "./components/LessonCreationGuide";
 import { useAuth } from "../../context/AuthContext";
 import ConnectStripeButton from "../../components/ConnectStripeButton";
+import useStripeConnect from "./hooks/useStripeConnect";
 
 /**
  * Profile Component
@@ -36,11 +35,11 @@ const Profile = () => {
   const [createdLessons, setCreatedLessons] = useState([]);
   const [purchasedLessons, setPurchasedLessons] = useState([]);
   const [activeTab, setActiveTab] = useState("profile");
-  const [stripeConnected, setStripeConnected] = useState(false);
-  const { user } = useAuth();
   const [deletingLesson, setDeletingLesson] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { user } = useAuth();
+  const { stripeConnected, initiateStripeConnect } = useStripeConnect(user?.id);
 
   useEffect(() => {
     if (user) {
@@ -96,7 +95,7 @@ const Profile = () => {
         // If profile doesn't exist, create a new one
         const { error: insertError } = await supabase
           .from('profiles')
-          .insert([{
+          .upsert([{
             id: user.id,
             full_name: '',
             email: user.email,
@@ -104,7 +103,10 @@ const Profile = () => {
             avatar_url: '',
             social_media_tag: '',
             updated_at: new Date(),
-          }]);
+          }], { 
+            onConflict: 'id',
+            ignoreDuplicates: true 
+          });
 
         if (insertError) throw insertError;
 
@@ -301,30 +303,6 @@ const Profile = () => {
     }
   };
 
-  const initiateStripeConnect = async () => {
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        "create-stripe-connect",
-        {
-          body: JSON.stringify({ userId: user.id }),
-        },
-      );
-
-      if (error) {
-        throw new Error(error.message || "Failed to initiate Stripe Connect");
-      }
-
-      if (data && data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("Failed to initiate Stripe Connect: No URL returned");
-      }
-    } catch (err) {
-      console.error("Error initiating Stripe Connect:", err);
-      setError(err.message || "An unexpected error occurred");
-    }
-  };
-
   const handleCreateLesson = () => {
     if (stripeConnected) {
       setActiveTab("create-lesson");
@@ -392,7 +370,6 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
       <main className="flex-grow container mx-auto px-4 sm:px-6 py-8">
         <div className="card bg-base-100 shadow-xl max-w-5xl mx-auto">
           <div className="card-body p-4 sm:p-8">
@@ -520,6 +497,8 @@ const Profile = () => {
                         onCreateLesson={handleCreateLesson}
                         onDeleteProfile={handleDeleteProfile}
                         onLogout={handleLogout}
+                        stripeConnected={stripeConnected}
+                        onStripeConnect={initiateStripeConnect}
                       />
                     </div>
                   </div>
@@ -629,7 +608,6 @@ const Profile = () => {
           </div>
         </div>
       </main>
-      <Footer />
 
       {/* Confirmation Modal */}
       {deletingLesson && (

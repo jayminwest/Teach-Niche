@@ -1,9 +1,6 @@
 // src/pages/success.js
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
-import AlertMessage from "../../components/AlertMessage";
 import supabase from "../../utils/supabaseClient";
 
 /**
@@ -80,27 +77,29 @@ const SuccessPage = () => {
   }, [sessionId, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-6">
-        {error ? (
-          <div className="text-center text-red-600">
-            <h2 className="text-2xl font-bold mb-4">Error</h2>
-            <p>{error}</p>
-          </div>
-        ) : (
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4 text-green-600">
-              Purchase Successful!
-            </h2>
-            <p className="text-gray-600">
-              Redirecting you to your lesson...
-            </p>
-            <div className="mt-4">
-              <div className="loading loading-spinner loading-lg"></div>
+    <div className="min-h-screen flex flex-col">
+      <main className="flex-grow flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full space-y-8 p-6">
+          {error ? (
+            <div className="text-center text-red-600">
+              <h2 className="text-2xl font-bold mb-4">Error</h2>
+              <p>{error}</p>
             </div>
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-4 text-green-600">
+                Purchase Successful!
+              </h2>
+              <p className="text-gray-600">
+                Redirecting you to your lesson...
+              </p>
+              <div className="mt-4">
+                <div className="loading loading-spinner loading-lg"></div>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 };

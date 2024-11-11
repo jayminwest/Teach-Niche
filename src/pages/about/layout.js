@@ -1,5 +1,4 @@
 import React from "react";
-import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -67,7 +66,6 @@ const AboutUs = () => {
 
   return (
     <div className="bg-base-200 min-h-screen">
-      <Header />
       <main className="container mx-auto px-4 py-8">
         <section
           className="hero h-96 rounded-box overflow-hidden mb-12 bg-center bg-cover"
@@ -335,7 +333,6 @@ const AboutUs = () => {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 };

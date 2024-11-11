@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import LessonCard from "./LessonCard";
 import supabase from "../../../utils/supabaseClient";
 import { useAuth } from "../../../context/AuthContext";
+import { useMarketplaceFilters } from '../hooks/useMarketplaceFilters';
 
 /**
  * LessonsGrid Component
@@ -16,7 +17,13 @@ import { useAuth } from "../../../context/AuthContext";
  * @param {number} [props.limit] - The maximum number of lessons to display.
  * @returns {JSX.Element} The Lessons Grid.
  */
-const LessonsGrid = ({ showPurchasedOnly = false, sortOption, priceFilter, limit, isFeatured }) => {
+const LessonsGrid = ({ 
+  showPurchasedOnly = false, 
+  limit, 
+  isFeatured,
+  sortOption = "default",
+  priceFilter = "all" 
+}) => {
   const [lessons, setLessons] = useState([]);
   const [purchasedLessons, setPurchasedLessons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -113,49 +120,15 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, priceFilter, limit
     };
   }, [user, limit, isFeatured]);
 
-  const sortLessons = (lessonsToSort) => {
-    switch (sortOption) {
-      case "price_asc":
-        return [...lessonsToSort].sort((a, b) => a.price - b.price);
-      case "price_desc":
-        return [...lessonsToSort].sort((a, b) => b.price - a.price);
-      case "creator_asc":
-        return [...lessonsToSort].sort((a, b) =>
-          a.profiles.full_name.localeCompare(b.profiles.full_name)
-        );
-      case "creator_desc":
-        return [...lessonsToSort].sort((a, b) =>
-          b.profiles.full_name.localeCompare(a.profiles.full_name)
-        );
-      case "popular":
-        return [...lessonsToSort].sort((a, b) => {
-          const aCount = a.purchaseCount || 0;
-          const bCount = b.purchaseCount || 0;
-          return bCount - aCount;
-        });
-      case "rating":
-        return [...lessonsToSort].sort((a, b) => {
-          const aRating = a.averageRating || 0;
-          const bRating = b.averageRating || 0;
-          return bRating - aRating;
-        });
-      default:
-        return lessonsToSort;
-    }
-  };
+  const displayLessons = showPurchasedOnly
+    ? lessons.filter((lesson) => purchasedLessons.includes(lesson.id))
+    : lessons;
 
-  const filterLessons = (lessonsToFilter) => {
-    let filtered = lessonsToFilter;
-
-    // Apply price filter
-    if (priceFilter === 'free') {
-      filtered = filtered.filter(lesson => lesson.price === 0);
-    } else if (priceFilter === 'paid') {
-      filtered = filtered.filter(lesson => lesson.price > 0);
-    }
-
-    return filtered;
-  };
+  const filteredAndSortedLessons = useMarketplaceFilters(
+    displayLessons,
+    sortOption,
+    priceFilter
+  );
 
   if (loading) {
     return (
@@ -173,19 +146,15 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, priceFilter, limit
     );
   }
 
-  const displayLessons = showPurchasedOnly
-    ? lessons.filter((lesson) => purchasedLessons.includes(lesson.id))
-    : filterLessons(lessons);
-
-  const sortedLessons = sortLessons(displayLessons);
-
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-      {showPurchasedOnly && sortedLessons.length === 0 ? (
-        <p className="text-center text-gray-600">You haven't purchased any lessons yet.</p>
+      {showPurchasedOnly && filteredAndSortedLessons.length === 0 ? (
+        <p className="text-center text-gray-600">
+          You haven't purchased any lessons yet.
+        </p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 justify-items-center">
-          {sortedLessons.map((lesson) => (
+          {filteredAndSortedLessons.map((lesson) => (
             <div key={lesson.id} className="w-full max-w-sm">
               <LessonCard
                 {...lesson}

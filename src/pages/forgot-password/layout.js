@@ -39,7 +39,6 @@ const ForgotPasswordLayout = () => {
 
   return (
     <div className="container mx-auto">
-      <Header />
       <main className="flex justify-center items-center min-h-screen">
         <div className="card w-full max-w-sm shadow-2xl bg-base-100">
           <div className="card-body">
@@ -74,7 +73,6 @@ const ForgotPasswordLayout = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

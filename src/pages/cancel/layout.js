@@ -16,7 +16,6 @@ const CancelPage = () => {
 
   return (
     <div>
-      <Header />
       <main className="flex flex-col justify-center items-center min-h-screen py-10">
         <div 
           className="card w-full max-w-md shadow-2xl bg-base-100 p-6 text-center"
@@ -35,7 +34,6 @@ const CancelPage = () => {
           </button>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

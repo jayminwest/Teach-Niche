@@ -2,12 +2,16 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
-import TextEditor from "../../components/TextEditor";
 import supabase from "../../utils/supabaseClient";
 import AlertMessage from "../../components/AlertMessage";
 import { useAuth } from "../../context/AuthContext";
+import VideoUploadSection from "./components/VideoUploadSection";
+import PriceSelector from "./components/PriceSelector";
+import CategorySelector from "./components/CategorySelector";
+import LessonContentEditor from "./components/LessonContentEditor";
+import useFormDraft from "./hooks/useFormDraft";
+import useVideoUpload from "./hooks/useVideoUpload";
+import { useLessonCreation } from "./hooks/useLessonCreation";
 
 /**
  * CreateLesson Component
@@ -23,23 +27,38 @@ const CreateLesson = () => {
     cost: "0",
     content: "",
   });
-  const [categoryIds, setCategoryIds] = 
-  useState([]);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+  const [categoryIds, setCategoryIds] = useState([]);
   const [categories, setCategories] = useState([]);
   const [thumbnail, setThumbnail] = useState(null);
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [videoFile, setVideoFile] = useState(null);
+  const [customPrice, setCustomPrice] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [videoFile, setVideoFile] = useState(null);
-  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
-  const [uploadStatus, setUploadStatus] = useState('');
-  const [isUploading, setIsUploading] = useState(false);
-  const [customPrice, setCustomPrice] = useState(false);
-  const priceOptions = [0, 5, 10, 15, 20];
-  const [lessonId, setLessonId] = useState(null);
+
+  // Custom hooks
+  const { clearDraft } = useFormDraft(
+    lessonData, 
+    setLessonData, 
+    categoryIds, 
+    setCategoryIds, 
+    thumbnailPreview, 
+    setThumbnailPreview
+  );
+
+  const {
+    uploadVideo,
+    videoUploadProgress,
+    uploadStatus,
+    isUploading,
+  } = useVideoUpload();
+
+  const {
+    createOrUpdateLesson,
+    error,
+    success,
+    isSubmitting,
+  } = useLessonCreation();
 
   useEffect(() => {
     fetchCategories();
@@ -80,294 +99,60 @@ const CreateLesson = () => {
     }
   };
 
-  const handleVideoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setVideoFile(file);
-      setVideoUploadProgress(0); // Reset progress when a new file is selected
-    }
-  };
-
-  // Load saved form data on component mount
-  useEffect(() => {
-    const savedData = localStorage.getItem('lessonDraft');
-    if (savedData) {
-      const parsed = JSON.parse(savedData);
-      setLessonData(parsed.lessonData);
-      setCategoryIds(parsed.categoryIds);
-      if (parsed.thumbnailPreview) {
-        setThumbnailPreview(parsed.thumbnailPreview);
-      }
-      // Note: We can't restore File objects from localStorage
-    }
-  }, []);
-
-  // Save form data on changes
-  useEffect(() => {
-    const draftData = {
-      lessonData,
-      categoryIds,
-      thumbnailPreview
-    };
-    localStorage.setItem('lessonDraft', JSON.stringify(draftData));
-  }, [lessonData, categoryIds, thumbnailPreview]);
-
-  // Clear saved data after successful submission
-  const clearSavedDraft = () => {
-    localStorage.removeItem('lessonDraft');
-  };
-
-  const initializeLesson = async () => {
-    try {
-      setError(null);
-      setIsSubmitting(true);
-
-      // Validate form data
-      if (!lessonData.title.trim() || 
-          !lessonData.description.trim() || 
-          lessonData.cost === "" || 
-          !lessonData.content?.trim()) {
-        throw new Error("Please fill in all required fields");
-      }
-
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // Create the lesson first
-      const response = await fetch(
-        `${process.env.REACT_APP_SUPABASE_FUNCTIONS_URL}/create-lesson`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            title: lessonData.title,
-            description: lessonData.description,
-            price: parseFloat(lessonData.cost),
-            content: lessonData.content,
-            category_ids: categoryIds,
-            thumbnail_url: thumbnailPreview,
-            vimeo_video_id: null
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create lesson');
-      }
-
-      const { lesson_id } = await response.json();
-      setLessonId(lesson_id);
-      return lesson_id;
-
-    } catch (err) {
-      setError(err.message);
-      throw err;
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
     
     try {
-      // First create the lesson
-      const lessonId = await initializeLesson();
-      
-      // Then handle video upload if there's a video file
-      if (videoFile) {
-        setIsUploading(true);
-        setUploadStatus('Preparing video upload...');
-        
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        const initFormData = new FormData();
-        initFormData.append('title', lessonData.title);
-        initFormData.append('description', lessonData.description);
-        initFormData.append('fileSize', videoFile.size.toString());
-        initFormData.append('fileName', videoFile.name);
-        initFormData.append('lessonId', lessonId);
+      // Handle thumbnail upload if exists
+      let thumbnailUrl = thumbnailPreview;
+      if (thumbnail) {
+        const fileExt = thumbnail.name.split(".").pop();
+        const fileName = `lesson-thumbnails/${Math.random()}.${fileExt}`;
 
-        // Initialize upload
-        const initResponse = await fetch(
-          `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/upload-vimeo-video/initialize`, 
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${session.access_token}`,
-            },
-            body: initFormData,
-          }
-        );
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("lesson-thumbnails")
+          .upload(fileName, thumbnail);
 
-        if (!initResponse.ok) {
-          const errorData = await initResponse.json();
-          throw new Error(errorData.error || 'Failed to initialize video upload');
-        }
+        if (uploadError) throw uploadError;
 
-        const { 
-          upload_link, 
-          vimeo_video_id: newVimeoId,
-          vimeo_url: newVimeoUrl,
-          chunk_size, 
-          access_token 
-        } = await initResponse.json();
+        const { data: { publicUrl } } = supabase.storage
+          .from("lesson-thumbnails")
+          .getPublicUrl(fileName);
 
-        // Upload video in chunks
-        const totalSize = videoFile.size;
-        let uploadedBytes = 0;
-        
-        while (uploadedBytes < totalSize) {
-          const chunk = videoFile.slice(uploadedBytes, uploadedBytes + chunk_size);
-          
-          const chunkResponse = await fetch(upload_link, {
-            method: 'PATCH',
-            headers: {
-              'Tus-Resumable': '1.0.0',
-              'Upload-Offset': uploadedBytes.toString(),
-              'Content-Type': 'application/offset+octet-stream',
-              'Authorization': `Bearer ${access_token}`,
-            },
-            body: chunk,
-          });
-
-          if (!chunkResponse.ok) {
-            throw new Error(`Failed to upload chunk at offset ${uploadedBytes}`);
-          }
-
-          uploadedBytes = parseInt(chunkResponse.headers.get('Upload-Offset') || '0');
-          const progress = (uploadedBytes / totalSize) * 100;
-          setVideoUploadProgress(Math.round(progress));
-          setUploadStatus(`Uploading: ${Math.round(progress)}%`);
-        }
-
-        setUploadStatus('Upload complete! Processing...');
-
-        // Update lesson status after successful upload
-        const { error: updateError } = await supabase
-          .from('tutorials')
-          .update({ 
-            status: 'published',
-            vimeo_video_id: newVimeoId
-          })
-          .eq('id', lessonId);
-
-        if (updateError) throw updateError;
+        thumbnailUrl = publicUrl;
       }
 
-      setSuccess("Lesson created successfully!");
-      clearSavedDraft();
+      // If there's a video file, upload it first
+      let vimeoData = null;
+      if (videoFile) {
+        vimeoData = await uploadVideo(
+          videoFile,
+          null, // No lessonId yet
+          lessonData.title,
+          lessonData.description
+        );
+      }
+
+      // Create the lesson with all data
+      const lessonId = await createOrUpdateLesson({
+        lessonData,
+        categoryIds,
+        thumbnailUrl,
+        vimeoData
+      });
+
+      clearDraft();
       setTimeout(() => navigate("/marketplace"), 2000);
 
     } catch (err) {
-      setError(err.message);
-      // If there's an error and we have a lessonId, update the status to 'failed'
-      if (lessonId) {
-        await supabase
-          .from('tutorials')
-          .update({ status: 'failed' })
-          .eq('id', lessonId);
-      }
-    } finally {
-      setIsSubmitting(false);
-      setIsUploading(false);
+      console.error("Error creating lesson:", err);
     }
-  };
-
-  // Add this section where the video upload UI is rendered
-  const renderVideoUploadSection = () => {
-    return (
-      <div className="pt-4">
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-gray-700">
-            Upload your video
-          </label>
-          <div className="relative group">
-            <div className="cursor-help text-gray-400 hover:text-gray-600">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 112.871 5.026v.345a.75.75 0 01-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 108.94 6.94zM10 15a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-              Videos should be:
-              <ul className="list-disc ml-4 mt-1">
-                <li>Maximum 25 minutes long</li>
-                <li>1080p quality</li>
-                <li>Landscape mode (horizontal)</li>
-              </ul>
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
-            </div>
-          </div>
-        </div>
-        <div className={`mt-1 rounded-lg border-2 ${videoFile ? 'border-green-500 bg-green-50' : 'border-dashed border-gray-300'} px-6 py-4`}>
-          <div className="text-center">
-            {!videoFile ? (
-              <>
-                <label
-                  htmlFor="video"
-                  className="cursor-pointer inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-blue-500 bg-white border border-blue-500 rounded-md hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  Choose a video
-                  <input
-                    id="video"
-                    name="video"
-                    type="file"
-                    accept="video/*"
-                    className="sr-only"
-                    onChange={handleVideoChange}
-                    required
-                  />
-                </label>
-                <p className="text-xs text-gray-500 mt-2">
-                  Select from your device or record a new video
-                </p>
-              </>
-            ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span className="text-sm font-medium text-green-800">Video selected successfully!</span>
-                </div>
-                <div className="text-xs text-gray-600">
-                  <p className="font-medium">{videoFile.name}</p>
-                  <p>Size: {(videoFile.size / (1024 * 1024)).toFixed(2)} MB</p>
-                </div>
-                <button
-                  onClick={() => {
-                    setVideoFile(null);
-                    setVideoUploadProgress(0);
-                  }}
-                  className="inline-flex items-center px-3 py-1 text-xs text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                  Remove video
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Header />
       <main className="flex-grow container mx-auto px-4 py-6">
         <div className="max-w-3xl mx-auto">
-          {/* Friendlier Header */}
           <div className="mb-6 text-center">
             <h2 className="text-2xl font-bold text-gray-900">
               Create Your Lesson
@@ -377,7 +162,6 @@ const CreateLesson = () => {
             </p>
           </div>
 
-          {/* Main Form - More compact and friendly */}
           <div className="bg-white rounded-lg shadow-sm p-6">
             <form onSubmit={handleSubmit} className="space-y-6" role="form">
               {/* Basic Info Section */}
@@ -415,154 +199,85 @@ const CreateLesson = () => {
                 </div>
               </div>
 
-              {/* Price Section - Simplified */}
-              <div className="pt-4">
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    Set your price
-                  </label>
-                  <div className="relative group">
-                    <div className="cursor-help text-gray-400 hover:text-gray-600">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 112.871 5.026v.345a.75.75 0 01-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 108.94 6.94zM10 15a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                      Suggested pricing: $1 for every 2 minutes of video content
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-1 flex gap-3">
-                  <select
-                    id="cost"
-                    name="cost"
-                    className="block w-32 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    value={customPrice ? "custom" : lessonData.cost.toString()}
-                    onChange={(e) => {
-                      if (e.target.value === "custom") {
-                        setCustomPrice(true);
-                        setLessonData(prev => ({ ...prev, cost: "" }));
-                      } else {
-                        setCustomPrice(false);
-                        setLessonData(prev => ({ ...prev, cost: e.target.value }));
-                      }
-                    }}
-                    required
-                  >
-                    {priceOptions.map((price) => (
-                      <option key={price} value={price.toString()}>
-                        ${price}
-                      </option>
-                    ))}
-                    <option value="custom">Custom</option>
-                  </select>
-                  {customPrice && (
-                    <div className="relative flex-1">
-                      <span className="absolute inset-y-0 left-3 flex items-center text-gray-500">$</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        className="block w-full rounded-md border border-gray-300 pl-7 pr-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                        value={lessonData.cost}
-                        onChange={(e) => handleInputChange({
-                          target: { name: "cost", value: e.target.value }
-                        })}
-                        placeholder="0.00"
-                        required
+              {/* Price Selector */}
+              <PriceSelector
+                cost={lessonData.cost}
+                onCostChange={(value) => setLessonData(prev => ({ ...prev, cost: value }))}
+                customPrice={customPrice}
+                setCustomPrice={setCustomPrice}
+              />
+
+              {/* Video Upload Section */}
+              <VideoUploadSection
+                videoFile={videoFile}
+                onVideoChange={(e) => setVideoFile(e.target.files[0])}
+                onVideoRemove={() => setVideoFile(null)}
+              />
+
+              {/* Thumbnail Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Thumbnail
+                </label>
+                <div className="mt-1 flex flex-col gap-4">
+                  {/* Show thumbnail preview */}
+                  {thumbnailPreview && (
+                    <div className="relative w-32 h-32">
+                      <img
+                        src={thumbnailPreview}
+                        alt="Thumbnail preview"
+                        className="w-full h-full object-cover rounded-lg"
                       />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setThumbnail(null);
+                          setThumbnailPreview(null);
+                        }}
+                        className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full p-1 hover:bg-red-200"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </button>
                     </div>
                   )}
-                </div>
-              </div>
-
-              {/* Media Section */}
-              {renderVideoUploadSection()}
-
-              {/* Content Section */}
-              <div className="border-t border-gray-900/10 pt-8">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-semibold leading-7 text-gray-900">Lesson Content</h3>
-                  <div className="relative group">
-                    <div className="cursor-help text-gray-400 hover:text-gray-600">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM8.94 6.94a.75.75 0 11-1.061-1.061 3 3 0 112.871 5.026v.345a.75.75 0 01-1.5 0v-.5c0-.72.57-1.172 1.081-1.287A1.5 1.5 0 108.94 6.94zM10 15a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 p-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                      <p className="mb-2">TeachNiche doesn't auto-save content. We recommend:</p>
-                      <ul className="list-disc ml-4">
-                        <li>Writing your content in a separate document first</li>
-                        <li>Using Markdown formatting for better presentation (you can ask ChatGPT to help)</li>
-                        <li>Copying and pasting your final text here</li>
-                      </ul>
-                      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-2 mb-4">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs text-gray-500">Supports Markdown</span>
-                    <a 
-                      href="https://www.markdownguide.org/basic-syntax/" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-500 hover:text-blue-600 hover:underline"
-                    >
-                      View formatting guide
-                    </a>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <TextEditor
-                    value={lessonData.content}
-                    onChange={(content) => setLessonData((prev) => ({ ...prev, content }))}
-                    options={{
-                      hideIcons: ['side-by-side', 'fullscreen'],
-                      status: false, // Hides the status bar
-                      spellChecker: true,
-                      minHeight: "200px",
-                      maxHeight: "400px"
-                    }}
+                  {/* Upload input */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleThumbnailChange}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
                   />
                 </div>
               </div>
 
-              {/* Categories Section */}
+              {/* Content Editor */}
+              <LessonContentEditor
+                content={lessonData.content}
+                onChange={(content) => setLessonData(prev => ({ ...prev, content }))}
+              />
+
+              {/* Category Selector */}
               {categories.length > 0 && (
-                <div className="border-t border-gray-900/10 pt-8">
-                  <h3 className="text-base font-semibold leading-7 text-gray-900">Categories</h3>
-                  <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
-                    {categories.map((category) => (
-                      <div key={category.id} className="relative flex items-start">
-                        <div className="flex h-6 items-center">
-                          <input
-                            type="checkbox"
-                            id={`category-${category.id}`}
-                            value={category.id}
-                            onChange={handleCategoryChange}
-                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                          />
-                        </div>
-                        <div className="ml-3 text-sm leading-6">
-                          <label htmlFor={`category-${category.id}`} className="text-gray-900">
-                            {category.name}
-                          </label>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <CategorySelector
+                  categories={categories}
+                  selectedIds={categoryIds}
+                  onChange={handleCategoryChange}
+                />
               )}
 
-              {/* Submit Button - More friendly */}
+              {/* Submit Button */}
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isUploading}
                 className="w-full rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? "Creating your lesson..." : "Share your lesson"}
+                {isUploading 
+                  ? "Uploading video..." 
+                  : isSubmitting 
+                    ? "Creating your lesson..." 
+                    : "Share your lesson"}
               </button>
             </form>
           </div>
@@ -570,19 +285,20 @@ const CreateLesson = () => {
           <AlertMessage error={error} success={success} />
         </div>
       </main>
-      <Footer />
 
-      {/* Upload Progress Overlay - More compact */}
+      {/* Updated Upload Progress Overlay to match edit-lesson */}
       {isUploading && (
-        <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-md p-4 max-w-xs">
-          <div className="text-sm">
-            <p className="font-medium">Uploading...</p>
-            <p className="text-gray-500 text-xs mt-1">{uploadStatus}</p>
-            <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 max-w-sm w-full">
+          <div className="mb-2">
+            <div className="flex justify-between mb-1">
+              <span className="text-sm font-medium">{uploadStatus}</span>
+              <span className="text-sm font-medium">{videoUploadProgress}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2.5">
               <div 
-                className="h-full bg-blue-500 transition-all duration-300"
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
                 style={{ width: `${videoUploadProgress}%` }}
-              />
+              ></div>
             </div>
           </div>
         </div>

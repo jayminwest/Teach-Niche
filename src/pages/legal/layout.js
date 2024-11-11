@@ -1,7 +1,4 @@
 import React from "react";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
-
 /**
  * Legal Component
  *
@@ -49,7 +46,6 @@ const Legal = () => {
 
   return (
     <div className="bg-base-200 min-h-screen">
-      <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="card bg-base-100 shadow-xl">
           <div className="card-body">
@@ -67,7 +63,6 @@ const Legal = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

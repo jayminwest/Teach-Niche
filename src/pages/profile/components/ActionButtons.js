@@ -9,9 +9,25 @@ import React from "react";
  * @param {Function} props.onCreateLesson - Function to handle lesson creation.
  * @param {Function} props.onDeleteProfile - Function to handle profile deletion.
  * @param {Function} props.onLogout - Function to handle user logout.
+ * @param {boolean} props.stripeConnected - Whether the user has connected their Stripe account.
+ * @param {Function} props.onStripeConnect - Function to handle Stripe connection.
  * @returns {JSX.Element} The Action Buttons component.
  */
-const ActionButtons = ({ onCreateLesson, onDeleteProfile, onLogout }) => {
+const ActionButtons = ({ 
+  onCreateLesson, 
+  onDeleteProfile, 
+  onLogout,
+  stripeConnected,
+  onStripeConnect
+}) => {
+  const handleCreateLesson = () => {
+    if (stripeConnected) {
+      onCreateLesson();
+    } else {
+      onStripeConnect();
+    }
+  };
+
   return (
     <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
       <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -32,10 +48,10 @@ const ActionButtons = ({ onCreateLesson, onDeleteProfile, onLogout }) => {
       </div>
       <button
         className="btn btn-success w-full sm:w-auto"
-        onClick={onCreateLesson}
-        aria-label="Create Lesson"
+        onClick={handleCreateLesson}
+        aria-label={stripeConnected ? "Create Lesson" : "Connect Stripe to Create Lessons"}
       >
-        Create Lesson
+        {stripeConnected ? "Create Lesson" : "Connect Stripe to Create Lessons"}
       </button>
     </div>
   );
