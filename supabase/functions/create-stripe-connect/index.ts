@@ -26,6 +26,9 @@ const generateStripeOAuthUrl = (userId: string) => {
     scope: "read_write",
     state: userId,
     redirect_uri: redirectUri,
+    capabilities: ["card_payments", "transfers"],
+    suggested_capabilities: ["transfers"],
+    business_type: "individual",
   });
 };
 

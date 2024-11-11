@@ -142,88 +142,22 @@ const EditLesson = () => {
     setIsSubmitting(true);
     setVideoUploadProgress(0);
 
-    let vimeo_video_id = lessonData.vimeo_video_id;
-    let videoUrl = null;
-
-    if (
-      !lessonData.title.trim() || 
-      !lessonData.description.trim() || 
-      lessonData.cost === '' || 
-      !lessonData.content.trim()
-    ) {
-      setError("Please fill in all required fields.");
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
+      // Basic validation
+      if (
+        !lessonData.title.trim() || 
+        !lessonData.description.trim() || 
+        lessonData.cost === '' || 
+        !lessonData.content.trim()
+      ) {
+        throw new Error("Please fill in all required fields.");
+      }
+
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw sessionError;
 
       if (!session) {
         throw new Error("No active session. Please log in and try again.");
-      }
-
-      // Get the current lesson data to check if it was previously free
-      const { data: currentLesson, error: lessonError } = await supabase
-        .from("tutorials")
-        .select("price, stripe_product_id, stripe_price_id")
-        .eq("id", id)
-        .single();
-
-      if (lessonError) throw lessonError;
-
-      const newPrice = parseFloat(lessonData.cost);
-      const wasFreePreviously = currentLesson.price === 0;
-      const willBePaid = newPrice > 0;
-
-      // Check if Stripe account is required (changing to paid lesson)
-      if (wasFreePreviously && willBePaid) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('stripe_account_id, stripe_onboarding_complete')
-          .eq('id', session.user.id)
-          .single();
-
-        if (!profile?.stripe_account_id || !profile?.stripe_onboarding_complete) {
-          setError("Please connect your Stripe account before making this lesson paid.");
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Create new Stripe product and price
-        const response = await fetch(`${process.env.REACT_APP_SUPABASE_FUNCTIONS_URL}/create-lesson`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            title: lessonData.title,
-            description: lessonData.description,
-            price: newPrice,
-            content: lessonData.content,
-            create_stripe_only: true, // Add this flag to indicate we only need Stripe products
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create Stripe product');
-        }
-
-        const { stripe_product_id, stripe_price_id } = await response.json();
-
-        // Update the lesson with the new Stripe IDs
-        const { error: updateError } = await supabase
-          .from("tutorials")
-          .update({
-            stripe_product_id,
-            stripe_price_id
-          })
-          .eq("id", id);
-
-        if (updateError) throw updateError;
       }
 
       // Handle video upload if there's a new video
@@ -232,9 +166,10 @@ const EditLesson = () => {
         setUploadStatus('Preparing video upload...');
         
         const initFormData = new FormData();
-        initFormData.append('video', videoFile);
         initFormData.append('title', lessonData.title);
         initFormData.append('description', lessonData.description);
+        initFormData.append('fileSize', videoFile.size.toString());
+        initFormData.append('fileName', videoFile.name);
 
         setUploadStatus('Initializing upload...');
         
@@ -257,12 +192,10 @@ const EditLesson = () => {
         const { 
           upload_link, 
           vimeo_video_id: newVimeoId, 
-          vimeo_url,  // Get from response
+          vimeo_url: newVimeoUrl,
           chunk_size, 
           access_token 
         } = await initResponse.json();
-        vimeo_video_id = newVimeoId;
-        videoUrl = vimeo_url;  // Assign the value
 
         // Upload video in chunks
         const totalSize = videoFile.size;
@@ -290,11 +223,13 @@ const EditLesson = () => {
           const progress = (uploadedBytes / totalSize) * 100;
           setVideoUploadProgress(Math.round(progress));
           setUploadStatus(`Uploading: ${Math.round(progress)}%`);
-
-          console.log(`Upload progress: ${progress.toFixed(2)}%`);
         }
 
         setUploadStatus('Upload complete! Processing...');
+
+        // Update the video ID in lessonData
+        lessonData.vimeo_video_id = newVimeoId;
+        lessonData.vimeo_url = newVimeoUrl;
       }
 
       // Handle thumbnail upload if there's a new thumbnail
@@ -318,20 +253,21 @@ const EditLesson = () => {
       }
 
       // Update the lesson
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from("tutorials")
         .update({
           title: lessonData.title.trim(),
           description: lessonData.description.trim(),
-          price: newPrice,
+          price: parseFloat(lessonData.cost),
           content: lessonData.content.trim(),
           thumbnail_url: thumbnailUrl,
-          vimeo_video_id: vimeo_video_id,
-          vimeo_url: videoUrl,
+          vimeo_video_id: lessonData.vimeo_video_id,
+          vimeo_url: lessonData.vimeo_url,
+          status: videoFile ? 'published' : lessonData.vimeo_video_id ? 'published' : 'draft'
         })
         .eq("id", id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
       // Handle categories update
       await supabase
@@ -374,6 +310,30 @@ const EditLesson = () => {
       setIsSubmitting(true);
       setError(null);
 
+      // Delete video from Vimeo if it exists
+      if (lessonData.vimeo_video_id) {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        const response = await fetch(
+          `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/delete-vimeo-video`,
+          {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              videoId: lessonData.vimeo_video_id
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to delete video');
+        }
+      }
+
       // Delete tutorial categories
       const { error: categoryError } = await supabase
         .from("tutorial_categories")
@@ -395,6 +355,67 @@ const EditLesson = () => {
     } catch (err) {
       setError(err.message || "Failed to delete lesson");
       console.error("Error deleting lesson:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteVideo = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this video? This action cannot be undone."
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setIsSubmitting(true);
+      setError(null);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Delete video from Vimeo
+      const response = await fetch(
+        `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/delete-vimeo-video`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            videoId: lessonData.vimeo_video_id
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete video');
+      }
+
+      // Update lesson in database
+      const { error: updateError } = await supabase
+        .from('tutorials')
+        .update({ 
+          vimeo_video_id: null,
+          vimeo_url: null,
+          status: 'draft'
+        })
+        .eq('id', id);
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      setLessonData(prev => ({
+        ...prev,
+        vimeo_video_id: null,
+        vimeo_url: null
+      }));
+
+      setSuccess("Video deleted successfully!");
+    } catch (err) {
+      setError(err.message);
+      console.error("Error deleting video:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -558,7 +579,7 @@ const EditLesson = () => {
                     />
                   </div>
                   <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex items-center justify-between">
+                    <div className="flex justify-between items-center">
                       <div>
                         <p className="text-sm text-gray-600">Current Video:</p>
                         <p className="font-medium">
@@ -566,14 +587,14 @@ const EditLesson = () => {
                           Video ID: {lessonData.vimeo_video_id}
                         </p>
                       </div>
-                      <a 
-                        href={`https://vimeo.com/${lessonData.vimeo_video_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-indigo-600 hover:text-indigo-800 text-sm"
+                      <button
+                        type="button"
+                        onClick={handleDeleteVideo}
+                        disabled={isSubmitting}
+                        className="px-3 py-1 text-sm text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        View on Vimeo
-                      </a>
+                        Delete Video
+                      </button>
                     </div>
                   </div>
                 </div>

@@ -1,9 +1,10 @@
 // src/pages/success.js
 import React, { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import AlertMessage from "../../components/AlertMessage";
+import supabase from "../../utils/supabaseClient";
 
 /**
  * SuccessPage Component
@@ -13,66 +14,93 @@ import AlertMessage from "../../components/AlertMessage";
  * @returns {JSX.Element} The Success Page.
  */
 const SuccessPage = () => {
-  const location = useLocation();
-  const [purchaseDetails, setPurchaseDetails] = useState(null);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [error, setError] = useState(null);
+  const sessionId = searchParams.get("session_id");
 
   useEffect(() => {
-    const fetchPurchaseDetails = async () => {
-      const queryParams = new URLSearchParams(location.search);
-      const sessionId = queryParams.get("session_id");
-
+    const verifyPurchase = async () => {
       if (!sessionId) {
-        setError("No session ID found.");
+        setError("No session ID found");
         return;
       }
 
       try {
-        const response = await fetch(
-          `/api/get-purchase?session_id=${sessionId}`,
-        );
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        // Add retry logic
+        let attempts = 0;
+        const maxAttempts = 5;
+        let purchase = null;
+
+        while (attempts < maxAttempts) {
+          const { data, error } = await supabase
+            .from("purchases")
+            .select("tutorial_id, status")
+            .eq("stripe_session_id", sessionId)
+            .maybeSingle(); // Use maybeSingle instead of single
+
+          if (error) {
+            console.error("Query error:", error);
+            attempts++;
+            if (attempts === maxAttempts) throw error;
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds between attempts
+            continue;
+          }
+
+          if (data) {
+            purchase = data;
+            break;
+          }
+
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
-        const data = await response.json();
-        setPurchaseDetails(data);
+
+        if (!purchase) {
+          throw new Error("Purchase not found after multiple attempts");
+        }
+
+        if (purchase.status !== "completed") {
+          throw new Error("Purchase not completed");
+        }
+
+        // Redirect to the lesson page after short delay
+        setTimeout(() => {
+          navigate(`/lesson/${purchase.tutorial_id}`);
+        }, 2000);
       } catch (err) {
-        setError(err.message);
-        console.error("Error fetching purchase details:", err);
+        console.error("Error verifying purchase:", err);
+        setError(
+          "Purchase verification is taking longer than expected. Please check your email for confirmation or contact support."
+        );
       }
     };
 
-    fetchPurchaseDetails();
-  }, [location.search]);
+    verifyPurchase();
+  }, [sessionId, navigate]);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-grow flex flex-col justify-center items-center py-10">
-        <div className="card w-full max-w-md shadow-2xl bg-base-100 p-6 text-center">
-          <h2 className="text-3xl font-bold mb-4">Purchase Successful!</h2>
-          <p className="mb-6">
-            Thank you for your purchase. Your lesson has been added to your
-            profile.
-          </p>
-          {purchaseDetails && (
-            <div className="mb-6">
-              <h3 className="text-xl font-semibold mb-2">Purchase Details:</h3>
-              <p>Lesson: {purchaseDetails.lessonTitle}</p>
-              <p>Price: ${purchaseDetails.price}</p>
-              <p>
-                Purchase Date:{" "}
-                {new Date(purchaseDetails.purchaseDate).toLocaleDateString()}
-              </p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full space-y-8 p-6">
+        {error ? (
+          <div className="text-center text-red-600">
+            <h2 className="text-2xl font-bold mb-4">Error</h2>
+            <p>{error}</p>
+          </div>
+        ) : (
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-4 text-green-600">
+              Purchase Successful!
+            </h2>
+            <p className="text-gray-600">
+              Redirecting you to your lesson...
+            </p>
+            <div className="mt-4">
+              <div className="loading loading-spinner loading-lg"></div>
             </div>
-          )}
-          <Link to="/my-purchases" className="btn btn-primary">
-            View My Purchases
-          </Link>
-        </div>
-        <AlertMessage error={error} />
-      </main>
-      <Footer />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

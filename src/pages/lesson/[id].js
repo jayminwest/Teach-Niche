@@ -55,13 +55,19 @@ const LessonPage = () => {
             .select("*")
             .eq("user_id", user.id)
             .eq("tutorial_id", id)
-            .single();
+            .eq("status", 'completed')
+            .maybeSingle();
 
-          if (purchaseError && purchaseError.code !== "PGRST116") {
+          if (purchaseError) {
+            console.error('Error checking purchase:', purchaseError);
             throw purchaseError;
           }
 
-          setHasAccess(!!purchaseData);
+          setHasAccess(
+            lessonData.price === 0 || 
+            lessonData.creator_id === user.id || 
+            !!purchaseData
+          );
         }
       } catch (err) {
         console.error("Error in fetchLessonAndAccess:", err);

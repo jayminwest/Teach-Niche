@@ -7,9 +7,16 @@ export const allowedOrigins = [
   "http://localhost:3000",
   "https://teach-niche.com",
   "https://www.teach-niche.com",
-  "https://wcqpttujocyvueudlcnt.supabase.co",
-  // Add any other origins that should be allowed to make requests
+  "https://wcqpttujocyvueudlcnt.supabase.co", // Prod Supabase
+  "https://wfjxshbcjzngthjprdal.supabase.co", // Dev Supabase
 ];
+
+/**
+ * Clean and format URL to prevent double slashes
+ * @param url - URL to clean
+ * @returns Cleaned URL
+ */
+export const cleanUrl = (url: string) => url.replace(/\/$/, '');
 
 /**
  * Generate CORS headers for a given origin
@@ -42,3 +49,22 @@ export const createCorsResponse = (
     headers: { ...corsHeaders(origin), "Content-Type": "application/json" },
   });
 };
+
+// Add environment variable validation
+export const validateEnvVars = () => {
+  const required = [
+    'STRIPE_SECRET_KEY',
+    'STRIPE_WEBHOOK_SECRET',
+    'SUPABASE_URL',
+    'SUPABASE_SERVICE_ROLE_KEY'
+  ];
+
+  const missing = required.filter(key => !Deno.env.get(key));
+  
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+};
+
+// Call this at the start of your webhook handler
+validateEnvVars();

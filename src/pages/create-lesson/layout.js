@@ -39,6 +39,7 @@ const CreateLesson = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [customPrice, setCustomPrice] = useState(false);
   const priceOptions = [0, 5, 10, 15, 20];
+  const [lessonId, setLessonId] = useState(null);
 
   useEffect(() => {
     fetchCategories();
@@ -116,58 +117,83 @@ const CreateLesson = () => {
     localStorage.removeItem('lessonDraft');
   };
 
+  const initializeLesson = async () => {
+    try {
+      setError(null);
+      setIsSubmitting(true);
+
+      // Validate form data
+      if (!lessonData.title.trim() || 
+          !lessonData.description.trim() || 
+          lessonData.cost === "" || 
+          !lessonData.content?.trim()) {
+        throw new Error("Please fill in all required fields");
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // Create the lesson first
+      const response = await fetch(
+        `${process.env.REACT_APP_SUPABASE_FUNCTIONS_URL}/create-lesson`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            title: lessonData.title,
+            description: lessonData.description,
+            price: parseFloat(lessonData.cost),
+            content: lessonData.content,
+            category_ids: categoryIds,
+            thumbnail_url: thumbnailPreview,
+            vimeo_video_id: null
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create lesson');
+      }
+
+      const { lesson_id } = await response.json();
+      setLessonId(lesson_id);
+      return lesson_id;
+
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
-    setIsSubmitting(true);
-    setVideoUploadProgress(0);
-    setIsUploading(true);
-    setUploadStatus('Preparing video upload...');
-
+    
     try {
-      // Validate form data - Modified content validation
-      if (!lessonData.title.trim() || 
-          !lessonData.description.trim() || 
-          lessonData.cost === "" || 
-          !lessonData.content?.trim() || // Added trim() check for content
-          !videoFile) {
-        const missingFields = [];
-        if (!lessonData.title.trim()) missingFields.push('title');
-        if (!lessonData.description.trim()) missingFields.push('description');
-        if (lessonData.cost === "") missingFields.push('cost');
-        if (!lessonData.content?.trim()) missingFields.push('content');
-        if (!videoFile) missingFields.push('video');
-
-        throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
-      }
-
-      if (parseFloat(lessonData.cost) < 0) {
-        setError("Price cannot be negative");
-        setIsSubmitting(false);
-        return;
-      }
-
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) throw sessionError;
-
-      // Initialize video-related variables
-      let vimeo_video_id = null;
-      let vimeo_url = null;
-
-      // Handle video upload if there's a video file
+      // First create the lesson
+      const lessonId = await initializeLesson();
+      
+      // Then handle video upload if there's a video file
       if (videoFile) {
         setIsUploading(true);
         setUploadStatus('Preparing video upload...');
+        
+        const { data: { session } } = await supabase.auth.getSession();
         
         const initFormData = new FormData();
         initFormData.append('title', lessonData.title);
         initFormData.append('description', lessonData.description);
         initFormData.append('fileSize', videoFile.size.toString());
         initFormData.append('fileName', videoFile.name);
+        initFormData.append('lessonId', lessonId);
 
-        setUploadStatus('Initializing upload...');
-        
+        // Initialize upload
         const initResponse = await fetch(
           `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/upload-vimeo-video/initialize`, 
           {
@@ -186,14 +212,11 @@ const CreateLesson = () => {
 
         const { 
           upload_link, 
-          vimeo_video_id: newVimeoId, 
+          vimeo_video_id: newVimeoId,
           vimeo_url: newVimeoUrl,
           chunk_size, 
           access_token 
         } = await initResponse.json();
-
-        vimeo_video_id = newVimeoId;
-        vimeo_url = newVimeoUrl;
 
         // Upload video in chunks
         const totalSize = videoFile.size;
@@ -224,114 +247,32 @@ const CreateLesson = () => {
         }
 
         setUploadStatus('Upload complete! Processing...');
-      }
 
-      // Get Stripe IDs if needed
-      let stripe_product_id = null;
-      let stripe_price_id = null;
+        // Update lesson status after successful upload
+        const { error: updateError } = await supabase
+          .from('tutorials')
+          .update({ 
+            status: 'published',
+            vimeo_video_id: newVimeoId
+          })
+          .eq('id', lessonId);
 
-      if (parseFloat(lessonData.cost) > 0) {
-        const response = await fetch(`${process.env.REACT_APP_SUPABASE_FUNCTIONS_URL}/create-lesson`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
-            title: lessonData.title,
-            description: lessonData.description,
-            price: parseFloat(lessonData.cost),
-            content: lessonData.content,
-            create_stripe_only: true
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to create Stripe product');
-        }
-
-        const { stripe_product_id: productId, stripe_price_id: priceId } = await response.json();
-        stripe_product_id = productId;
-        stripe_price_id = priceId;
-      }
-
-      // Handle thumbnail upload
-      let thumbnailUrl = null;
-      if (thumbnail) {
-        const fileExt = thumbnail.name.split(".").pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `lesson-thumbnails/${fileName}`;
-
-        const { data, error: uploadError } = await supabase.storage
-          .from("lesson-thumbnails")
-          .upload(filePath, thumbnail);
-
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from("lesson-thumbnails")
-          .getPublicUrl(filePath);
-
-        thumbnailUrl = publicUrl;
-      }
-
-      // Create the lesson directly in Supabase
-      const { data, error } = await supabase
-        .from("tutorials")
-        .insert({
-          title: lessonData.title,
-          description: lessonData.description,
-          price: parseFloat(lessonData.cost),
-          content: lessonData.content,
-          creator_id: session.user.id,
-          thumbnail_url: thumbnailUrl,
-          vimeo_video_id,
-          vimeo_url,
-          stripe_product_id,
-          stripe_price_id,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Handle category assignments
-      if (categoryIds.length > 0) {
-        const categoryInserts = categoryIds.map((categoryId) => ({
-          tutorial_id: data.id,
-          category_id: categoryId,
-        }));
-
-        const { error: categoryError } = await supabase
-          .from("tutorial_categories")
-          .insert(categoryInserts);
-
-        if (categoryError) throw categoryError;
+        if (updateError) throw updateError;
       }
 
       setSuccess("Lesson created successfully!");
-      clearSavedDraft(); // Clear the draft after successful submission
+      clearSavedDraft();
       setTimeout(() => navigate("/marketplace"), 2000);
+
     } catch (err) {
-      const errorMessage = err.message || "An unexpected error occurred.";
-      console.error("Error creating lesson:", {
-        error: err,
-        message: errorMessage,
-        stack: err.stack,
-        state: {
-          lessonData,
-          videoFile: videoFile ? {
-            name: videoFile.name,
-            size: videoFile.size,
-            type: videoFile.type
-          } : null,
-          isUploading,
-          videoUploadProgress,
-          uploadStatus
-        }
-      });
-      setError(errorMessage);
+      setError(err.message);
+      // If there's an error and we have a lessonId, update the status to 'failed'
+      if (lessonId) {
+        await supabase
+          .from('tutorials')
+          .update({ status: 'failed' })
+          .eq('id', lessonId);
+      }
     } finally {
       setIsSubmitting(false);
       setIsUploading(false);

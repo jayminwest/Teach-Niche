@@ -65,10 +65,19 @@ const ConnectStripeButton = ({ onConnect, className }) => {
   const handleConnectStripe = async () => {
     setLoadingState("connecting");
     try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        throw new Error("No active session. Please log in and try again.");
+      }
+
       const { data, error } = await supabase.functions.invoke(
         "create-stripe-connect",
         {
           body: JSON.stringify({ userId: user.id }),
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
         },
       );
 

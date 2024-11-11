@@ -11,10 +11,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'Prefer': 'return=representation'
+  },
+  db: {
+    schema: 'public'
   }
 })
 

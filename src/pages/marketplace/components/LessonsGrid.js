@@ -49,7 +49,8 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, priceFilter, limit
 
         const { data: purchaseCounts, error: purchaseError } = await supabase
           .from('purchases')
-          .select('tutorial_id');
+          .select('tutorial_id')
+          .eq('status', 'completed');
 
         if (purchaseError) throw purchaseError;
 
@@ -86,7 +87,8 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, priceFilter, limit
           const { data: purchases, error: userPurchasesError } = await supabase
             .from("purchases")
             .select("tutorial_id")
-            .eq("user_id", user.id);
+            .eq("user_id", user.id)
+            .eq("status", "completed");
 
           if (userPurchasesError) throw userPurchasesError;
 
@@ -95,6 +97,7 @@ const LessonsGrid = ({ showPurchasedOnly = false, sortOption, priceFilter, limit
           );
         }
       } catch (error) {
+        console.error("Error fetching lessons:", error);
         setLessons([]);
       } finally {
         if (isMounted) {

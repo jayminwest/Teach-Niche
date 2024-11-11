@@ -87,6 +87,9 @@ const LessonCard = ({
               user_id: user.id,
               tutorial_id: id,
               purchase_date: new Date().toISOString(),
+              status: 'completed',
+              amount: 0,
+              creator_id: creator_id
             },
           ]);
 

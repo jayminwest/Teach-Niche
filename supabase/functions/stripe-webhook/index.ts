@@ -2,14 +2,23 @@
 
 import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@1.35.6?target=deno";
+import { cleanUrl } from "../_shared/config.ts";
+import Stripe from "https://esm.sh/stripe@12.0.0?target=deno";
 
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-// Webhook secret for verifying Stripe signatures
-const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
+// Add webhook secrets for both types
+const platformWebhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
+const connectWebhookSecret = Deno.env.get("STRIPE_CONNECT_WEBHOOK_SECRET")!;
+
+// Initialize Stripe
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
+  apiVersion: '2023-10-16',
+  httpClient: Stripe.createFetchHttpClient(),
+});
 
 /**
  * Convert ArrayBuffer to Hex string
@@ -81,77 +90,127 @@ async function verifyStripeSignature(
  * @param session - Checkout session object
  */
 const handleCheckoutSession = async (session: any) => {
-  const tutorialId = session.metadata?.tutorial_id;
-  const userId = session.client_reference_id;
+  console.log("Starting handleCheckoutSession with full session data:", session);
 
-  if (!tutorialId || !userId) {
-    console.error("Missing tutorial_id or user_id in session metadata.");
+  // Only process completed payments
+  if (session.payment_status !== 'paid') {
+    console.log(`Skipping session ${session.id} - payment status is ${session.payment_status}`);
     return;
   }
 
-  const { data: existingPurchase, error: existingError } = await supabase
-    .from("purchases")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("tutorial_id", tutorialId)
-    .single();
+  try {
+    // Calculate amounts first to ensure we have valid numbers
+    const totalAmount = session.amount_total ? session.amount_total / 100 : 0;
+    const platformFee = session.application_fee_amount ? session.application_fee_amount / 100 : 0;
+    const creatorEarnings = totalAmount - platformFee;
 
-  if (existingError && existingError.code !== "PGRST116") {
-    console.error("Error checking existing purchase:", existingError.message);
-    return;
-  }
+    // Validate required fields
+    if (!session.client_reference_id || !session.metadata?.tutorial_id || !session.metadata?.creator_id) {
+      console.error("Missing required fields:", {
+        userId: session.client_reference_id,
+        tutorialId: session.metadata?.tutorial_id,
+        creatorId: session.metadata?.creator_id
+      });
+      throw new Error("Missing required fields for purchase");
+    }
 
-  if (existingPurchase) {
-    console.log("Purchase already exists:", existingPurchase.id);
-    return;
-  }
+    // Prepare purchase data
+    const purchaseData = {
+      user_id: session.client_reference_id,
+      tutorial_id: session.metadata.tutorial_id,
+      creator_id: session.metadata.creator_id,
+      purchase_date: new Date().toISOString(),
+      amount: totalAmount,
+      platform_fee: platformFee,
+      creator_earnings: creatorEarnings,
+      payment_intent_id: session.payment_intent,
+      fee_percentage: session.metadata?.fee_percentage,
+      status: 'completed',
+      stripe_session_id: session.id,
+      metadata: {
+        stripe_customer: session.customer,
+        payment_status: session.payment_status,
+        payment_method_types: session.payment_method_types
+      }
+    };
 
-  const { data, error } = await supabase
-    .from("purchases")
-    .insert([
-      {
-        user_id: userId,
-        tutorial_id: tutorialId,
-        purchase_date: new Date(),
-      },
-    ]);
+    console.log("Attempting to insert purchase with data:", purchaseData);
 
-  if (error) {
-    console.error("Error recording purchase:", error.message);
-  } else {
-    console.log("Purchase recorded successfully:", data[0].id);
+    // Insert purchase record
+    const { data: purchase, error: insertError } = await supabase
+      .from("purchases")
+      .insert([purchaseData])
+      .select();
+
+    if (insertError) {
+      console.error("Failed to insert purchase:", insertError);
+      throw insertError;
+    }
+
+    if (!purchase || purchase.length === 0) {
+      throw new Error("Purchase was not inserted successfully");
+    }
+
+    console.log("Purchase successfully recorded:", purchase[0]);
+    return { success: true, purchaseId: purchase[0].id };
+
+  } catch (error) {
+    console.error("Error in handleCheckoutSession:", error);
+    throw error;
   }
 };
 
 // Main handler function
-serve(async (req) => {
-  if (req.method === "POST") {
-    const payload = await req.text();
-    const sig = req.headers.get("stripe-signature");
-
-    if (!sig) {
-      return new Response("Missing Stripe signature.", { status: 400 });
+serve(async (req: Request) => {
+  try {
+    const signature = req.headers.get('stripe-signature');
+    if (!signature) {
+      console.error('No signature provided');
+      return new Response('No signature provided', { status: 400 });
     }
+
+    const body = await req.text();
+    console.log('Received webhook body:', body);
 
     try {
-      const event = await verifyStripeSignature(payload, sig, webhookSecret);
+      // Replace Stripe's verification with our custom async verification
+      const event = await verifyStripeSignature(
+        body,
+        signature,
+        platformWebhookSecret // Use platform webhook secret by default
+      );
+      console.log('Webhook event verified:', event.type);
 
-      if (event.type === "checkout.session.completed") {
-        await handleCheckoutSession(event.data.object);
-      } else {
-        console.log(`Unhandled event type ${event.type}`);
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        console.log('Processing checkout session:', session.id);
+
+        try {
+          const result = await handleCheckoutSession(session);
+          console.log('Checkout session handled successfully:', result);
+        } catch (error) {
+          console.error('Error handling checkout session:', error);
+          throw error;
+        }
       }
 
-      return new Response(JSON.stringify({ received: true }), { status: 200 });
-    } catch (err: any) {
-      console.error("Webhook Error:", err.message);
-      return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+      return new Response(JSON.stringify({ received: true }), {
+        headers: { 'Content-Type': 'application/json' },
+        status: 200,
+      });
+    } catch (err) {
+      console.error('Error verifying webhook event:', err);
+      throw err;
     }
-  } else if (req.method === "GET") {
-    return new Response("Stripe webhook is functioning correctly", {
-      status: 200,
-    });
-  } else {
-    return new Response("Method Not Allowed", { status: 405 });
+  } catch (err) {
+    const error = err as Error;
+    console.error('Error processing webhook:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+        status: 400,
+      }
+    );
   }
 });
