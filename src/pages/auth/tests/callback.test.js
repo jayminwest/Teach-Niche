@@ -1,26 +1,26 @@
-import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { BrowserRouter } from 'react-router-dom';
-import AuthCallback from '../callback';
+import React from "react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import { BrowserRouter } from "react-router-dom";
+import AuthCallback from "../callback";
 
 // Mock useNavigate
 const mockNavigate = jest.fn();
-jest.mock('react-router-dom', () => ({
-  ...jest.requireActual('react-router-dom'),
+jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
   useNavigate: () => mockNavigate,
 }));
 
 // Mock useAuthCallbackNavigation with handlers invoking mockNavigate
-jest.mock('../../../hooks/useAuthCallbackNavigation', () => ({
+jest.mock("../../../hooks/useAuthCallbackNavigation", () => ({
   useAuthCallbackNavigation: () => ({
-    handleNavigateToProfile: () => mockNavigate('/profile'),
-    handleNavigateToSignIn: () => mockNavigate('/sign-in'),
+    handleNavigateToProfile: () => mockNavigate("/profile"),
+    handleNavigateToSignIn: () => mockNavigate("/sign-in"),
   }),
 }));
 
 // Mock supabase client with proper structure
-jest.mock('../../../utils/supabaseClient', () => ({
+jest.mock("../../../utils/supabaseClient", () => ({
   __esModule: true,
   default: {
     auth: {
@@ -30,8 +30,10 @@ jest.mock('../../../utils/supabaseClient', () => ({
 }));
 
 // Mock AlertMessage component
-jest.mock('../../../components/AlertMessage', () => {
-  const AlertMessage = ({ error }) => <div data-testid="alert-message">{error}</div>;
+jest.mock("../../../components/AlertMessage", () => {
+  const AlertMessage = ({ error }) => (
+    <div data-testid="alert-message">{error}</div>
+  );
   return AlertMessage;
 });
 
@@ -39,114 +41,116 @@ const renderWithProviders = (ui) => {
   return render(
     <BrowserRouter>
       {ui}
-    </BrowserRouter>
+    </BrowserRouter>,
   );
 };
 
-describe('AuthCallback Component', () => {
+describe("AuthCallback Component", () => {
   beforeEach(() => {
     mockNavigate.mockClear();
-    const supabase = require('../../../utils/supabaseClient').default;
+    const supabase = require("../../../utils/supabaseClient").default;
     supabase.auth.getSession.mockReset();
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
-  test('shows loading state and navigates to profile on successful authentication', async () => {
-    const supabase = require('../../../utils/supabaseClient').default;
+  test("shows loading state and navigates to profile on successful authentication", async () => {
+    const supabase = require("../../../utils/supabaseClient").default;
     supabase.auth.getSession.mockResolvedValue({
       data: {
         session: {
-          user: { id: '123' }
-        }
+          user: { id: "123" },
+        },
       },
-      error: null
+      error: null,
     });
 
     renderWithProviders(<AuthCallback />);
 
     // Check loading states in sequence
-    expect(screen.getByRole('status')).toBeInTheDocument();
-    expect(screen.getByText('Verifying session...')).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.getByText("Verifying session...")).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/profile');
+      expect(mockNavigate).toHaveBeenCalledWith("/profile");
     });
   });
 
-  test('shows error and navigates to sign-in on authentication failure', async () => {
-    const supabase = require('../../../utils/supabaseClient').default;
-    supabase.auth.getSession.mockRejectedValue(new Error('Auth failed'));
+  test("shows error and navigates to sign-in on authentication failure", async () => {
+    const supabase = require("../../../utils/supabaseClient").default;
+    supabase.auth.getSession.mockRejectedValue(new Error("Auth failed"));
 
     renderWithProviders(<AuthCallback />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('alert-message')).toBeInTheDocument();
+      expect(screen.getByTestId("alert-message")).toBeInTheDocument();
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith('/sign-in');
+    expect(mockNavigate).toHaveBeenCalledWith("/sign-in");
   });
 
-  test('handles invalid session data', async () => {
-    const supabase = require('../../../utils/supabaseClient').default;
+  test("handles invalid session data", async () => {
+    const supabase = require("../../../utils/supabaseClient").default;
     supabase.auth.getSession.mockResolvedValue({
       data: { session: null },
-      error: null
+      error: null,
     });
 
     renderWithProviders(<AuthCallback />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('alert-message')).toBeInTheDocument();
+      expect(screen.getByTestId("alert-message")).toBeInTheDocument();
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith('/sign-in');
+    expect(mockNavigate).toHaveBeenCalledWith("/sign-in");
   });
 
-  test('handles session error', async () => {
-    const supabase = require('../../../utils/supabaseClient').default;
+  test("handles session error", async () => {
+    const supabase = require("../../../utils/supabaseClient").default;
     supabase.auth.getSession.mockResolvedValue({
       data: null,
-      error: new Error('Session error')
+      error: new Error("Session error"),
     });
 
     renderWithProviders(<AuthCallback />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('alert-message')).toBeInTheDocument();
+      expect(screen.getByTestId("alert-message")).toBeInTheDocument();
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith('/sign-in');
+    expect(mockNavigate).toHaveBeenCalledWith("/sign-in");
   });
 
-  test('return to sign in button works', async () => {
-    const supabase = require('../../../utils/supabaseClient').default;
-    supabase.auth.getSession.mockRejectedValue(new Error('Auth failed'));
+  test("return to sign in button works", async () => {
+    const supabase = require("../../../utils/supabaseClient").default;
+    supabase.auth.getSession.mockRejectedValue(new Error("Auth failed"));
 
     renderWithProviders(<AuthCallback />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('alert-message')).toBeInTheDocument();
+      expect(screen.getByTestId("alert-message")).toBeInTheDocument();
     });
 
-    const button = screen.getByRole('button', { name: /return to sign in/i });
+    const button = screen.getByRole("button", { name: /return to sign in/i });
     await fireEvent.click(button);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/sign-in');
+    expect(mockNavigate).toHaveBeenCalledWith("/sign-in");
   });
 
-  test('buttons have accessible names', async () => {
-    const supabase = require('../../../utils/supabaseClient').default;
-    supabase.auth.getSession.mockRejectedValue(new Error('Auth failed'));
+  test("buttons have accessible names", async () => {
+    const supabase = require("../../../utils/supabaseClient").default;
+    supabase.auth.getSession.mockRejectedValue(new Error("Auth failed"));
 
     renderWithProviders(<AuthCallback />);
 
     await waitFor(() => {
-      const returnButton = screen.getByRole('button', { name: /return to sign in/i });
-      expect(returnButton).toHaveAccessibleName('Return to Sign In');
+      const returnButton = screen.getByRole("button", {
+        name: /return to sign in/i,
+      });
+      expect(returnButton).toHaveAccessibleName("Return to Sign In");
     });
   });
-}); 
+});

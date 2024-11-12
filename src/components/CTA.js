@@ -10,8 +10,8 @@ import { Link } from "react-router-dom";
  */
 const CTA = () => {
   return (
-    <section 
-      className="py-12 md:py-24 bg-base-100" 
+    <section
+      className="py-12 md:py-24 bg-base-100"
       aria-labelledby="cta-heading"
     >
       <div className="container mx-auto px-4">
@@ -20,8 +20,7 @@ const CTA = () => {
             id="cta-heading"
             className="flex-grow text-4xl md:text-5xl 2xl:text-6xl font-bold text-primary"
           >
-            Share Your Expertise{" "}
-            <br className="hidden sm:inline" />
+            Share Your Expertise <br className="hidden sm:inline" />
             and Grow with Teach Niche.
           </h2>
           <Link

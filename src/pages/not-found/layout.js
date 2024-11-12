@@ -14,7 +14,6 @@ import Footer from "../../components/Footer";
 const NotFound = () => {
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="flex-grow flex flex-col items-center justify-center p-4">
         <h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1>
         <p className="mb-8 text-center">
@@ -24,7 +23,6 @@ const NotFound = () => {
           Go to Marketplace
         </Link>
       </main>
-      <Footer />
     </div>
   );
 };

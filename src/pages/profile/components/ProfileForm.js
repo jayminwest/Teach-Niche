@@ -12,9 +12,9 @@ import React, { useState } from "react";
  */
 const ProfileForm = ({ profileData, onUpdate }) => {
   const [formData, setFormData] = useState({
-    fullName: profileData.fullName || '',
-    socialMediaTag: profileData.socialMediaTag || '',
-    bio: profileData.bio || '',
+    fullName: profileData.fullName || "",
+    socialMediaTag: profileData.socialMediaTag || "",
+    bio: profileData.bio || "",
   });
 
   const handleChange = (e) => {
@@ -60,7 +60,9 @@ const ProfileForm = ({ profileData, onUpdate }) => {
       </div>
       <div className="form-control">
         <label className="label" htmlFor="bio">
-          <span className="label-text text-lg">Bio / Country / Team Affiliation</span>
+          <span className="label-text text-lg">
+            Bio / Country / Team Affiliation
+          </span>
         </label>
         <textarea
           id="bio"

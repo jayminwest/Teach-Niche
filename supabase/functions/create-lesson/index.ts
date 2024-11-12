@@ -55,139 +55,129 @@ serve(async (req) => {
     }
 
     const requestData = await req.json();
-    const { 
-      title, 
-      description, 
-      price, 
-      vimeo_url, 
-      content, 
+    const {
+      title,
+      description,
+      price,
+      content,
       category_ids,
-      vimeo_video_id,
-      create_stripe_only = false
+      create_stripe_only = false,
+      thumbnail_url = null,
+      vimeo_video_id = null,
     } = requestData;
 
-    console.log("Received data:", {
-      title: title || 'MISSING',
-      description: description || 'MISSING',
-      price: price || 'MISSING',
-      vimeo_url: vimeo_url || 'MISSING',
-      content: content ? `${content.slice(0, 50)}...` : 'MISSING',
-      category_ids: category_ids || 'MISSING',
-      vimeo_video_id: vimeo_video_id || 'MISSING'
-    });
-
-    // Detailed validation
+    // Validate fields
     const missingFields = [];
-    if (!title) missingFields.push('title');
-    if (price === undefined || price === null) missingFields.push('price');
-    if (!content) missingFields.push('content');
+    if (!title) missingFields.push("title");
+    if (price === undefined || price === null) missingFields.push("price");
+    if (!content) missingFields.push("content");
 
     if (missingFields.length > 0) {
-      console.error("Missing required fields:", {
-        missingFields,
-        receivedData: {
-          hasTitle: !!title,
-          hasPrice: price !== undefined && price !== null,
-          hasContent: !!content,
-          priceValue: price,
-          titleLength: title?.length,
-          contentLength: content?.length
-        }
-      });
-      
-      return createCorsResponse(
-        400,
-        { 
-          error: `Missing required fields: ${missingFields.join(', ')}`,
-          received: { 
-            title: !!title, 
-            price: price !== undefined && price !== null, 
-            content: !!content 
-          }
-        },
-        origin,
-      );
-    }
-
-    // If we're only creating Stripe products, skip the validation
-    if (!create_stripe_only) {
-      // Get user's Stripe account ID only if the lesson is not free
-      let stripeAccountId = null;
-      let stripeOnboardingComplete = false;
-
-      if (parseFloat(price) > 0) {
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("stripe_account_id, stripe_onboarding_complete")
-          .eq("id", user.id)
-          .single();
-
-        if (profileError) {
-          return createCorsResponse(500, {
-            error: "Failed to fetch user profile",
-          }, origin);
-        }
-
-        stripeAccountId = profile.stripe_account_id;
-        stripeOnboardingComplete = profile.stripe_onboarding_complete;
-
-        if (!stripeAccountId || !stripeOnboardingComplete) {
-          return createCorsResponse(403, {
-            error: "Please connect your Stripe account before creating paid lessons.",
-          }, origin);
-        }
-      }
-    }
-
-    // If we're only creating Stripe products, return early with just the Stripe IDs
-    if (create_stripe_only) {
-      const product = await stripe.products.create({
-        name: title,
-        description: description || "",
-      });
-
-      const stripePrice = await stripe.prices.create({
-        unit_amount: Math.round(parseFloat(price) * 100),
-        currency: "usd",
-        product: product.id,
-      });
-
-      return createCorsResponse(201, { 
-        stripe_product_id: product.id,
-        stripe_price_id: stripePrice.id
+      return createCorsResponse(400, {
+        error: `Missing required fields: ${missingFields.join(", ")}`,
       }, origin);
     }
 
+    // Create Stripe product and price if needed
     let stripe_product_id = null;
     let stripe_price_id = null;
 
-    // Create Stripe product and price if lesson is not free
     if (parseFloat(price) > 0) {
+      // Get the creator's Stripe account ID
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("stripe_account_id")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile?.stripe_account_id) {
+        return createCorsResponse(400, {
+          error: "Creator must connect Stripe account first",
+        }, origin);
+      }
+
+      // Create product on the platform account
       const product = await stripe.products.create({
         name: title,
         description: description || "",
+        metadata: {
+          creator_id: user.id,
+          creator_stripe_account: profile.stripe_account_id,
+        },
       });
 
+      // Create price with application fee
       const stripePrice = await stripe.prices.create({
         unit_amount: Math.round(parseFloat(price) * 100),
         currency: "usd",
         product: product.id,
+        metadata: {
+          creator_id: user.id,
+          creator_stripe_account: profile.stripe_account_id,
+        },
       });
 
       stripe_product_id = product.id;
       stripe_price_id = stripePrice.id;
     }
 
-    // Return just the Stripe IDs without creating the lesson
-    return createCorsResponse(201, { 
+    // If we're only creating Stripe products, return early
+    if (create_stripe_only) {
+      return createCorsResponse(201, {
+        stripe_product_id,
+        stripe_price_id,
+      }, origin);
+    }
+
+    // Create the lesson record
+    const { data: lesson, error: lessonError } = await supabase
+      .from("tutorials")
+      .insert({
+        title,
+        description,
+        price: parseFloat(price),
+        content,
+        creator_id: user.id,
+        thumbnail_url,
+        stripe_product_id,
+        stripe_price_id,
+        status: "draft",
+        vimeo_video_id,
+      })
+      .select()
+      .single();
+
+    if (lessonError) {
+      throw new Error(`Failed to create lesson: ${lessonError.message}`);
+    }
+
+    // Handle category assignments if provided
+    if (category_ids?.length > 0) {
+      const categoryInserts = category_ids.map((categoryId: string) => ({
+        tutorial_id: lesson.id,
+        category_id: categoryId,
+      }));
+
+      const { error: categoryError } = await supabase
+        .from("tutorial_categories")
+        .insert(categoryInserts);
+
+      if (categoryError) {
+        throw new Error(
+          `Failed to assign categories: ${categoryError.message}`,
+        );
+      }
+    }
+
+    return createCorsResponse(201, {
+      lesson_id: lesson.id,
       stripe_product_id,
-      stripe_price_id
+      stripe_price_id,
     }, origin);
   } catch (error) {
     console.error("Error in create-lesson:", error);
     return createCorsResponse(500, {
       error: error instanceof Error ? error.message : "Internal server error",
-      details: error instanceof Error ? error.stack : String(error)
     }, origin);
   }
 });
