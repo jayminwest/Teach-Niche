@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import supabase from '../../../utils/supabaseClient';
+import { useEffect, useState } from "react";
+import supabase from "../../../utils/supabaseClient";
 
 const useLessonData = (id, user) => {
   const [lesson, setLesson] = useState(null);
@@ -35,15 +35,15 @@ const useLessonData = (id, user) => {
             .select("*")
             .eq("user_id", user.id)
             .eq("tutorial_id", id)
-            .eq("status", 'completed')
+            .eq("status", "completed")
             .maybeSingle();
 
           if (purchaseError) throw purchaseError;
 
           setHasAccess(
-            lessonData.price === 0 || 
-            lessonData.creator_id === user.id || 
-            !!purchaseData
+            lessonData.price === 0 ||
+              lessonData.creator_id === user.id ||
+              !!purchaseData,
           );
         }
       } catch (err) {
@@ -60,4 +60,4 @@ const useLessonData = (id, user) => {
   return { lesson, creator, loading, hasAccess, error };
 };
 
-export default useLessonData; 
+export default useLessonData;

@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import heroImage from "../public/images/HeroBackground.jpg";
 
 /**
  * Hero Component
@@ -11,18 +12,20 @@ import { Link } from "react-router-dom";
  */
 const Hero = () => {
   return (
-    <section className="hero-section py-8 md:py-12" aria-label="Welcome section">
+    <section
+      className="hero-section py-8 md:py-12"
+      aria-label="Welcome section"
+    >
       <div className="container mx-auto px-4">
         <div
           className="hero min-h-[500px] rounded-box overflow-hidden bg-center bg-cover relative"
           style={{
-            backgroundImage:
-              "url(https://images.unsplash.com/photo-1444210971048-6130cf0c46cf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2073&q=80)",
+            backgroundImage: `url(${heroImage})`,
           }}
           role="img"
-          aria-label="Person illustration on brown wooden dock stage photography during nighttime"
+          aria-label="Grayscale photography of a modern escalator in Paris underground station with circular architectural design"
         >
-          <div className="hero-overlay bg-gray-800 bg-opacity-60"></div>
+          <div className="absolute inset-0 bg-gray-800 bg-opacity-30 backdrop-grayscale backdrop-brightness-75"></div>
           <div className="hero-content text-center text-white relative z-10">
             <div className="max-w-lg">
               <h1 className="mb-5 sm:mb-7 text-4xl sm:text-5xl md:text-6xl font-bold animate-fadeIn">
@@ -33,8 +36,8 @@ const Hero = () => {
                 players to share knowledge, hone their skills, and earn income
                 doing what they love.
               </p>
-              <Link 
-                to="/marketplace" 
+              <Link
+                to="/marketplace"
                 className="btn btn-warning sm:btn-wide hover:scale-105 transition-transform"
                 aria-label="Browse available lessons in the marketplace"
               >

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState } from "react";
 
 const MarketplaceContext = createContext();
 
@@ -23,7 +23,7 @@ export const MarketplaceProvider = ({ children }) => {
 export const useMarketplace = () => {
   const context = useContext(MarketplaceContext);
   if (!context) {
-    throw new Error('useMarketplace must be used within a MarketplaceProvider');
+    throw new Error("useMarketplace must be used within a MarketplaceProvider");
   }
   return context;
-}; 
+};

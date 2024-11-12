@@ -29,7 +29,7 @@ const PurchasedLessons = ({ lessons }) => {
               {...lesson}
               isPurchased={true}
               purchaseDate={lesson.purchaseDate}
-              creatorName={lesson.creator_name || 'Unknown Creator'}
+              creatorName={lesson.creator_name || "Unknown Creator"}
             />
           </div>
         ))}
@@ -38,4 +38,4 @@ const PurchasedLessons = ({ lessons }) => {
   );
 };
 
-export default PurchasedLessons; 
+export default PurchasedLessons;

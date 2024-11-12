@@ -1,8 +1,9 @@
-import React from 'react';
-import { useMarketplace } from '../../context/MarketplaceContext';
+import React from "react";
+import { useMarketplace } from "../../context/MarketplaceContext";
 
 const MarketplaceFilters = () => {
-  const { sortOption, setSortOption, priceFilter, setPriceFilter } = useMarketplace();
+  const { sortOption, setSortOption, priceFilter, setPriceFilter } =
+    useMarketplace();
 
   return (
     <div className="space-y-4">
@@ -39,4 +40,4 @@ const MarketplaceFilters = () => {
   );
 };
 
-export default MarketplaceFilters; 
+export default MarketplaceFilters;

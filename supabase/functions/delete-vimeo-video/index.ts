@@ -47,27 +47,29 @@ serve(async (req) => {
     }
 
     // Delete video from Vimeo
-    const deleteResponse = await fetch(`https://api.vimeo.com/videos/${videoId}`, {
-      method: "DELETE",
-      headers: {
-        "Authorization": `bearer ${vimeoAccessToken}`,
-        "Content-Type": "application/json",
+    const deleteResponse = await fetch(
+      `https://api.vimeo.com/videos/${videoId}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Authorization": `bearer ${vimeoAccessToken}`,
+          "Content-Type": "application/json",
+        },
       },
-    });
+    );
 
     if (!deleteResponse.ok) {
       const errorData = await deleteResponse.json();
       throw new Error(`Failed to delete video: ${JSON.stringify(errorData)}`);
     }
 
-    return createCorsResponse(200, { 
-      message: "Video deleted successfully" 
+    return createCorsResponse(200, {
+      message: "Video deleted successfully",
     }, origin);
-
   } catch (error) {
     console.error("Error in delete-vimeo-video:", error);
     return createCorsResponse(500, {
-      error: error instanceof Error ? error.message : "Internal server error"
+      error: error instanceof Error ? error.message : "Internal server error",
     }, origin);
   }
-}); 
+});

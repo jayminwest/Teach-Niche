@@ -15,8 +15,8 @@ const platformWebhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET")!;
 const connectWebhookSecret = Deno.env.get("STRIPE_CONNECT_WEBHOOK_SECRET")!;
 
 // Initialize Stripe
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
-  apiVersion: '2023-10-16',
+const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
+  apiVersion: "2023-10-16",
   httpClient: Stripe.createFetchHttpClient(),
 });
 
@@ -90,26 +90,36 @@ async function verifyStripeSignature(
  * @param session - Checkout session object
  */
 const handleCheckoutSession = async (session: any) => {
-  console.log("Starting handleCheckoutSession with full session data:", session);
+  console.log(
+    "Starting handleCheckoutSession with full session data:",
+    session,
+  );
 
   // Only process completed payments
-  if (session.payment_status !== 'paid') {
-    console.log(`Skipping session ${session.id} - payment status is ${session.payment_status}`);
+  if (session.payment_status !== "paid") {
+    console.log(
+      `Skipping session ${session.id} - payment status is ${session.payment_status}`,
+    );
     return;
   }
 
   try {
     // Calculate amounts first to ensure we have valid numbers
     const totalAmount = session.amount_total ? session.amount_total / 100 : 0;
-    const platformFee = session.application_fee_amount ? session.application_fee_amount / 100 : 0;
+    const platformFee = session.application_fee_amount
+      ? session.application_fee_amount / 100
+      : 0;
     const creatorEarnings = totalAmount - platformFee;
 
     // Validate required fields
-    if (!session.client_reference_id || !session.metadata?.tutorial_id || !session.metadata?.creator_id) {
+    if (
+      !session.client_reference_id || !session.metadata?.tutorial_id ||
+      !session.metadata?.creator_id
+    ) {
       console.error("Missing required fields:", {
         userId: session.client_reference_id,
         tutorialId: session.metadata?.tutorial_id,
-        creatorId: session.metadata?.creator_id
+        creatorId: session.metadata?.creator_id,
       });
       throw new Error("Missing required fields for purchase");
     }
@@ -125,13 +135,13 @@ const handleCheckoutSession = async (session: any) => {
       creator_earnings: creatorEarnings,
       payment_intent_id: session.payment_intent,
       fee_percentage: session.metadata?.fee_percentage,
-      status: 'completed',
+      status: "completed",
       stripe_session_id: session.id,
       metadata: {
         stripe_customer: session.customer,
         payment_status: session.payment_status,
-        payment_method_types: session.payment_method_types
-      }
+        payment_method_types: session.payment_method_types,
+      },
     };
 
     console.log("Attempting to insert purchase with data:", purchaseData);
@@ -153,7 +163,6 @@ const handleCheckoutSession = async (session: any) => {
 
     console.log("Purchase successfully recorded:", purchase[0]);
     return { success: true, purchaseId: purchase[0].id };
-
   } catch (error) {
     console.error("Error in handleCheckoutSession:", error);
     throw error;
@@ -163,54 +172,54 @@ const handleCheckoutSession = async (session: any) => {
 // Main handler function
 serve(async (req: Request) => {
   try {
-    const signature = req.headers.get('stripe-signature');
+    const signature = req.headers.get("stripe-signature");
     if (!signature) {
-      console.error('No signature provided');
-      return new Response('No signature provided', { status: 400 });
+      console.error("No signature provided");
+      return new Response("No signature provided", { status: 400 });
     }
 
     const body = await req.text();
-    console.log('Received webhook body:', body);
+    console.log("Received webhook body:", body);
 
     try {
       // Replace Stripe's verification with our custom async verification
       const event = await verifyStripeSignature(
         body,
         signature,
-        platformWebhookSecret // Use platform webhook secret by default
+        platformWebhookSecret, // Use platform webhook secret by default
       );
-      console.log('Webhook event verified:', event.type);
+      console.log("Webhook event verified:", event.type);
 
-      if (event.type === 'checkout.session.completed') {
+      if (event.type === "checkout.session.completed") {
         const session = event.data.object;
-        console.log('Processing checkout session:', session.id);
+        console.log("Processing checkout session:", session.id);
 
         try {
           const result = await handleCheckoutSession(session);
-          console.log('Checkout session handled successfully:', result);
+          console.log("Checkout session handled successfully:", result);
         } catch (error) {
-          console.error('Error handling checkout session:', error);
+          console.error("Error handling checkout session:", error);
           throw error;
         }
       }
 
       return new Response(JSON.stringify({ received: true }), {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         status: 200,
       });
     } catch (err) {
-      console.error('Error verifying webhook event:', err);
+      console.error("Error verifying webhook event:", err);
       throw err;
     }
   } catch (err) {
     const error = err as Error;
-    console.error('Error processing webhook:', error);
+    console.error("Error processing webhook:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         status: 400,
-      }
+      },
     );
   }
 });

@@ -38,12 +38,12 @@ const CreateLesson = () => {
 
   // Custom hooks
   const { clearDraft } = useFormDraft(
-    lessonData, 
-    setLessonData, 
-    categoryIds, 
-    setCategoryIds, 
-    thumbnailPreview, 
-    setThumbnailPreview
+    lessonData,
+    setLessonData,
+    categoryIds,
+    setCategoryIds,
+    thumbnailPreview,
+    setThumbnailPreview,
   );
 
   const {
@@ -101,7 +101,7 @@ const CreateLesson = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       // Handle thumbnail upload if exists
       let thumbnailUrl = thumbnailPreview;
@@ -129,7 +129,7 @@ const CreateLesson = () => {
           videoFile,
           null, // No lessonId yet
           lessonData.title,
-          lessonData.description
+          lessonData.description,
         );
       }
 
@@ -138,12 +138,11 @@ const CreateLesson = () => {
         lessonData,
         categoryIds,
         thumbnailUrl,
-        vimeoData
+        vimeoData,
       });
 
       clearDraft();
       setTimeout(() => navigate("/marketplace"), 2000);
-
     } catch (err) {
       console.error("Error creating lesson:", err);
     }
@@ -158,7 +157,8 @@ const CreateLesson = () => {
               Create Your Lesson
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              Note: Lesson drafts will not be saved and refreshing will clear your progress!
+              Note: Lesson drafts will not be saved and refreshing will clear
+              your progress!
             </p>
           </div>
 
@@ -167,7 +167,10 @@ const CreateLesson = () => {
               {/* Basic Info Section */}
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="title" className="text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="title"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     What's your lesson called?
                   </label>
                   <input
@@ -183,7 +186,10 @@ const CreateLesson = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="description" className="text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="description"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     A short description of your lesson:
                   </label>
                   <textarea
@@ -202,7 +208,8 @@ const CreateLesson = () => {
               {/* Price Selector */}
               <PriceSelector
                 cost={lessonData.cost}
-                onCostChange={(value) => setLessonData(prev => ({ ...prev, cost: value }))}
+                onCostChange={(value) =>
+                  setLessonData((prev) => ({ ...prev, cost: value }))}
                 customPrice={customPrice}
                 setCustomPrice={setCustomPrice}
               />
@@ -236,8 +243,17 @@ const CreateLesson = () => {
                         }}
                         className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full p-1 hover:bg-red-200"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clipRule="evenodd"
+                          />
                         </svg>
                       </button>
                     </div>
@@ -255,7 +271,8 @@ const CreateLesson = () => {
               {/* Content Editor */}
               <LessonContentEditor
                 content={lessonData.content}
-                onChange={(content) => setLessonData(prev => ({ ...prev, content }))}
+                onChange={(content) =>
+                  setLessonData((prev) => ({ ...prev, content }))}
               />
 
               {/* Category Selector */}
@@ -273,11 +290,11 @@ const CreateLesson = () => {
                 disabled={isSubmitting || isUploading}
                 className="w-full rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isUploading 
-                  ? "Uploading video..." 
-                  : isSubmitting 
-                    ? "Creating your lesson..." 
-                    : "Share your lesson"}
+                {isUploading
+                  ? "Uploading video..."
+                  : isSubmitting
+                  ? "Creating your lesson..."
+                  : "Share your lesson"}
               </button>
             </form>
           </div>
@@ -292,13 +309,16 @@ const CreateLesson = () => {
           <div className="mb-2">
             <div className="flex justify-between mb-1">
               <span className="text-sm font-medium">{uploadStatus}</span>
-              <span className="text-sm font-medium">{videoUploadProgress}%</span>
+              <span className="text-sm font-medium">
+                {videoUploadProgress}%
+              </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div 
-                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+              <div
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
                 style={{ width: `${videoUploadProgress}%` }}
-              ></div>
+              >
+              </div>
             </div>
           </div>
         </div>

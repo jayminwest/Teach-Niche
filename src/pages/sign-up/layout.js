@@ -21,11 +21,11 @@ const SignUpLayout = () => {
       />
 
       <AlertMessage error={error} />
-      
+
       <div className="mt-6 text-center text-sm">
         <p className="text-gray-600">Already have an account?</p>
-        <Link 
-          to="/sign-in" 
+        <Link
+          to="/sign-in"
           className="font-medium text-blue-600 hover:text-blue-500 mt-1 block"
           aria-label="Go to sign in page"
         >

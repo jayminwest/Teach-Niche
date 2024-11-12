@@ -16,7 +16,7 @@ export const allowedOrigins = [
  * @param url - URL to clean
  * @returns Cleaned URL
  */
-export const cleanUrl = (url: string) => url.replace(/\/$/, '');
+export const cleanUrl = (url: string) => url.replace(/\/$/, "");
 
 /**
  * Generate CORS headers for a given origin
@@ -53,16 +53,18 @@ export const createCorsResponse = (
 // Add environment variable validation
 export const validateEnvVars = () => {
   const required = [
-    'STRIPE_SECRET_KEY',
-    'STRIPE_WEBHOOK_SECRET',
-    'SUPABASE_URL',
-    'SUPABASE_SERVICE_ROLE_KEY'
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
   ];
 
-  const missing = required.filter(key => !Deno.env.get(key));
-  
+  const missing = required.filter((key) => !Deno.env.get(key));
+
   if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    throw new Error(
+      `Missing required environment variables: ${missing.join(", ")}`,
+    );
   }
 };
 

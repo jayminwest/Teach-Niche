@@ -39,7 +39,12 @@ const ConnectStripeButton = ({ onConnect, className }) => {
 
   if (authLoading) {
     return (
-      <button className={`${className || "btn btn-primary"} opacity-50 cursor-not-allowed`} disabled>
+      <button
+        className={`${
+          className || "btn btn-primary"
+        } opacity-50 cursor-not-allowed`}
+        disabled
+      >
         <span className="loading loading-spinner loading-sm mr-2"></span>
         Loading...
       </button>
@@ -48,7 +53,10 @@ const ConnectStripeButton = ({ onConnect, className }) => {
 
   if (authError) {
     return (
-      <button className={`${className || "btn btn-primary"} btn-error`} disabled>
+      <button
+        className={`${className || "btn btn-primary"} btn-error`}
+        disabled
+      >
         Error: {authError}
       </button>
     );
@@ -56,7 +64,10 @@ const ConnectStripeButton = ({ onConnect, className }) => {
 
   if (!user) {
     return (
-      <button className={`${className || "btn btn-primary"} opacity-50`} disabled>
+      <button
+        className={`${className || "btn btn-primary"} opacity-50`}
+        disabled
+      >
         Please log in first
       </button>
     );
@@ -65,8 +76,9 @@ const ConnectStripeButton = ({ onConnect, className }) => {
   const handleConnectStripe = async () => {
     setLoadingState("connecting");
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
+      const { data: { session }, error: sessionError } = await supabase.auth
+        .getSession();
+
       if (sessionError || !session) {
         throw new Error("No active session. Please log in and try again.");
       }

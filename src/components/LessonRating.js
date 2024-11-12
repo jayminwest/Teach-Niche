@@ -5,7 +5,7 @@ import supabase from "../utils/supabaseClient";
 
 /**
  * StarRating Component
- * 
+ *
  * Renders an interactive or static star rating display.
  */
 const StarRating = ({ rating, onRatingChange, interactive = true }) => {
@@ -17,8 +17,10 @@ const StarRating = ({ rating, onRatingChange, interactive = true }) => {
           type="button"
           onClick={() => interactive && onRatingChange(star)}
           className={`text-2xl transition-colors ${
-            interactive ? 'cursor-pointer hover:text-yellow-400' : 'cursor-default'
-          } ${star <= rating ? 'text-yellow-400' : 'text-base-300'}`}
+            interactive
+              ? "cursor-pointer hover:text-yellow-400"
+              : "cursor-default"
+          } ${star <= rating ? "text-yellow-400" : "text-base-300"}`}
           disabled={!interactive}
         >
           ★
@@ -202,7 +204,9 @@ const LessonRating = ({ lessonId, isWelcomePage }) => {
         <div className="text-right">
           <div className="text-3xl font-bold">
             {averageRating ? averageRating.toFixed(1) : "0.0"}
-            <span className="text-base font-normal text-base-content/70"> / 5.0</span>
+            <span className="text-base font-normal text-base-content/70">
+              / 5.0
+            </span>
           </div>
           <p className="text-sm text-base-content/70">
             {reviews.length} {reviews.length === 1 ? "review" : "reviews"}
@@ -235,14 +239,16 @@ const LessonRating = ({ lessonId, isWelcomePage }) => {
               className="btn btn-primary"
               disabled={!rating || isSubmitting}
             >
-              {isSubmitting ? (
-                <>
-                  <span className="loading loading-spinner loading-sm"></span>
-                  Submitting...
-                </>
-              ) : (
-                "Submit Review"
-              )}
+              {isSubmitting
+                ? (
+                  <>
+                    <span className="loading loading-spinner loading-sm"></span>
+                    Submitting...
+                  </>
+                )
+                : (
+                  "Submit Review"
+                )}
             </button>
           </form>
         </div>
@@ -278,42 +284,50 @@ const LessonRating = ({ lessonId, isWelcomePage }) => {
 
       <div className="divider">Other Reviews</div>
 
-      {loading ? (
-        <div className="flex justify-center py-8">
-          <span className="loading loading-spinner loading-lg"></span>
-        </div>
-      ) : reviews.filter(review => review.user_id !== user?.id).length === 0 ? (
-        <p className="text-center py-8 opacity-70">No reviews yet. Be the first to share your experience!</p>
-      ) : (
-        <div className="space-y-4">
-          {reviews
-            .filter(review => review.user_id !== user?.id)
-            .map((review) => (
-              <div key={review.id} className="card bg-base-200 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  {review.profiles?.avatar_url ? (
-                    <img
-                      src={review.profiles.avatar_url}
-                      alt={review.profiles.full_name}
-                      className="w-8 h-8 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 bg-base-300 rounded-full flex items-center justify-center">
-                      <span>{review.profiles?.full_name?.[0] || '?'}</span>
-                    </div>
+      {loading
+        ? (
+          <div className="flex justify-center py-8">
+            <span className="loading loading-spinner loading-lg"></span>
+          </div>
+        )
+        : reviews.filter((review) => review.user_id !== user?.id).length === 0
+        ? (
+          <p className="text-center py-8 opacity-70">
+            No reviews yet. Be the first to share your experience!
+          </p>
+        )
+        : (
+          <div className="space-y-4">
+            {reviews
+              .filter((review) => review.user_id !== user?.id)
+              .map((review) => (
+                <div key={review.id} className="card bg-base-200 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    {review.profiles?.avatar_url
+                      ? (
+                        <img
+                          src={review.profiles.avatar_url}
+                          alt={review.profiles.full_name}
+                          className="w-8 h-8 rounded-full"
+                        />
+                      )
+                      : (
+                        <div className="w-8 h-8 bg-base-300 rounded-full flex items-center justify-center">
+                          <span>{review.profiles?.full_name?.[0] || "?"}</span>
+                        </div>
+                      )}
+                    <span className="font-semibold">
+                      {review.profiles?.full_name || "Anonymous"}
+                    </span>
+                  </div>
+                  <StarRating rating={review.rating} interactive={false} />
+                  {review.comment && (
+                    <p className="mt-2 whitespace-pre-wrap">{review.comment}</p>
                   )}
-                  <span className="font-semibold">
-                    {review.profiles?.full_name || "Anonymous"}
-                  </span>
                 </div>
-                <StarRating rating={review.rating} interactive={false} />
-                {review.comment && (
-                  <p className="mt-2 whitespace-pre-wrap">{review.comment}</p>
-                )}
-              </div>
-            ))}
-        </div>
-      )}
+              ))}
+          </div>
+        )}
     </div>
   );
 };

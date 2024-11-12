@@ -21,31 +21,31 @@ module.exports = {
       typography: {
         DEFAULT: {
           css: {
-            maxWidth: 'none',
-            color: 'inherit',
+            maxWidth: "none",
+            color: "inherit",
             a: {
-              color: '#3b82f6',
-              '&:hover': {
-                color: '#2563eb',
+              color: "#3b82f6",
+              "&:hover": {
+                color: "#2563eb",
               },
             },
             code: {
-              color: 'inherit',
-              padding: '0.2em 0.4em',
-              borderRadius: '0.25rem',
-              backgroundColor: 'hsl(var(--b2))',
+              color: "inherit",
+              padding: "0.2em 0.4em",
+              borderRadius: "0.25rem",
+              backgroundColor: "hsl(var(--b2))",
             },
-            'code::before': {
+            "code::before": {
               content: '""',
             },
-            'code::after': {
+            "code::after": {
               content: '""',
             },
             pre: {
-              backgroundColor: 'hsl(var(--b2))',
-              padding: '1rem',
-              borderRadius: '0.5rem',
-              overflow: 'auto',
+              backgroundColor: "hsl(var(--b2))",
+              padding: "1rem",
+              borderRadius: "0.5rem",
+              overflow: "auto",
             },
           },
         },
@@ -53,8 +53,8 @@ module.exports = {
     },
   },
   plugins: [
-    require('@tailwindcss/typography'),
-    require("daisyui")
+    require("@tailwindcss/typography"),
+    require("daisyui"),
   ],
   daisyui: {
     themes: ["light"],

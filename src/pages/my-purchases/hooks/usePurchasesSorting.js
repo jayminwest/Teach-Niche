@@ -2,7 +2,7 @@ import { useState } from "react";
 
 /**
  * Custom hook to manage sorting state for purchased lessons
- * 
+ *
  * @returns {{
  *   sortOption: string,
  *   handleSortChange: (newOption: string) => void
@@ -21,4 +21,4 @@ const usePurchasesSorting = () => {
   };
 };
 
-export default usePurchasesSorting; 
+export default usePurchasesSorting;

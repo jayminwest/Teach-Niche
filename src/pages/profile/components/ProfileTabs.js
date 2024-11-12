@@ -12,11 +12,11 @@ import React from "react";
  * @param {boolean} props.isStripeConnected - Whether user has connected Stripe
  * @returns {JSX.Element} The Profile Tabs component
  */
-const ProfileTabs = ({ 
-  activeTab, 
-  setActiveTab, 
-  isMobile, 
-  isStripeConnected 
+const ProfileTabs = ({
+  activeTab,
+  setActiveTab,
+  isMobile,
+  isStripeConnected,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
 
@@ -96,4 +96,4 @@ const ProfileTabs = ({
   );
 };
 
-export default ProfileTabs; 
+export default ProfileTabs;

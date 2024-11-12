@@ -1,5 +1,5 @@
 // src/pages/lesson/[id].js
-import React, { useState, useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import LessonDetail from "../../components/LessonDetail";
@@ -7,13 +7,16 @@ import LessonRating from "../../components/LessonRating";
 import LessonDiscussion from "../../components/LessonDiscussion";
 import LessonTabs from "./components/LessonTabs";
 import useLessonData from "./hooks/useLessonData";
-import { TABS, ERROR_MESSAGES } from "./constants";
+import { ERROR_MESSAGES, TABS } from "./constants";
 
 const LessonPage = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState(TABS.CONTENT);
-  const { lesson, creator, loading, hasAccess, error } = useLessonData(id, user);
+  const { lesson, creator, loading, hasAccess, error } = useLessonData(
+    id,
+    user,
+  );
 
   const handleTabChange = useCallback((tab) => {
     setActiveTab(tab);
@@ -38,7 +41,9 @@ const LessonPage = () => {
   }
 
   if (!lesson) {
-    return <div className="prose text-center mt-10">{ERROR_MESSAGES.NOT_FOUND}</div>;
+    return (
+      <div className="prose text-center mt-10">{ERROR_MESSAGES.NOT_FOUND}</div>
+    );
   }
 
   if (!user) {
@@ -61,7 +66,11 @@ const LessonPage = () => {
       case TABS.DISCUSSION:
         return hasAccess
           ? <LessonDiscussion lessonId={id} />
-          : <div className="prose text-center mt-10">{ERROR_MESSAGES.NEED_PURCHASE}</div>;
+          : (
+            <div className="prose text-center mt-10">
+              {ERROR_MESSAGES.NEED_PURCHASE}
+            </div>
+          );
       default:
         return null;
     }
@@ -70,7 +79,9 @@ const LessonPage = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <main className="flex-grow container mx-auto px-4 py-8">
-        <h1 className="prose text-2xl md:text-3xl font-bold mb-6">{lesson.title}</h1>
+        <h1 className="prose text-2xl md:text-3xl font-bold mb-6">
+          {lesson.title}
+        </h1>
         <div className="flex flex-col md:flex-row">
           <aside className="w-full md:w-64 mb-6 md:mb-0 md:mr-8">
             <LessonTabs

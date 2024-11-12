@@ -66,57 +66,58 @@ const Profile = () => {
   const fetchUserProfile = async () => {
     try {
       if (!user || !user.id) {
-        throw new Error('No authenticated user found');
+        throw new Error("No authenticated user found");
       }
 
       // First check if profile exists
       const { data: existingProfile, error: queryError } = await supabase
-        .from('profiles')
+        .from("profiles")
         .select()
-        .eq('id', user.id)
+        .eq("id", user.id)
         .single();
 
-      if (queryError && queryError.code !== 'PGRST116') {
+      if (queryError && queryError.code !== "PGRST116") {
         throw queryError;
       }
 
       // If profile exists, use it
       if (existingProfile) {
         setProfileData({
-          fullName: existingProfile.full_name || '',
-          email: existingProfile.email || '',
-          bio: existingProfile.bio || '',
-          profilePicture: existingProfile.avatar_url || '',
-          socialMediaTag: existingProfile.social_media_tag || '',
+          fullName: existingProfile.full_name || "",
+          email: existingProfile.email || "",
+          bio: existingProfile.bio || "",
+          profilePicture: existingProfile.avatar_url || "",
+          socialMediaTag: existingProfile.social_media_tag || "",
           stripe_account_id: existingProfile.stripe_account_id,
-          stripe_onboarding_complete: existingProfile.stripe_onboarding_complete,
+          stripe_onboarding_complete:
+            existingProfile.stripe_onboarding_complete,
         });
       } else {
         // If profile doesn't exist, create a new one
         const { error: insertError } = await supabase
-          .from('profiles')
+          .from("profiles")
           .upsert([{
             id: user.id,
-            full_name: '',
+            full_name: "",
             email: user.email,
-            bio: '',
-            avatar_url: '',
-            social_media_tag: '',
+            bio: "",
+            avatar_url: "",
+            social_media_tag: "",
             updated_at: new Date(),
-          }], { 
-            onConflict: 'id',
-            ignoreDuplicates: true 
+          }], {
+            onConflict: "id",
+            ignoreDuplicates: true,
           });
 
         if (insertError) throw insertError;
 
         // Set initial profile data
         setProfileData({
-          fullName: '',
-          email: user.email || '',
-          bio: '',
-          profilePicture: '',
-          socialMediaTag: '',
+          fullName: "",
+          email: user.email || "",
+          bio: "",
+          profilePicture: "",
+          socialMediaTag: "",
           stripe_account_id: null,
           stripe_onboarding_complete: false,
         });
@@ -127,7 +128,7 @@ const Profile = () => {
         fetchPurchasedLessons(user.id),
       ]);
     } catch (error) {
-      console.error('Error fetching user profile:', error.message);
+      console.error("Error fetching user profile:", error.message);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -212,7 +213,7 @@ const Profile = () => {
       if (error) throw error;
 
       setSuccessMessage("Profile updated successfully!");
-      setProfileData(prev => ({
+      setProfileData((prev) => ({
         ...prev,
         fullName: updatedData.fullName,
         bio: updatedData.bio,
@@ -564,45 +565,54 @@ const Profile = () => {
             {activeTab === "created" && (
               <>
                 <h2 className="card-title text-2xl mb-6">Created Lessons</h2>
-                {createdLessons.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 justify-items-center">
-                    {createdLessons.map((lesson) => (
-                      <div key={lesson.id} className="w-full max-w-sm">
-                        <LessonCard
-                          {...lesson}
-                          creator_id={user.id}
-                          isCreated={true}
-                          isPurchased={false}
-                          creatorName={profileData.fullName}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-gray-600">You haven't created any lessons yet.</p>
-                )}
+                {createdLessons.length > 0
+                  ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 justify-items-center">
+                      {createdLessons.map((lesson) => (
+                        <div key={lesson.id} className="w-full max-w-sm">
+                          <LessonCard
+                            {...lesson}
+                            creator_id={user.id}
+                            isCreated={true}
+                            isPurchased={false}
+                            creatorName={profileData.fullName}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )
+                  : (
+                    <p className="text-center text-gray-600">
+                      You haven't created any lessons yet.
+                    </p>
+                  )}
               </>
             )}
 
             {activeTab === "purchased" && (
               <>
                 <h2 className="card-title text-2xl mb-6">Purchased Lessons</h2>
-                {purchasedLessons.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 justify-items-center">
-                    {purchasedLessons.map((lesson) => (
-                      <div key={lesson.id} className="w-full max-w-sm">
-                        <LessonCard
-                          {...lesson}
-                          isPurchased={true}
-                          purchaseDate={lesson.purchaseDate}
-                          creatorName={lesson.creator_name || 'Unknown Creator'}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-center text-gray-600">You haven't purchased any lessons yet.</p>
-                )}
+                {purchasedLessons.length > 0
+                  ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8 justify-items-center">
+                      {purchasedLessons.map((lesson) => (
+                        <div key={lesson.id} className="w-full max-w-sm">
+                          <LessonCard
+                            {...lesson}
+                            isPurchased={true}
+                            purchaseDate={lesson.purchaseDate}
+                            creatorName={lesson.creator_name ||
+                              "Unknown Creator"}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )
+                  : (
+                    <p className="text-center text-gray-600">
+                      You haven't purchased any lessons yet.
+                    </p>
+                  )}
               </>
             )}
           </div>

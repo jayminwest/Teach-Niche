@@ -17,4 +17,4 @@ const GoogleAuthButton = ({ onClick, isSubmitting, mode = "sign-in" }) => {
   );
 };
 
-export default GoogleAuthButton; 
+export default GoogleAuthButton;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 /**
  * SortingOptions Component
@@ -11,10 +11,10 @@ import React from 'react';
  */
 const SortingOptions = ({ sortOption, onSortChange }) => {
   const options = [
-    { value: 'default', label: 'Default' },
-    { value: 'recent', label: 'Most Recent' },
-    { value: 'oldest', label: 'Oldest First' },
-    { value: 'title', label: 'Title (A-Z)' }
+    { value: "default", label: "Default" },
+    { value: "recent", label: "Most Recent" },
+    { value: "oldest", label: "Oldest First" },
+    { value: "title", label: "Title (A-Z)" },
   ];
 
   return (
@@ -26,10 +26,11 @@ const SortingOptions = ({ sortOption, onSortChange }) => {
             key={value}
             onClick={() => onSortChange(value)}
             className={`w-full text-left px-4 py-2 rounded-lg transition-colors
-              ${sortOption === value 
-                ? 'bg-blue-100 text-blue-700' 
-                : 'hover:bg-gray-100'
-              }`}
+              ${
+              sortOption === value
+                ? "bg-blue-100 text-blue-700"
+                : "hover:bg-gray-100"
+            }`}
             aria-pressed={sortOption === value}
           >
             {label}
@@ -40,4 +41,4 @@ const SortingOptions = ({ sortOption, onSortChange }) => {
   );
 };
 
-export default SortingOptions; 
+export default SortingOptions;

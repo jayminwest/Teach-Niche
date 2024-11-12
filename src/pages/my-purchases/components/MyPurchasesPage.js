@@ -20,14 +20,14 @@ const MyPurchasesPage = () => {
           <h1 className="font-bold text-2xl md:text-3xl">
             My Lessons
           </h1>
-          <SortingOptions 
-            sortOption={sortOption} 
+          <SortingOptions
+            sortOption={sortOption}
             onSortChange={handleSortChange}
           />
         </aside>
 
         <div className="flex-1">
-          <LessonsGrid 
+          <LessonsGrid
             showPurchasedOnly={true}
             sortOption={sortOption}
           />
@@ -37,4 +37,4 @@ const MyPurchasesPage = () => {
   );
 };
 
-export default MyPurchasesPage; 
+export default MyPurchasesPage;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import supabase from "../../../utils/supabaseClient";
 
 const useProfileData = (userId) => {
@@ -24,24 +24,25 @@ const useProfileData = (userId) => {
   const fetchUserProfile = async () => {
     try {
       const { data: existingProfile, error: queryError } = await supabase
-        .from('profiles')
+        .from("profiles")
         .select()
-        .eq('id', userId)
+        .eq("id", userId)
         .single();
 
-      if (queryError && queryError.code !== 'PGRST116') {
+      if (queryError && queryError.code !== "PGRST116") {
         throw queryError;
       }
 
       if (existingProfile) {
         setProfileData({
-          fullName: existingProfile.full_name || '',
-          email: existingProfile.email || '',
-          bio: existingProfile.bio || '',
-          profilePicture: existingProfile.avatar_url || '',
-          socialMediaTag: existingProfile.social_media_tag || '',
+          fullName: existingProfile.full_name || "",
+          email: existingProfile.email || "",
+          bio: existingProfile.bio || "",
+          profilePicture: existingProfile.avatar_url || "",
+          socialMediaTag: existingProfile.social_media_tag || "",
           stripe_account_id: existingProfile.stripe_account_id,
-          stripe_onboarding_complete: existingProfile.stripe_onboarding_complete,
+          stripe_onboarding_complete:
+            existingProfile.stripe_onboarding_complete,
         });
       } else {
         await createNewProfile(userId);
@@ -56,25 +57,25 @@ const useProfileData = (userId) => {
   const createNewProfile = async (userId) => {
     try {
       const { error: insertError } = await supabase
-        .from('profiles')
+        .from("profiles")
         .insert([{
           id: userId,
-          full_name: '',
-          email: '',
-          bio: '',
-          avatar_url: '',
-          social_media_tag: '',
+          full_name: "",
+          email: "",
+          bio: "",
+          avatar_url: "",
+          social_media_tag: "",
           updated_at: new Date(),
         }]);
 
       if (insertError) throw insertError;
 
       setProfileData({
-        fullName: '',
-        email: '',
-        bio: '',
-        profilePicture: '',
-        socialMediaTag: '',
+        fullName: "",
+        email: "",
+        bio: "",
+        profilePicture: "",
+        socialMediaTag: "",
         stripe_account_id: null,
         stripe_onboarding_complete: false,
       });
@@ -104,9 +105,9 @@ const useProfileData = (userId) => {
       if (error) throw error;
 
       setSuccessMessage("Profile updated successfully!");
-      setProfileData(prev => ({
+      setProfileData((prev) => ({
         ...prev,
-        ...updatedData
+        ...updatedData,
       }));
     } catch (error) {
       setError(error.message);
@@ -141,4 +142,4 @@ const useProfileData = (userId) => {
   };
 };
 
-export default useProfileData; 
+export default useProfileData;

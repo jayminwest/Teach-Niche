@@ -1,4 +1,4 @@
-import supabase from './supabaseClient';
+import supabase from "./supabaseClient";
 
 /**
  * Generic database operations
@@ -12,11 +12,11 @@ const dbOperations = {
    * @param {Array} [options.select] - Columns to select
    * @returns {Promise<{data: Array, error: Error}>}
    */
-  async fetch(table, { filters = {}, select = ['*'] } = {}) {
+  async fetch(table, { filters = {}, select = ["*"] } = {}) {
     try {
       let query = supabase
         .from(table)
-        .select(select.join(','));
+        .select(select.join(","));
 
       // Apply filters if any
       Object.entries(filters).forEach(([key, value]) => {
@@ -24,9 +24,9 @@ const dbOperations = {
       });
 
       const { data, error } = await query;
-      
+
       if (error) throw error;
-      
+
       return { data, error: null };
     } catch (error) {
       console.error(`Error fetching from ${table}:`, error.message);
@@ -78,7 +78,7 @@ const dbOperations = {
       console.error(`Error updating ${table}:`, error.message);
       return { data: null, error };
     }
-  }
+  },
 };
 
-export default dbOperations; 
+export default dbOperations;

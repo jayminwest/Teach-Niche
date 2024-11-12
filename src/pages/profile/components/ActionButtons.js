@@ -13,12 +13,12 @@ import React from "react";
  * @param {Function} props.onStripeConnect - Function to handle Stripe connection.
  * @returns {JSX.Element} The Action Buttons component.
  */
-const ActionButtons = ({ 
-  onCreateLesson, 
-  onDeleteProfile, 
+const ActionButtons = ({
+  onCreateLesson,
+  onDeleteProfile,
   onLogout,
   stripeConnected,
-  onStripeConnect
+  onStripeConnect,
 }) => {
   const handleCreateLesson = () => {
     if (stripeConnected) {
@@ -49,7 +49,9 @@ const ActionButtons = ({
       <button
         className="btn btn-success w-full sm:w-auto"
         onClick={handleCreateLesson}
-        aria-label={stripeConnected ? "Create Lesson" : "Connect Stripe to Create Lessons"}
+        aria-label={stripeConnected
+          ? "Create Lesson"
+          : "Connect Stripe to Create Lessons"}
       >
         {stripeConnected ? "Create Lesson" : "Connect Stripe to Create Lessons"}
       </button>

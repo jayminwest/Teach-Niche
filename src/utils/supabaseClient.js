@@ -1,6 +1,6 @@
 // src/utils/supabaseClient.js
-import { createClient } from '@supabase/supabase-js';
-import config from './config';
+import { createClient } from "@supabase/supabase-js";
+import config from "./config";
 
 /**
  * Supabase client instance
@@ -9,7 +9,7 @@ import config from './config';
 const supabase = createClient(
   config.supabase.url,
   config.supabase.key,
-  config.supabase.options
+  config.supabase.options,
 );
 
 export default supabase;

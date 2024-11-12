@@ -2,7 +2,7 @@
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno";
-import { allowedOrigins, corsHeaders, cleanUrl } from "../_shared/config.ts";
+import { allowedOrigins, cleanUrl, corsHeaders } from "../_shared/config.ts";
 
 // Initialize Stripe
 const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
@@ -30,13 +30,13 @@ const exchangeCodeForToken = async (code: string) => {
     settings: {
       payouts: {
         schedule: {
-          interval: 'manual'
-        }
-      }
+          interval: "manual",
+        },
+      },
     },
     metadata: {
-      default_application_fee_percent: 15 // Can be different per account type
-    }
+      default_application_fee_percent: 15, // Can be different per account type
+    },
   });
 
   return response.stripe_user_id;
@@ -100,7 +100,8 @@ serve(async (req) => {
     console.log("User profile updated successfully");
 
     const frontendUrl = Deno.env.get("FRONTEND_URL");
-    const successUrl = cleanUrl(frontendUrl, 'profile') + '?stripe_connected=true';
+    const successUrl = cleanUrl(frontendUrl, "profile") +
+      "?stripe_connected=true";
     console.log("Redirecting to:", successUrl);
 
     return new Response(null, {
@@ -110,9 +111,9 @@ serve(async (req) => {
   } catch (error: any) {
     console.error("Error in Stripe OAuth callback:", error);
     const frontendUrl = Deno.env.get("FRONTEND_URL");
-    const errorUrl = cleanUrl(frontendUrl, 'profile') + 
+    const errorUrl = cleanUrl(frontendUrl, "profile") +
       `?stripe_error=${encodeURIComponent(error.message)}`;
-    
+
     return new Response(null, {
       status: 302,
       headers: { ...corsHeaders(origin), "Location": errorUrl },

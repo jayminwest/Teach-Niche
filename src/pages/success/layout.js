@@ -1,6 +1,11 @@
 // src/pages/success.js
 import React, { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import supabase from "../../utils/supabaseClient";
 
 /**
@@ -40,7 +45,7 @@ const SuccessPage = () => {
             console.error("Query error:", error);
             attempts++;
             if (attempts === maxAttempts) throw error;
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds between attempts
+            await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait 2 seconds between attempts
             continue;
           }
 
@@ -50,7 +55,7 @@ const SuccessPage = () => {
           }
 
           attempts++;
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise((resolve) => setTimeout(resolve, 2000));
         }
 
         if (!purchase) {
@@ -68,7 +73,7 @@ const SuccessPage = () => {
       } catch (err) {
         console.error("Error verifying purchase:", err);
         setError(
-          "Purchase verification is taking longer than expected. Please check your email for confirmation or contact support."
+          "Purchase verification is taking longer than expected. Please check your email for confirmation or contact support.",
         );
       }
     };
@@ -80,24 +85,26 @@ const SuccessPage = () => {
     <div className="min-h-screen flex flex-col">
       <main className="flex-grow flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full space-y-8 p-6">
-          {error ? (
-            <div className="text-center text-red-600">
-              <h2 className="text-2xl font-bold mb-4">Error</h2>
-              <p>{error}</p>
-            </div>
-          ) : (
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-4 text-green-600">
-                Purchase Successful!
-              </h2>
-              <p className="text-gray-600">
-                Redirecting you to your lesson...
-              </p>
-              <div className="mt-4">
-                <div className="loading loading-spinner loading-lg"></div>
+          {error
+            ? (
+              <div className="text-center text-red-600">
+                <h2 className="text-2xl font-bold mb-4">Error</h2>
+                <p>{error}</p>
               </div>
-            </div>
-          )}
+            )
+            : (
+              <div className="text-center">
+                <h2 className="text-2xl font-bold mb-4 text-green-600">
+                  Purchase Successful!
+                </h2>
+                <p className="text-gray-600">
+                  Redirecting you to your lesson...
+                </p>
+                <div className="mt-4">
+                  <div className="loading loading-spinner loading-lg"></div>
+                </div>
+              </div>
+            )}
         </div>
       </main>
     </div>

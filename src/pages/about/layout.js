@@ -8,31 +8,37 @@ import { useCallback } from "react";
 const VALUES = [
   {
     title: "Community Collaboration",
-    description: "Teach Niche fosters a space where kendama players of all levels can connect, share, and grow together.",
+    description:
+      "Teach Niche fosters a space where kendama players of all levels can connect, share, and grow together.",
   },
   {
     title: "Growth and Learning",
-    description: "The platform is committed to continuous improvement, both in skills and as a community resource.",
+    description:
+      "The platform is committed to continuous improvement, both in skills and as a community resource.",
   },
   {
     title: "Integrity and Fairness",
-    description: "Teach Niche operates with transparency and ensures equitable opportunities for all community members.",
+    description:
+      "Teach Niche operates with transparency and ensures equitable opportunities for all community members.",
   },
   {
     title: "Sustainability",
-    description: "The platform supports long-term growth for kendama enthusiasts and professionals alike.",
+    description:
+      "The platform supports long-term growth for kendama enthusiasts and professionals alike.",
   },
 ];
 
 const JOIN_OPTIONS = [
   {
     title: "For Learners",
-    description: "Access tutorials from some of the best kendama players in the world and take your skills to new heights.",
+    description:
+      "Access tutorials from some of the best kendama players in the world and take your skills to new heights.",
     buttonText: "View Lessons",
   },
   {
     title: "For Teachers",
-    description: "Share your expertise, connect with a global audience, and earn income doing what you love.",
+    description:
+      "Share your expertise, connect with a global audience, and earn income doing what you love.",
     buttonText: "Become a Teacher",
   },
 ];
@@ -62,7 +68,9 @@ export const useAboutUsNavigation = (user) => {
  */
 const AboutUs = () => {
   const { user } = useAuth();
-  const { handleTeachersClick, handleMarketplaceClick } = useAboutUsNavigation(user);
+  const { handleTeachersClick, handleMarketplaceClick } = useAboutUsNavigation(
+    user,
+  );
 
   return (
     <div className="bg-base-200 min-h-screen">
@@ -70,10 +78,10 @@ const AboutUs = () => {
         <section
           className="hero h-96 rounded-box overflow-hidden mb-12 bg-center bg-cover"
           style={{
-            backgroundImage: "url(https://images.unsplash.com/photo-1470240731273-7821a6eeb6bd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80)",
+            backgroundImage: `url('/images/AboutBackground.jpg')`,
           }}
           role="img"
-          aria-label="Group of people setting up campfire"
+          aria-label="Grayscale photo of three people standing in a train station in Rome, Italy"
         >
           <div className="hero-overlay bg-opacity-60"></div>
           <div className="hero-content text-center text-white">
@@ -94,8 +102,8 @@ const AboutUs = () => {
                 The mission of <strong>Teach Niche</strong>{" "}
                 is to create a space within the kendama community for players of
                 all skill levels to share knowledge, support one another, and
-                hone their abilities. Teach Niche places the community first and is
-                dedicated to fostering growth, creating connections, and
+                hone their abilities. Teach Niche places the community first and
+                is dedicated to fostering growth, creating connections, and
                 promoting more financial sustainability for the kendama
                 community.
               </p>
@@ -106,10 +114,10 @@ const AboutUs = () => {
               <h2 className="card-title text-2xl mb-4">Story</h2>
               <p className="text-lg mb-4">
                 Hello! I'm Jaymin West, the founder of{" "}
-                <strong>Teach Niche</strong>. I've played
-                kendama for over seven years, and in that time, I've been fortunate enough to sesh
-                with players from all over the world and have tried to form
-                Teach Niche to fit the values of the kendama community as a whole.
+                <strong>Teach Niche</strong>. I've played kendama for over seven
+                years, and in that time, I've been fortunate enough to sesh with
+                players from all over the world and have tried to form Teach
+                Niche to fit the values of the kendama community as a whole.
               </p>
               <p className="text-lg">
                 Teach Niche was born from a simple idea: to help kendama players
@@ -318,10 +326,14 @@ const AboutUs = () => {
                   <h3 className="card-title">{option.title}</h3>
                   <p>{option.description}</p>
                   <div className="card-actions justify-end">
-                    <button 
-                      onClick={option.title === "For Teachers" ? handleTeachersClick : handleMarketplaceClick} 
+                    <button
+                      onClick={option.title === "For Teachers"
+                        ? handleTeachersClick
+                        : handleMarketplaceClick}
                       className="btn btn-primary"
-                      data-testid={option.title === "For Teachers" ? "teacher-button" : "marketplace-button"}
+                      data-testid={option.title === "For Teachers"
+                        ? "teacher-button"
+                        : "marketplace-button"}
                       aria-label={option.buttonText}
                     >
                       {option.buttonText}

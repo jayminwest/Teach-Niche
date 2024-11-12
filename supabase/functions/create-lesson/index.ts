@@ -55,26 +55,26 @@ serve(async (req) => {
     }
 
     const requestData = await req.json();
-    const { 
-      title, 
-      description, 
-      price, 
-      content, 
+    const {
+      title,
+      description,
+      price,
+      content,
       category_ids,
       create_stripe_only = false,
       thumbnail_url = null,
-      vimeo_video_id = null
+      vimeo_video_id = null,
     } = requestData;
 
     // Validate fields
     const missingFields = [];
-    if (!title) missingFields.push('title');
-    if (price === undefined || price === null) missingFields.push('price');
-    if (!content) missingFields.push('content');
+    if (!title) missingFields.push("title");
+    if (price === undefined || price === null) missingFields.push("price");
+    if (!content) missingFields.push("content");
 
     if (missingFields.length > 0) {
-      return createCorsResponse(400, { 
-        error: `Missing required fields: ${missingFields.join(', ')}` 
+      return createCorsResponse(400, {
+        error: `Missing required fields: ${missingFields.join(", ")}`,
       }, origin);
     }
 
@@ -85,14 +85,14 @@ serve(async (req) => {
     if (parseFloat(price) > 0) {
       // Get the creator's Stripe account ID
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('stripe_account_id')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("stripe_account_id")
+        .eq("id", user.id)
         .single();
 
       if (!profile?.stripe_account_id) {
-        return createCorsResponse(400, { 
-          error: "Creator must connect Stripe account first" 
+        return createCorsResponse(400, {
+          error: "Creator must connect Stripe account first",
         }, origin);
       }
 
@@ -102,8 +102,8 @@ serve(async (req) => {
         description: description || "",
         metadata: {
           creator_id: user.id,
-          creator_stripe_account: profile.stripe_account_id
-        }
+          creator_stripe_account: profile.stripe_account_id,
+        },
       });
 
       // Create price with application fee
@@ -113,8 +113,8 @@ serve(async (req) => {
         product: product.id,
         metadata: {
           creator_id: user.id,
-          creator_stripe_account: profile.stripe_account_id
-        }
+          creator_stripe_account: profile.stripe_account_id,
+        },
       });
 
       stripe_product_id = product.id;
@@ -123,9 +123,9 @@ serve(async (req) => {
 
     // If we're only creating Stripe products, return early
     if (create_stripe_only) {
-      return createCorsResponse(201, { 
+      return createCorsResponse(201, {
         stripe_product_id,
-        stripe_price_id
+        stripe_price_id,
       }, origin);
     }
 
@@ -141,8 +141,8 @@ serve(async (req) => {
         thumbnail_url,
         stripe_product_id,
         stripe_price_id,
-        status: 'draft',
-        vimeo_video_id
+        status: "draft",
+        vimeo_video_id,
       })
       .select()
       .single();
@@ -163,20 +163,21 @@ serve(async (req) => {
         .insert(categoryInserts);
 
       if (categoryError) {
-        throw new Error(`Failed to assign categories: ${categoryError.message}`);
+        throw new Error(
+          `Failed to assign categories: ${categoryError.message}`,
+        );
       }
     }
 
-    return createCorsResponse(201, { 
+    return createCorsResponse(201, {
       lesson_id: lesson.id,
       stripe_product_id,
-      stripe_price_id
+      stripe_price_id,
     }, origin);
-
   } catch (error) {
     console.error("Error in create-lesson:", error);
     return createCorsResponse(500, {
-      error: error instanceof Error ? error.message : "Internal server error"
+      error: error instanceof Error ? error.message : "Internal server error",
     }, origin);
   }
 });

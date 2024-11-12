@@ -27,7 +27,7 @@ const ForgotPasswordLayout = () => {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
-      
+
       if (error) throw error;
       setMessage("Password reset link has been sent to your email.");
     } catch (error) {
@@ -60,7 +60,7 @@ const ForgotPasswordLayout = () => {
                 />
               </div>
               <div className="form-control mt-6">
-                <button 
+                <button
                   className="btn btn-primary"
                   type="submit"
                   disabled={isLoading}

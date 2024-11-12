@@ -13,7 +13,9 @@ import LessonCard from "../../marketplace/components/LessonCard";
  * @param {Function} props.onDeleteLesson - Function to handle lesson deletion
  * @returns {JSX.Element} The Created Lessons component
  */
-const CreatedLessons = ({ lessons, creatorName, creatorId, onDeleteLesson }) => {
+const CreatedLessons = (
+  { lessons, creatorName, creatorId, onDeleteLesson },
+) => {
   if (!lessons.length) {
     return (
       <div className="text-center py-8">
@@ -34,7 +36,8 @@ const CreatedLessons = ({ lessons, creatorName, creatorId, onDeleteLesson }) => 
               isCreated={true}
               isPurchased={false}
               creatorName={creatorName}
-              onDelete={() => onDeleteLesson(lesson.id)}
+              onDelete={() =>
+                onDeleteLesson(lesson.id)}
             />
           </div>
         ))}
@@ -43,4 +46,4 @@ const CreatedLessons = ({ lessons, creatorName, creatorId, onDeleteLesson }) => 
   );
 };
 
-export default CreatedLessons; 
+export default CreatedLessons;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import LessonsGrid from "../pages/marketplace/components/LessonsGrid";
 import supabase from "../utils/supabaseClient";
 
@@ -19,12 +19,12 @@ const FeaturedLessons = () => {
   useEffect(() => {
     const fetchStats = async () => {
       const { data: lessons } = await supabase
-        .from('tutorials')
-        .select('id');
-      
+        .from("tutorials")
+        .select("id");
+
       const { data: students } = await supabase
-        .from('purchases')
-        .select('user_id', { count: 'exact', distinct: true });
+        .from("purchases")
+        .select("user_id", { count: "exact", distinct: true });
 
       setStats({
         totalLessons: lessons?.length || 0,
@@ -68,8 +68,8 @@ const FeaturedLessons = () => {
 
         {/* Featured Lessons Grid */}
         <div className="relative z-10">
-          <LessonsGrid 
-            isFeatured={true}  // New prop to filter featured lessons
+          <LessonsGrid
+            isFeatured={true} // New prop to filter featured lessons
             limit={6}
           />
         </div>

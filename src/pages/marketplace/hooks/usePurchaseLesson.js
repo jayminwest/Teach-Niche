@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../../context/AuthContext';
-import supabase from '../../../utils/supabaseClient';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../context/AuthContext";
+import supabase from "../../../utils/supabaseClient";
 
 export const usePurchaseLesson = () => {
   const [loading, setLoading] = useState(false);
@@ -30,9 +30,9 @@ export const usePurchaseLesson = () => {
           user_id: user.id,
           tutorial_id: lessonId,
           purchase_date: new Date().toISOString(),
-          status: 'completed',
+          status: "completed",
           amount: 0,
-          creator_id: user.id
+          creator_id: user.id,
         }]);
 
       if (error) throw error;
@@ -64,15 +64,15 @@ export const usePurchaseLesson = () => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({
-          error: `HTTP error! status: ${response.status}`
+          error: `HTTP error! status: ${response.status}`,
         }));
-        throw new Error(errorData.error || 'Failed to create checkout session');
+        throw new Error(errorData.error || "Failed to create checkout session");
       }
 
       const data = await response.json();
-      
+
       if (!data.sessionUrl) {
-        throw new Error('No checkout session URL returned');
+        throw new Error("No checkout session URL returned");
       }
 
       window.location.href = data.sessionUrl;
@@ -87,6 +87,6 @@ export const usePurchaseLesson = () => {
   return {
     purchaseLesson,
     loading,
-    error
+    error,
   };
-}; 
+};

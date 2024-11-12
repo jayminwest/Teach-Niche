@@ -55,7 +55,7 @@ const EditLesson = () => {
     success,
     isSubmitting,
     setError,
-    setSuccess
+    setSuccess,
   } = useLessonCreation(true); // true for edit mode
 
   useEffect(() => {
@@ -64,7 +64,9 @@ const EditLesson = () => {
   }, [id]);
 
   useEffect(() => {
-    if (lessonData.cost && !PRICE_OPTIONS.includes(parseFloat(lessonData.cost))) {
+    if (
+      lessonData.cost && !PRICE_OPTIONS.includes(parseFloat(lessonData.cost))
+    ) {
       setCustomPrice(true);
     }
   }, [lessonData.cost]);
@@ -143,7 +145,7 @@ const EditLesson = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       // Handle thumbnail upload if exists
       let thumbnailUrl = thumbnailPreview;
@@ -171,7 +173,7 @@ const EditLesson = () => {
           videoFile,
           id,
           lessonData.title,
-          lessonData.description
+          lessonData.description,
         );
       }
 
@@ -181,11 +183,10 @@ const EditLesson = () => {
         categoryIds,
         thumbnailUrl,
         vimeoData: vimeoData || { vimeo_video_id: lessonData.vimeo_video_id },
-        lessonId: id
+        lessonId: id,
       });
 
       setTimeout(() => navigate("/profile"), 2000);
-
     } catch (err) {
       console.error("Error updating lesson:", err);
     }
@@ -193,7 +194,7 @@ const EditLesson = () => {
 
   const handleDeleteLesson = async () => {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this lesson? This action cannot be undone."
+      "Are you sure you want to delete this lesson? This action cannot be undone.",
     );
 
     if (!confirmed) return;
@@ -202,24 +203,24 @@ const EditLesson = () => {
       // Delete video from Vimeo if it exists
       if (lessonData.vimeo_video_id) {
         const { data: { session } } = await supabase.auth.getSession();
-        
+
         const response = await fetch(
           `${process.env.REACT_APP_SUPABASE_URL}/functions/v1/delete-vimeo-video`,
           {
-            method: 'DELETE',
+            method: "DELETE",
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`,
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session.access_token}`,
             },
             body: JSON.stringify({
-              videoId: lessonData.vimeo_video_id
+              videoId: lessonData.vimeo_video_id,
             }),
-          }
+          },
         );
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to delete video');
+          throw new Error(errorData.error || "Failed to delete video");
         }
       }
 
@@ -227,18 +228,18 @@ const EditLesson = () => {
       if (lessonData.thumbnail_url) {
         // Extract the file path from the URL or use the path directly
         let thumbnailPath = lessonData.thumbnail_url;
-        if (thumbnailPath.startsWith('http')) {
+        if (thumbnailPath.startsWith("http")) {
           // Extract the filename from the URL
-          thumbnailPath = thumbnailPath.split('/').pop();
+          thumbnailPath = thumbnailPath.split("/").pop();
           thumbnailPath = `lesson-thumbnails/${thumbnailPath}`;
         }
 
         const { error: deleteStorageError } = await supabase.storage
-          .from('lesson-thumbnails')
+          .from("lesson-thumbnails")
           .remove([thumbnailPath]);
 
         if (deleteStorageError) {
-          console.error('Error deleting thumbnail:', deleteStorageError);
+          console.error("Error deleting thumbnail:", deleteStorageError);
           // Continue with lesson deletion even if thumbnail deletion fails
         }
       }
@@ -272,7 +273,10 @@ const EditLesson = () => {
             {/* Basic Info Section */}
             <div className="space-y-4">
               <div>
-                <label htmlFor="title" className="text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="title"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Title
                 </label>
                 <input
@@ -287,7 +291,10 @@ const EditLesson = () => {
               </div>
 
               <div>
-                <label htmlFor="description" className="text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="description"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Description
                 </label>
                 <textarea
@@ -305,7 +312,8 @@ const EditLesson = () => {
             {/* Price Selector */}
             <PriceSelector
               cost={lessonData.cost}
-              onCostChange={(value) => setLessonData(prev => ({ ...prev, cost: value }))}
+              onCostChange={(value) =>
+                setLessonData((prev) => ({ ...prev, cost: value }))}
               customPrice={customPrice}
               setCustomPrice={setCustomPrice}
             />
@@ -344,7 +352,8 @@ const EditLesson = () => {
                 {(thumbnailPreview || lessonData.thumbnail_url) && (
                   <div className="relative w-32 h-32">
                     <img
-                      src={thumbnailPreview || getThumbnailUrl(lessonData.thumbnail_url)}
+                      src={thumbnailPreview ||
+                        getThumbnailUrl(lessonData.thumbnail_url)}
                       alt="Thumbnail preview"
                       className="w-full h-full object-cover rounded-lg"
                     />
@@ -353,12 +362,24 @@ const EditLesson = () => {
                       onClick={() => {
                         setThumbnail(null);
                         setThumbnailPreview(null);
-                        setLessonData(prev => ({ ...prev, thumbnail_url: null }));
+                        setLessonData((prev) => ({
+                          ...prev,
+                          thumbnail_url: null,
+                        }));
                       }}
                       className="absolute -top-2 -right-2 bg-red-100 text-red-600 rounded-full p-1 hover:bg-red-200"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </button>
                   </div>
@@ -376,7 +397,8 @@ const EditLesson = () => {
             {/* Content Editor */}
             <LessonContentEditor
               content={lessonData.content}
-              onChange={(content) => setLessonData(prev => ({ ...prev, content }))}
+              onChange={(content) =>
+                setLessonData((prev) => ({ ...prev, content }))}
             />
 
             {/* Category Selector */}
@@ -394,11 +416,11 @@ const EditLesson = () => {
               disabled={isSubmitting || isUploading}
               className="w-full rounded-md bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isUploading 
-                ? "Uploading video..." 
-                : isSubmitting 
-                  ? "Updating lesson..." 
-                  : "Update lesson"}
+              {isUploading
+                ? "Uploading video..."
+                : isSubmitting
+                ? "Updating lesson..."
+                : "Update lesson"}
             </button>
           </form>
         );
@@ -413,15 +435,15 @@ const EditLesson = () => {
 
   const getThumbnailUrl = (url) => {
     if (!url) return null;
-    
+
     // If it's already a full URL, return it
-    if (url.startsWith('http')) return url;
-    
+    if (url.startsWith("http")) return url;
+
     // Get public URL from Supabase
     const { data: { publicUrl } } = supabase.storage
-      .from('lesson-thumbnails')
+      .from("lesson-thumbnails")
       .getPublicUrl(url);
-      
+
     return publicUrl;
   };
 
@@ -447,7 +469,7 @@ const EditLesson = () => {
               Delete Lesson
             </button>
           </div>
-          
+
           <div className="mb-6">
             <div className="flex border-b">
               {["content", "reviews", "discussion"].map((tab) => (
@@ -474,13 +496,16 @@ const EditLesson = () => {
             <div className="mb-2">
               <div className="flex justify-between mb-1">
                 <span className="text-sm font-medium">{uploadStatus}</span>
-                <span className="text-sm font-medium">{videoUploadProgress}%</span>
+                <span className="text-sm font-medium">
+                  {videoUploadProgress}%
+                </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div 
-                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                <div
+                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
                   style={{ width: `${videoUploadProgress}%` }}
-                ></div>
+                >
+                </div>
               </div>
             </div>
           </div>

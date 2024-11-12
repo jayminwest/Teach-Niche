@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React from "react";
+import { Link } from "react-router-dom";
 
 /**
  * SignInRequired Component
@@ -17,7 +17,7 @@ const SignInRequired = () => {
         <p className="text-gray-600">
           Please sign in to view your purchased lessons.
         </p>
-        <Link 
+        <Link
           to="/auth/signin"
           className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg
             hover:bg-blue-700 transition-colors"
@@ -29,4 +29,4 @@ const SignInRequired = () => {
   );
 };
 
-export default SignInRequired; 
+export default SignInRequired;

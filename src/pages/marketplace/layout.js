@@ -3,7 +3,10 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import LessonsGrid from "./components/LessonsGrid";
 import MarketplaceFilters from "./components/ui/MarketplaceFilters";
-import { MarketplaceProvider, useMarketplace } from "./context/MarketplaceContext";
+import {
+  MarketplaceProvider,
+  useMarketplace,
+} from "./context/MarketplaceContext";
 import MarketplaceStats from "./components/MarketplaceStats";
 
 const MarketplaceContent = () => {
@@ -28,7 +31,7 @@ const MarketplaceContent = () => {
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row gap-8 h-full">
           <div className="md:w-64 space-y-6">
-            <h1 className={`font-bold ${isMobile ? 'text-2xl' : 'text-3xl'}`}>
+            <h1 className={`font-bold ${isMobile ? "text-2xl" : "text-3xl"}`}>
               Marketplace
             </h1>
             <MarketplaceStats />
@@ -36,7 +39,7 @@ const MarketplaceContent = () => {
           </div>
 
           <div className="flex-1">
-            <LessonsGrid 
+            <LessonsGrid
               sortOption={sortOption}
               priceFilter={priceFilter}
             />

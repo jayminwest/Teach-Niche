@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./App.css";
 
@@ -31,9 +31,13 @@ import ProtectedRoute from "./components/ProtectedRoute";
 const BetaAlert = () => (
   <div className="alert alert-warning shadow-lg mx-auto my-4 max-w-6xl">
     <div className="flex justify-center items-center space-x-2">
-      <i className="bi bi-exclamation-triangle-fill text-sm" aria-hidden="true" />
+      <i
+        className="bi bi-exclamation-triangle-fill text-sm"
+        aria-hidden="true"
+      />
       <span className="text-sm font-semibold">
-        Welcome to Teach Niche! The site is currently in Beta, so please be patient as the site improves.
+        Welcome to Teach Niche! The site is currently in Beta, so please be
+        patient as the site improves.
       </span>
     </div>
   </div>
@@ -59,7 +63,7 @@ const App = () => {
           <Route path="/success" element={<Success />} />
           <Route path="/cancel" element={<Cancel />} />
           <Route path="/logout" element={<Logout />} />
-          
+
           {/* Protected Routes */}
           <Route
             path="/profile"

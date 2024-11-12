@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import supabase from "../../../utils/supabaseClient";
 
 const useStripeConnect = (userId) => {
@@ -36,7 +36,7 @@ const useStripeConnect = (userId) => {
         "create-stripe-connect",
         {
           body: JSON.stringify({ userId }),
-        }
+        },
       );
 
       if (error) {
@@ -62,4 +62,4 @@ const useStripeConnect = (userId) => {
   };
 };
 
-export default useStripeConnect; 
+export default useStripeConnect;

@@ -17,5 +17,5 @@ root.render(
         <SpeedInsights />
       </BrowserRouter>
     </AuthProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

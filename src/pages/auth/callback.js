@@ -14,7 +14,8 @@ import { useAuthCallbackNavigation } from "../../hooks/useAuthCallbackNavigation
  * @returns {JSX.Element} A loading message or error state while processing the callback.
  */
 const AuthCallback = () => {
-  const { handleNavigateToProfile, handleNavigateToSignIn } = useAuthCallbackNavigation();
+  const { handleNavigateToProfile, handleNavigateToSignIn } =
+    useAuthCallbackNavigation();
   const [error, setError] = useState(null);
   const [status, setStatus] = useState("Processing authentication...");
 
@@ -23,7 +24,7 @@ const AuthCallback = () => {
       try {
         setStatus("Verifying session...");
         const { data, error: sessionError } = await supabase.auth.getSession();
-        
+
         if (sessionError) {
           throw sessionError;
         }
@@ -48,7 +49,7 @@ const AuthCallback = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <AlertMessage error={error} />
-        <button 
+        <button
           onClick={handleNavigateToSignIn}
           className="btn btn-primary mt-4"
           aria-label="Return to Sign In"
@@ -62,7 +63,11 @@ const AuthCallback = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <div className="flex items-center space-x-4">
-        <span className="loading loading-spinner loading-lg" role="status" aria-label="Loading" />
+        <span
+          className="loading loading-spinner loading-lg"
+          role="status"
+          aria-label="Loading"
+        />
         <p className="text-lg" aria-live="polite">{status}</p>
       </div>
     </div>

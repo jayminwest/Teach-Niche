@@ -12,16 +12,17 @@ import ConnectStripeButton from "../../../components/ConnectStripeButton";
  * @param {Function} props.onStripeConnected - Callback when Stripe is connected
  * @returns {JSX.Element} The Become Teacher component
  */
-const BecomeTeacher = ({ 
-  isStripeConnected, 
-  onStripeConnect, 
-  onStripeConnected 
+const BecomeTeacher = ({
+  isStripeConnected,
+  onStripeConnect,
+  onStripeConnected,
 }) => {
   return (
     <div className="space-y-6">
       <h2 className="card-title text-3xl mb-6">Become A Teacher</h2>
       <p className="mb-6">
-        To start creating and selling lessons, you need to connect your Stripe account.
+        To start creating and selling lessons, you need to connect your Stripe
+        account.
       </p>
 
       <div className="space-y-6">
@@ -68,7 +69,9 @@ const BecomeTeacher = ({
       </div>
 
       <div className="mt-8">
-        <h3 className="text-xl font-semibold mb-4">What you can do as a teacher:</h3>
+        <h3 className="text-xl font-semibold mb-4">
+          What you can do as a teacher:
+        </h3>
         <ul className="space-y-3 list-disc pl-5">
           <li>Create and sell your own lessons</li>
           <li>Set your own prices</li>
@@ -101,4 +104,4 @@ const BecomeTeacher = ({
   );
 };
 
-export default BecomeTeacher; 
+export default BecomeTeacher;

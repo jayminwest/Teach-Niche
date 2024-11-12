@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import supabase from '../utils/supabaseClient';
-import DiscussionPost from '../pages/lesson/components/DiscussionPost';
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import supabase from "../utils/supabaseClient";
+import DiscussionPost from "../pages/lesson/components/DiscussionPost";
 
 const LessonDiscussion = ({ lessonId }) => {
   const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [authors, setAuthors] = useState({});
-  const [newPost, setNewPost] = useState('');
+  const [newPost, setNewPost] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -18,33 +18,33 @@ const LessonDiscussion = ({ lessonId }) => {
   const fetchPosts = async () => {
     try {
       const { data: posts, error } = await supabase
-        .from('discussion_posts')
-        .select('*')
-        .eq('tutorial_id', lessonId)
-        .order('created_at', { ascending: false });
+        .from("discussion_posts")
+        .select("*")
+        .eq("tutorial_id", lessonId)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
       // Fetch all unique user IDs from posts
-      const userIds = [...new Set(posts.map(post => post.user_id))];
-      
+      const userIds = [...new Set(posts.map((post) => post.user_id))];
+
       const { data: users, error: usersError } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url')
-        .in('id', userIds);
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .in("id", userIds);
 
       if (usersError) throw usersError;
 
       // Create a map of user IDs to user data
       const authorsMap = users.reduce((acc, user) => ({
         ...acc,
-        [user.id]: user
+        [user.id]: user,
       }), {});
 
       setPosts(posts);
       setAuthors(authorsMap);
     } catch (error) {
-      console.error('Error fetching posts:', error);
+      console.error("Error fetching posts:", error);
     } finally {
       setLoading(false);
     }
@@ -57,11 +57,11 @@ const LessonDiscussion = ({ lessonId }) => {
     setSubmitting(true);
     try {
       const { data, error } = await supabase
-        .from('discussion_posts')
+        .from("discussion_posts")
         .insert({
           tutorial_id: lessonId,
           user_id: user.id,
-          content: newPost.trim()
+          content: newPost.trim(),
         })
         .select()
         .single();
@@ -69,31 +69,33 @@ const LessonDiscussion = ({ lessonId }) => {
       if (error) throw error;
 
       // Add the new post to the list
-      setPosts(prev => [data, ...prev]);
-      setNewPost('');
-      
+      setPosts((prev) => [data, ...prev]);
+      setNewPost("");
+
       // Make sure we have the author data
       if (!authors[user.id]) {
         const { data: userData } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url')
-          .eq('id', user.id)
+          .from("profiles")
+          .select("id, full_name, avatar_url")
+          .eq("id", user.id)
           .single();
-          
-        setAuthors(prev => ({
+
+        setAuthors((prev) => ({
           ...prev,
-          [user.id]: userData
+          [user.id]: userData,
         }));
       }
     } catch (error) {
-      console.error('Error creating post:', error);
+      console.error("Error creating post:", error);
     } finally {
       setSubmitting(false);
     }
   };
 
   if (loading) {
-    return <div className="flex justify-center p-8">Loading discussions...</div>;
+    return (
+      <div className="flex justify-center p-8">Loading discussions...</div>
+    );
   }
 
   return (
@@ -112,25 +114,27 @@ const LessonDiscussion = ({ lessonId }) => {
             disabled={!newPost.trim() || submitting}
             className="btn btn-primary"
           >
-            {submitting ? 'Posting...' : 'Post'}
+            {submitting ? "Posting..." : "Post"}
           </button>
         </div>
       </form>
 
       <div className="divide-y divide-base-300">
-        {posts.length === 0 ? (
-          <div className="p-8 text-center text-base-content/60">
-            No discussions yet. Be the first to start the conversation!
-          </div>
-        ) : (
-          posts.map(post => (
-            <DiscussionPost
-              key={post.id}
-              post={post}
-              author={authors[post.user_id]}
-            />
-          ))
-        )}
+        {posts.length === 0
+          ? (
+            <div className="p-8 text-center text-base-content/60">
+              No discussions yet. Be the first to start the conversation!
+            </div>
+          )
+          : (
+            posts.map((post) => (
+              <DiscussionPost
+                key={post.id}
+                post={post}
+                author={authors[post.user_id]}
+              />
+            ))
+          )}
       </div>
     </div>
   );

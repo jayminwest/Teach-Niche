@@ -21,16 +21,16 @@ serve(async (req) => {
     await stripe.accounts.update(accountId, {
       metadata: {
         default_application_fee_percent: feePercentage,
-        account_tier: tier
-      }
+        account_tier: tier,
+      },
     });
 
-    return createCorsResponse(200, { 
-      message: "Fee rate updated successfully" 
+    return createCorsResponse(200, {
+      message: "Fee rate updated successfully",
     }, origin);
   } catch (error) {
-    return createCorsResponse(500, { 
-      error: error instanceof Error ? error.message : "Internal server error" 
+    return createCorsResponse(500, {
+      error: error instanceof Error ? error.message : "Internal server error",
     }, origin);
   }
-}); 
+});

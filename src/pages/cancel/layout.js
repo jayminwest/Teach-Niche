@@ -17,7 +17,7 @@ const CancelPage = () => {
   return (
     <div>
       <main className="flex flex-col justify-center items-center min-h-screen py-10">
-        <div 
+        <div
           className="card w-full max-w-md shadow-2xl bg-base-100 p-6 text-center"
           data-testid="cancel-card"
         >

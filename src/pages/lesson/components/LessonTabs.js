@@ -1,9 +1,9 @@
-import React from 'react';
-import { TABS, TAB_LABELS } from '../constants';
+import React from "react";
+import { TAB_LABELS, TABS } from "../constants";
 
 const LessonTabs = ({ activeTab, onTabChange, hasAccess }) => {
   const handleKeyDown = (e, tab) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       onTabChange(tab);
     }
@@ -16,10 +16,16 @@ const LessonTabs = ({ activeTab, onTabChange, hasAccess }) => {
           (tab !== TABS.DISCUSSION || hasAccess) && (
             <li key={tab} className="flex-shrink-0">
               <button
-                onClick={() => onTabChange(tab)}
-                onKeyDown={(e) => handleKeyDown(e, tab)}
+                onClick={() =>
+                  onTabChange(tab)}
+                onKeyDown={(e) =>
+                  handleKeyDown(e, tab)}
                 className={`w-full text-left py-2 px-4 rounded text-sm md:text-base
-                  ${activeTab === tab ? "bg-primary text-white" : "hover:bg-base-300"}`}
+                  ${
+                  activeTab === tab
+                    ? "bg-primary text-white"
+                    : "hover:bg-base-300"
+                }`}
                 aria-selected={activeTab === tab}
                 role="tab"
                 tabIndex={0}
@@ -35,4 +41,4 @@ const LessonTabs = ({ activeTab, onTabChange, hasAccess }) => {
   );
 };
 
-export default LessonTabs; 
+export default LessonTabs;

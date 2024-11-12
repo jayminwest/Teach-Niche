@@ -1,9 +1,11 @@
-import React from 'react';
+import React from "react";
 
 const CategorySelector = ({ categories, selectedIds, onChange }) => {
   return (
     <div className="border-t border-gray-900/10 pt-8">
-      <h3 className="text-base font-semibold leading-7 text-gray-900">Categories</h3>
+      <h3 className="text-base font-semibold leading-7 text-gray-900">
+        Categories
+      </h3>
       <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
         {categories.map((category) => (
           <div key={category.id} className="relative flex items-start">
@@ -18,7 +20,10 @@ const CategorySelector = ({ categories, selectedIds, onChange }) => {
               />
             </div>
             <div className="ml-3 text-sm leading-6">
-              <label htmlFor={`category-${category.id}`} className="text-gray-900">
+              <label
+                htmlFor={`category-${category.id}`}
+                className="text-gray-900"
+              >
                 {category.name}
               </label>
             </div>
@@ -29,4 +34,4 @@ const CategorySelector = ({ categories, selectedIds, onChange }) => {
   );
 };
 
-export default CategorySelector; 
+export default CategorySelector;

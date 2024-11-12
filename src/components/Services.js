@@ -54,8 +54,8 @@ const Services = () => {
   ];
 
   return (
-    <section 
-      className="py-10 md:py-16 bg-base-100" 
+    <section
+      className="py-10 md:py-16 bg-base-100"
       aria-labelledby="services-heading"
     >
       <div className="container mx-auto px-4">
@@ -82,13 +82,13 @@ const Services = () => {
               aria-labelledby={`service-title-${index}`}
             >
               <div className="card-body items-center text-center gap-4">
-                <i 
-                  className={`bi ${item.icon} text-4xl text-primary`} 
+                <i
+                  className={`bi ${item.icon} text-4xl text-primary`}
                   aria-hidden="true"
                 >
                 </i>
-                <h3 
-                  id={`service-title-${index}`} 
+                <h3
+                  id={`service-title-${index}`}
                   className="card-title"
                 >
                   {item.title}

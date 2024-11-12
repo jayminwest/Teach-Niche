@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import supabase from "../../../utils/supabaseClient";
 
 const useLessons = (userId) => {
@@ -22,7 +22,7 @@ const useLessons = (userId) => {
       const { data, error } = await supabase
         .from("tutorials")
         .select(
-          "id, title, description, price, content_url, created_at, thumbnail_url"
+          "id, title, description, price, content_url, created_at, thumbnail_url",
         )
         .eq("creator_id", userId);
 
@@ -63,8 +63,8 @@ const useLessons = (userId) => {
 
       if (deleteError) throw deleteError;
 
-      setCreatedLessons(prevLessons => 
-        prevLessons.filter(lesson => lesson.id !== lessonId)
+      setCreatedLessons((prevLessons) =>
+        prevLessons.filter((lesson) => lesson.id !== lessonId)
       );
       return true;
     } catch (error) {
@@ -84,4 +84,4 @@ const useLessons = (userId) => {
   };
 };
 
-export default useLessons; 
+export default useLessons;

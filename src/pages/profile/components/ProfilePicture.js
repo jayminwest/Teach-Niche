@@ -32,14 +32,15 @@ const ProfilePicture = ({ profilePicture, onUpdate }) => {
           .getPublicUrl(filePath);
 
         // Get current user
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        const { data: { user }, error: userError } = await supabase.auth
+          .getUser();
         if (userError) throw userError;
 
         // Update user profile with new avatar URL
         const { error: updateError } = await supabase
-          .from('profiles')
+          .from("profiles")
           .update({ avatar_url: publicURL.publicUrl })
-          .eq('id', user.id);
+          .eq("id", user.id);
 
         if (updateError) throw updateError;
 

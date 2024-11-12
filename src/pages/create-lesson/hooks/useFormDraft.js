@@ -1,7 +1,14 @@
-import { useEffect } from 'react';
-import { DRAFT_STORAGE_KEY } from '../constants';
+import { useEffect } from "react";
+import { DRAFT_STORAGE_KEY } from "../constants";
 
-const useFormDraft = (lessonData, setLessonData, categoryIds, setCategoryIds, thumbnailPreview, setThumbnailPreview) => {
+const useFormDraft = (
+  lessonData,
+  setLessonData,
+  categoryIds,
+  setCategoryIds,
+  thumbnailPreview,
+  setThumbnailPreview,
+) => {
   // Load saved form data on component mount
   useEffect(() => {
     const savedData = localStorage.getItem(DRAFT_STORAGE_KEY);
@@ -20,7 +27,7 @@ const useFormDraft = (lessonData, setLessonData, categoryIds, setCategoryIds, th
     const draftData = {
       lessonData,
       categoryIds,
-      thumbnailPreview
+      thumbnailPreview,
     };
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftData));
   }, [lessonData, categoryIds, thumbnailPreview]);
@@ -32,4 +39,4 @@ const useFormDraft = (lessonData, setLessonData, categoryIds, setCategoryIds, th
   return { clearDraft };
 };
 
-export default useFormDraft; 
+export default useFormDraft;

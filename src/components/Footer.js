@@ -55,13 +55,13 @@ const Footer = () => {
   const handleCopyEmail = async (e) => {
     e.preventDefault();
     const email = "jaymin@teach-niche.com";
-    
+
     try {
       await navigator.clipboard.writeText(email);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
-      console.error('Failed to copy email:', err);
+      console.error("Failed to copy email:", err);
     }
   };
 
@@ -78,8 +78,8 @@ const Footer = () => {
             >
               Teaching
             </Link>
-            <Link 
-              className="link link-hover" 
+            <Link
+              className="link link-hover"
               to="/marketplace"
               aria-label="Browse lessons"
             >
@@ -89,14 +89,14 @@ const Footer = () => {
 
           <nav aria-label="Company">
             <h6 className="footer-title">Company</h6>
-            <Link 
-              className="link link-hover" 
+            <Link
+              className="link link-hover"
               to="/about"
               aria-label="About Teach Niche"
             >
               About us
             </Link>
-            <a 
+            <a
               href="mailto:jaymin@teach-niche.com"
               className="link link-hover relative"
               onClick={handleCopyEmail}
@@ -108,22 +108,22 @@ const Footer = () => {
 
           <nav aria-label="Legal">
             <h6 className="footer-title">Legal</h6>
-            <Link 
-              className="link link-hover" 
+            <Link
+              className="link link-hover"
               to="/legal"
               aria-label="Terms of use"
             >
               Terms of use
             </Link>
-            <Link 
-              className="link link-hover" 
+            <Link
+              className="link link-hover"
               to="/legal"
               aria-label="Privacy policy"
             >
               Privacy policy
             </Link>
-            <Link 
-              className="link link-hover" 
+            <Link
+              className="link link-hover"
               to="/legal"
               aria-label="Cookie policy"
             >
@@ -152,19 +152,22 @@ const Footer = () => {
                   required
                   aria-label="Email address for newsletter"
                 />
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="btn btn-primary join-item"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? (
-                    <>
-                      <span className="loading loading-spinner loading-sm"></span>
-                      Subscribing...
-                    </>
-                  ) : (
-                    "Subscribe"
-                  )}
+                  {isSubmitting
+                    ? (
+                      <>
+                        <span className="loading loading-spinner loading-sm">
+                        </span>
+                        Subscribing...
+                      </>
+                    )
+                    : (
+                      "Subscribe"
+                    )}
                 </button>
               </div>
             </fieldset>
@@ -191,7 +194,8 @@ const Footer = () => {
               aria-label="Follow Teach Niche on Instagram"
             >
               Follow Teach Niche On Instagram
-              <i className="bi bi-instagram text-xl ml-2" aria-hidden="true"></i>
+              <i className="bi bi-instagram text-xl ml-2" aria-hidden="true">
+              </i>
             </Link>
           </div>
         </div>
