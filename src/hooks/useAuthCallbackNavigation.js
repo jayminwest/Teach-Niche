@@ -20,4 +20,4 @@ export const useAuthCallbackNavigation = () => {
   }, [navigate]);
 
   return { handleNavigateToProfile, handleNavigateToSignIn };
-}; 
+};

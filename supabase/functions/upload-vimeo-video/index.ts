@@ -11,7 +11,7 @@ const CHUNK_SIZE = 10 * 1024 * 1024; // 10MB chunks
 
 serve(async (req: Request): Promise<Response> => {
   const origin = req.headers.get("origin") || "";
-  
+
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders(origin) });
   }
@@ -60,9 +60,9 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     const url = new URL(req.url);
-    
+
     // Initialize upload endpoint
-    if (url.pathname.endsWith('/initialize')) {
+    if (url.pathname.endsWith("/initialize")) {
       console.log("Initializing upload...");
       const formData = await req.formData();
       const title = formData.get("title") as string;
@@ -71,7 +71,11 @@ serve(async (req: Request): Promise<Response> => {
       const fileName = formData.get("fileName") as string;
 
       if (!title || !fileSize || !fileName) {
-        return createCorsResponse(400, { error: "Missing required fields" }, origin);
+        return createCorsResponse(
+          400,
+          { error: "Missing required fields" },
+          origin,
+        );
       }
 
       console.log(`Creating video on Vimeo: ${title}, size: ${fileSize} bytes`);
@@ -92,16 +96,18 @@ serve(async (req: Request): Promise<Response> => {
           name: title,
           description: description,
           privacy: {
-            view: "disable",  // Makes video private by default
-            embed: "public"   // Allows embedding
-          }
+            view: "disable", // Makes video private by default
+            embed: "public", // Allows embedding
+          },
         }),
       });
 
       if (!createResponse.ok) {
         const errorData = await createResponse.json();
         console.error("Vimeo creation error:", errorData);
-        throw new Error(`Failed to create video on Vimeo: ${JSON.stringify(errorData)}`);
+        throw new Error(
+          `Failed to create video on Vimeo: ${JSON.stringify(errorData)}`,
+        );
       }
 
       const createData = await createResponse.json();
@@ -110,26 +116,31 @@ serve(async (req: Request): Promise<Response> => {
       const vimeoId = createData.uri.split("/").pop();
       const vimeoUrl = `https://vimeo.com/${vimeoId}`;
 
-      return new Response(JSON.stringify({
-        upload_link: createData.upload.upload_link,
-        vimeo_video_id: vimeoId,
-        vimeo_url: vimeoUrl,
-        chunk_size: CHUNK_SIZE,
-        access_token: vimeoAccessToken
-      }), {
-        headers: {
-          ...corsHeaders(origin),
-          'Content-Type': 'application/json'
-        }
-      });
+      return new Response(
+        JSON.stringify({
+          upload_link: createData.upload.upload_link,
+          vimeo_video_id: vimeoId,
+          vimeo_url: vimeoUrl,
+          chunk_size: CHUNK_SIZE,
+          access_token: vimeoAccessToken,
+        }),
+        {
+          headers: {
+            ...corsHeaders(origin),
+            "Content-Type": "application/json",
+          },
+        },
+      );
     }
 
     return createCorsResponse(405, { error: "Method not allowed" }, origin);
   } catch (error) {
     console.error("Error in upload handler:", error);
-    return createCorsResponse(500, { 
-      error: error instanceof Error ? error.message : "An unexpected error occurred",
-      details: error instanceof Error ? error.stack : String(error)
+    return createCorsResponse(500, {
+      error: error instanceof Error
+        ? error.message
+        : "An unexpected error occurred",
+      details: error instanceof Error ? error.stack : String(error),
     }, origin);
   }
 });

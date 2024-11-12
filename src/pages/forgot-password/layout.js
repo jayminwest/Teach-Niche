@@ -27,7 +27,7 @@ const ForgotPasswordLayout = () => {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
-      
+
       if (error) throw error;
       setMessage("Password reset link has been sent to your email.");
     } catch (error) {
@@ -39,7 +39,6 @@ const ForgotPasswordLayout = () => {
 
   return (
     <div className="container mx-auto">
-      <Header />
       <main className="flex justify-center items-center min-h-screen">
         <div className="card w-full max-w-sm shadow-2xl bg-base-100">
           <div className="card-body">
@@ -61,7 +60,7 @@ const ForgotPasswordLayout = () => {
                 />
               </div>
               <div className="form-control mt-6">
-                <button 
+                <button
                   className="btn btn-primary"
                   type="submit"
                   disabled={isLoading}
@@ -74,7 +73,6 @@ const ForgotPasswordLayout = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

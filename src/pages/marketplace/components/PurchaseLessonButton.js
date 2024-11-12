@@ -51,7 +51,7 @@ const PurchaseLessonButton = ({ lessonId }) => {
       }
 
       const data = await response.json();
-      
+
       if (data.isFree) {
         // For free lessons, redirect directly to the lesson page
         navigate(`/lesson/${data.lessonId}`);

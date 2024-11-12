@@ -5,6 +5,7 @@ import Stripe from "https://esm.sh/stripe@12.5.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.22.0?target=deno"; // Ensure using Supabase v2
 import {
   allowedOrigins,
+  cleanUrl,
   corsHeaders,
   createCorsResponse,
 } from "../_shared/config.ts";
@@ -74,23 +75,45 @@ const fetchTutorial = async (tutorialId: string) => {
  * @returns Stripe checkout session URL
  */
 const createStripeCheckoutSession = async (tutorial: any, userId: string) => {
-  // If the lesson is free, return null to indicate no checkout needed
   if (tutorial.price === 0) {
     return null;
+  }
+
+  // Get the account's default application fee rate
+  const account = await stripe.accounts.retrieve(
+    tutorial.profiles.stripe_account_id,
+  );
+
+  // Default to 15% if no specific rate is set
+  const feePercentage = account.metadata?.default_application_fee_percent || 15;
+  const applicationFeeAmount = Math.round(
+    tutorial.price * 100 * (feePercentage / 100),
+  );
+
+  const frontendUrl = Deno.env.get("FRONTEND_URL")?.replace(/\/$/, ""); // Remove trailing slash if present
+
+  if (!frontendUrl) {
+    throw new Error("Frontend URL not configured");
   }
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     line_items: [{ price: tutorial.stripe_price_id, quantity: 1 }],
     mode: "payment",
-    success_url: `${
-      Deno.env.get("FRONTEND_URL")
-    }/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${Deno.env.get("FRONTEND_URL")}/cancel`,
-    metadata: { tutorial_id: tutorial.id },
+    success_url: `${frontendUrl}/success?session_id={CHECKOUT_SESSION_ID}`, // No leading slash
+    cancel_url: `${frontendUrl}/marketplace`,
+    metadata: {
+      tutorial_id: tutorial.id,
+      creator_id: tutorial.creator_id,
+      fee_percentage: feePercentage,
+    },
     client_reference_id: userId,
-  }, {
-    stripeAccount: tutorial.profiles.stripe_account_id,
+    payment_intent_data: {
+      application_fee_amount: applicationFeeAmount,
+      transfer_data: {
+        destination: tutorial.profiles.stripe_account_id,
+      },
+    },
   });
 
   return session.url;
@@ -163,9 +186,9 @@ serve(async (req) => {
         }, origin);
       }
 
-      return createCorsResponse(200, { 
+      return createCorsResponse(200, {
         isFree: true,
-        lessonId: tutorial.id 
+        lessonId: tutorial.id,
       }, origin);
     }
 

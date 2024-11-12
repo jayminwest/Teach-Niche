@@ -1,7 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
 import supabase from "../../utils/supabaseClient";
 import AlertMessage from "../../components/AlertMessage";
 
@@ -27,15 +25,17 @@ const ResetPasswordLayout = () => {
     const checkSession = async () => {
       try {
         // Get the access token from the URL hash
-        const hashParams = new URLSearchParams(window.location.hash.substring(1));
-        const access_token = hashParams.get('access_token');
-        
+        const hashParams = new URLSearchParams(
+          window.location.hash.substring(1),
+        );
+        const access_token = hashParams.get("access_token");
+
         if (access_token) {
           const { data: { session }, error } = await supabase.auth.setSession({
             access_token,
-            refresh_token: null
+            refresh_token: null,
           });
-          
+
           if (error) {
             throw error;
           }
@@ -48,7 +48,7 @@ const ResetPasswordLayout = () => {
 
         // Fallback to checking current session
         const { data: { session }, error } = await supabase.auth.getSession();
-        
+
         if (error) {
           throw error;
         }
@@ -85,13 +85,13 @@ const ResetPasswordLayout = () => {
 
     try {
       const { error } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
       });
 
       if (error) throw error;
 
       setMessage("Password updated successfully!");
-      
+
       // Redirect to sign in page after a short delay
       setTimeout(() => {
         navigate("/sign-in");
@@ -107,12 +107,11 @@ const ResetPasswordLayout = () => {
   if (!isValidSession) {
     return (
       <div className="flex flex-col min-h-screen">
-        <Header />
         <main className="flex-grow flex justify-center items-center">
           <div className="card w-full max-w-sm shadow-2xl bg-base-100">
             <div className="card-body">
               <AlertMessage error={error} />
-              <button 
+              <button
                 onClick={() => navigate("/forgot-password")}
                 className="btn btn-primary mt-4"
               >
@@ -121,14 +120,12 @@ const ResetPasswordLayout = () => {
             </div>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
       <main className="flex-grow flex justify-center items-center">
         <div className="card w-full max-w-sm shadow-2xl bg-base-100">
           <div className="card-body">
@@ -167,8 +164,8 @@ const ResetPasswordLayout = () => {
                 />
               </div>
               <div className="form-control mt-6">
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="btn btn-primary"
                   disabled={isLoading}
                 >
@@ -180,9 +177,8 @@ const ResetPasswordLayout = () => {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };
 
-export default ResetPasswordLayout; 
+export default ResetPasswordLayout;

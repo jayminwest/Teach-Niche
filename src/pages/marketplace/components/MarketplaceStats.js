@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import supabase from '../../../utils/supabaseClient';
+import React, { useEffect, useState } from "react";
+import supabase from "../../../utils/supabaseClient";
 
 const MarketplaceStats = () => {
   const [stats, setStats] = useState({
@@ -10,12 +10,12 @@ const MarketplaceStats = () => {
   useEffect(() => {
     const fetchStats = async () => {
       const { data: lessons } = await supabase
-        .from('tutorials')
-        .select('id');
-      
+        .from("tutorials")
+        .select("id");
+
       const { data: students } = await supabase
-        .from('purchases')
-        .select('user_id', { count: 'exact', distinct: true });
+        .from("purchases")
+        .select("user_id", { count: "exact", distinct: true });
 
       setStats({
         totalLessons: lessons?.length || 0,
@@ -42,4 +42,4 @@ const MarketplaceStats = () => {
   );
 };
 
-export default MarketplaceStats; 
+export default MarketplaceStats;
