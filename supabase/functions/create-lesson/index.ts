@@ -25,10 +25,13 @@ serve(async (req) => {
 
   // Handle CORS preflight request
   if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 204,
-      headers: corsHeaders(origin),
-    });
+    if (allowedOrigins.includes(origin)) {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders(origin),
+      });
+    }
+    return new Response(null, { status: 403 });
   }
 
   // Check if the origin is allowed
@@ -64,6 +67,7 @@ serve(async (req) => {
       create_stripe_only = false,
       thumbnail_url = null,
       vimeo_video_id = null,
+      status = "draft",
     } = requestData;
 
     // Validate fields
@@ -75,6 +79,14 @@ serve(async (req) => {
     if (missingFields.length > 0) {
       return createCorsResponse(400, {
         error: `Missing required fields: ${missingFields.join(", ")}`,
+      }, origin);
+    }
+
+    // Validate status
+    const validStatuses = ["draft", "published"];
+    if (!validStatuses.includes(status)) {
+      return createCorsResponse(400, {
+        error: "Invalid status. Must be either 'draft' or 'published'",
       }, origin);
     }
 
@@ -129,30 +141,41 @@ serve(async (req) => {
       }, origin);
     }
 
-    // Create the lesson record
+    // Create or update the lesson record
+    const lessonData = {
+      title,
+      description,
+      price: parseFloat(price),
+      content,
+      creator_id: user.id,
+      thumbnail_url,
+      stripe_product_id,
+      stripe_price_id,
+      status,
+      vimeo_video_id,
+      published_at: status === "published" ? new Date().toISOString() : null,
+    };
+
     const { data: lesson, error: lessonError } = await supabase
       .from("tutorials")
-      .insert({
-        title,
-        description,
-        price: parseFloat(price),
-        content,
-        creator_id: user.id,
-        thumbnail_url,
-        stripe_product_id,
-        stripe_price_id,
-        status: "draft",
-        vimeo_video_id,
-      })
+      .upsert(lessonData)
       .select()
       .single();
 
     if (lessonError) {
-      throw new Error(`Failed to create lesson: ${lessonError.message}`);
+      throw new Error(`Failed to create/update lesson: ${lessonError.message}`);
     }
 
     // Handle category assignments if provided
     if (category_ids?.length > 0) {
+      // First, remove existing categories if updating
+      if (lesson.id) {
+        await supabase
+          .from("tutorial_categories")
+          .delete()
+          .eq("tutorial_id", lesson.id);
+      }
+
       const categoryInserts = category_ids.map((categoryId: string) => ({
         tutorial_id: lesson.id,
         category_id: categoryId,
@@ -173,6 +196,8 @@ serve(async (req) => {
       lesson_id: lesson.id,
       stripe_product_id,
       stripe_price_id,
+      status: lesson.status,
+      published_at: lesson.published_at,
     }, origin);
   } catch (error) {
     console.error("Error in create-lesson:", error);

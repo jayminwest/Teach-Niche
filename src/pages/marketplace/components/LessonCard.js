@@ -162,39 +162,29 @@ const LessonCard = ({
         )}
 
         <div className="pt-2">
-          {isCreator
-            ? (
-              <button
-                className="w-full btn btn-outline btn-primary"
-                onClick={handleEdit}
-              >
-                Edit Lesson
-              </button>
-            )
-            : isPurchased || isWelcomeLesson
-            ? (
-              <button
-                className="w-full btn btn-success"
-                onClick={handleAccess}
-              >
-                Access Lesson
-              </button>
-            )
-            : loading
-            ? (
-              <p className="text-center text-gray-600">
-                Processing purchase...
-              </p>
-            )
-            : (
-              <button
-                className="w-full btn btn-primary"
-                onClick={handlePurchase}
-                disabled={loading}
-              >
-                Purchase Lesson
-              </button>
-            )}
+          {isCreator ? (
+            <button
+              className="w-full btn btn-outline btn-primary"
+              onClick={handleEdit}
+            >
+              Edit Lesson
+            </button>
+          ) : isPurchased || isWelcomeLesson ? (
+            <button
+              className="w-full btn btn-success"
+              onClick={handleAccess}
+            >
+              Access Lesson
+            </button>
+          ) : (
+            <button
+              className="w-full btn btn-primary"
+              onClick={handlePurchase}
+              disabled={loading}
+            >
+              Purchase Lesson
+            </button>
+          )}
         </div>
       </div>
     </div>

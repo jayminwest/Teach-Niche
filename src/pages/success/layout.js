@@ -1,8 +1,6 @@
 // src/pages/success.js
 import React, { useEffect, useState } from "react";
 import {
-  Link,
-  useLocation,
   useNavigate,
   useSearchParams,
 } from "react-router-dom";

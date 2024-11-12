@@ -124,12 +124,14 @@ const handleCheckoutSession = async (session: any) => {
       throw new Error("Missing required fields for purchase");
     }
 
+    const now = new Date().toISOString();
+
     // Prepare purchase data
     const purchaseData = {
       user_id: session.client_reference_id,
       tutorial_id: session.metadata.tutorial_id,
       creator_id: session.metadata.creator_id,
-      purchase_date: new Date().toISOString(),
+      purchase_date: now,
       amount: totalAmount,
       platform_fee: platformFee,
       creator_earnings: creatorEarnings,
@@ -142,6 +144,8 @@ const handleCheckoutSession = async (session: any) => {
         payment_status: session.payment_status,
         payment_method_types: session.payment_method_types,
       },
+      created_at: now,
+      updated_at: now,
     };
 
     console.log("Attempting to insert purchase with data:", purchaseData);

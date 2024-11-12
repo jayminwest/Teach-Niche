@@ -170,13 +170,20 @@ serve(async (req) => {
 
     if (!sessionUrl && tutorial.price === 0) {
       // Handle free lesson
+      const now = new Date().toISOString();
       const { error: purchaseError } = await supabase
         .from("purchases")
         .insert([
           {
             user_id: user.id,
             tutorial_id: tutorial.id,
-            purchase_date: new Date().toISOString(),
+            purchase_date: now,
+            amount: 0,
+            platform_fee: 0,
+            creator_earnings: 0,
+            status: "completed",
+            created_at: now,
+            updated_at: now,
           },
         ]);
 
