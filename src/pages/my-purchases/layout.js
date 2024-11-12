@@ -1,7 +1,5 @@
 // src/pages/my-purchases/layout.js
 import React from "react";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
 import MyPurchasesPage from "./components/MyPurchasesPage";
 import SignInRequired from "./components/SignInRequired";
 import { useAuth } from "../../context/AuthContext";
