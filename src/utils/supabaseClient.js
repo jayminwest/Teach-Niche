@@ -1,15 +1,20 @@
 // src/utils/supabaseClient.js
 import { createClient } from "@supabase/supabase-js";
-import config from "./config";
 
-/**
- * Supabase client instance
- * @type {SupabaseClient}
- */
+// Debug logging
+console.log('Environment Variables:', {
+  NODE_ENV: process.env.NODE_ENV,
+  SUPABASE_URL: process.env.REACT_APP_SUPABASE_URL,
+  HAS_KEY: !!process.env.REACT_APP_SUPABASE_KEY
+});
+
+if (!process.env.REACT_APP_SUPABASE_URL || !process.env.REACT_APP_SUPABASE_KEY) {
+  throw new Error('Missing Supabase environment variables');
+}
+
 const supabase = createClient(
-  config.supabase.url,
-  config.supabase.key,
-  config.supabase.options,
+  process.env.REACT_APP_SUPABASE_URL,
+  process.env.REACT_APP_SUPABASE_KEY
 );
 
 export default supabase;
