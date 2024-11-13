@@ -51,19 +51,57 @@ const updateUserProfile = async (
   userId: string,
   connectedAccountId: string,
 ) => {
-  const { error, count } = await supabase
+  console.log("Starting profile update for user:", userId);
+  
+  // First check if the profile exists
+  const { data: existingProfile, error: fetchError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", userId)
+    .single();
+
+  if (fetchError) {
+    console.error("Error fetching profile:", fetchError);
+    throw new Error(`Failed to fetch profile: ${fetchError.message}`);
+  }
+
+  if (!existingProfile) {
+    console.error("Profile not found for user:", userId);
+    throw new Error("Profile not found");
+  }
+
+  // Then update the profile without .select()
+  const { error } = await supabase
     .from("profiles")
     .update({
       stripe_account_id: connectedAccountId,
       stripe_onboarding_complete: true,
+      updated_at: new Date().toISOString()
     })
     .eq("id", userId);
 
   if (error) {
-    console.error("Error updating user profile:", error);
+    console.error("Error updating profile:", error);
     throw error;
   }
-  console.log(`Number of profiles updated: ${count}`);
+
+  // Verify the update by fetching the updated profile
+  const { data: updatedProfile, error: verifyError } = await supabase
+    .from("profiles")
+    .select("stripe_account_id, stripe_onboarding_complete")
+    .eq("id", userId)
+    .single();
+
+  if (verifyError) {
+    console.error("Error verifying update:", verifyError);
+    throw verifyError;
+  }
+
+  if (!updatedProfile?.stripe_account_id) {
+    throw new Error("Failed to verify profile update");
+  }
+
+  console.log("Profile update verified successfully");
 };
 
 // Main handler function
@@ -77,46 +115,94 @@ serve(async (req) => {
     return new Response(null, { status: 403 });
   }
 
-  const url = new URL(req.url);
-  const code = url.searchParams.get("code");
-  const state = url.searchParams.get("state");
-
-  if (!code) {
-    return new Response("Missing authorization code", { status: 400 });
-  }
-
   try {
-    console.log("Received code:", code);
-    console.log("Received state (userId):", state);
+    console.log("Starting OAuth callback process");
+    console.log("Request URL:", req.url);
+    
+    const url = new URL(req.url);
+    const code = url.searchParams.get("code");
+    const state = url.searchParams.get("state");
 
-    const connectedAccountId = await exchangeCodeForToken(code);
-    console.log("Connected Account ID:", connectedAccountId);
+    console.log("Parsed parameters:", { code: "REDACTED", state });
 
-    if (!connectedAccountId) {
+    if (!code) {
+      console.error("Missing authorization code");
+      return new Response("Missing authorization code", { status: 400 });
+    }
+
+    console.log("Attempting to exchange code for token...");
+    const response = await stripe.oauth.token({
+      grant_type: "authorization_code",
+      code,
+    }).catch((error: Stripe.StripeError) => {
+      console.error("Stripe token exchange error:", error);
+      throw error;
+    });
+
+    console.log("Token exchange response:", {
+      success: !!response.stripe_user_id,
+      accountId: "REDACTED"
+    });
+
+    if (!response.stripe_user_id) {
       throw new Error("Failed to obtain connected account ID");
     }
 
+    const connectedAccountId = response.stripe_user_id;
+    console.log("Connected Account ID: REDACTED");
+
+    console.log("Updating user profile for state:", state);
     await updateUserProfile(state!, connectedAccountId);
     console.log("User profile updated successfully");
 
     const frontendUrl = Deno.env.get("FRONTEND_URL");
-    const successUrl = cleanUrl(frontendUrl, "profile") +
-      "?stripe_connected=true";
+    if (!frontendUrl) {
+      console.error("FRONTEND_URL not set");
+      throw new Error("FRONTEND_URL environment variable is not set");
+    }
+
+    const successUrl = `${cleanUrl(frontendUrl)}/profile?stripe_connected=true`;
     console.log("Redirecting to:", successUrl);
 
     return new Response(null, {
       status: 302,
-      headers: { ...corsHeaders(origin), "Location": successUrl },
+      headers: { 
+        ...corsHeaders(origin), 
+        "Location": successUrl,
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Pragma": "no-cache"
+      },
     });
   } catch (error: any) {
-    console.error("Error in Stripe OAuth callback:", error);
+    console.error("Detailed error in OAuth callback:", {
+      message: error.message,
+      stack: error.stack,
+      type: error.type,
+      raw: error
+    });
+    
     const frontendUrl = Deno.env.get("FRONTEND_URL");
-    const errorUrl = cleanUrl(frontendUrl, "profile") +
-      `?stripe_error=${encodeURIComponent(error.message)}`;
+    if (!frontendUrl) {
+      return new Response("FRONTEND_URL environment variable is not set", { 
+        status: 500,
+        headers: corsHeaders(origin)
+      });
+    }
+
+    const errorMessage = encodeURIComponent(
+      error.message || "An unexpected error occurred"
+    );
+    const errorUrl = `${cleanUrl(frontendUrl)}/profile?stripe_error=${errorMessage}`;
+    console.log("Redirecting to error URL:", errorUrl);
 
     return new Response(null, {
       status: 302,
-      headers: { ...corsHeaders(origin), "Location": errorUrl },
+      headers: { 
+        ...corsHeaders(origin), 
+        "Location": errorUrl,
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Pragma": "no-cache"
+      },
     });
   }
 });
