@@ -79,18 +79,16 @@ const createStripeCheckoutSession = async (tutorial: any, userId: string) => {
     return null;
   }
 
-  // Get the account's default application fee rate
   const account = await stripe.accounts.retrieve(
     tutorial.profiles.stripe_account_id,
   );
 
-  // Default to 15% if no specific rate is set
   const feePercentage = account.metadata?.default_application_fee_percent || 15;
   const applicationFeeAmount = Math.round(
     tutorial.price * 100 * (feePercentage / 100),
   );
 
-  const frontendUrl = Deno.env.get("FRONTEND_URL")?.replace(/\/$/, ""); // Remove trailing slash if present
+  const frontendUrl = Deno.env.get("FRONTEND_URL")?.replace(/\/$/, "");
 
   if (!frontendUrl) {
     throw new Error("Frontend URL not configured");
@@ -100,7 +98,7 @@ const createStripeCheckoutSession = async (tutorial: any, userId: string) => {
     payment_method_types: ["card"],
     line_items: [{ price: tutorial.stripe_price_id, quantity: 1 }],
     mode: "payment",
-    success_url: `${frontendUrl}/success?session_id={CHECKOUT_SESSION_ID}`, // No leading slash
+    success_url: `${frontendUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${frontendUrl}/marketplace`,
     metadata: {
       tutorial_id: tutorial.id,
@@ -113,7 +111,7 @@ const createStripeCheckoutSession = async (tutorial: any, userId: string) => {
       transfer_data: {
         destination: tutorial.profiles.stripe_account_id,
       },
-    },
+    }
   });
 
   return session.url;
