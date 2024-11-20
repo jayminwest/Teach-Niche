@@ -8,7 +8,7 @@ export const allowedOrigins = [
   "https://teach-niche.com",
   "https://www.teach-niche.com",
   "https://wcqpttujocyvueudlcnt.supabase.co", // Prod Supabase
-  "https://wfjxshbcjzngthjprdal.supabase.co", // Dev Supabase
+  "https://hqiywiwxmofnexohfaft.supabase.co", // Dev Supabase
 ];
 
 /**

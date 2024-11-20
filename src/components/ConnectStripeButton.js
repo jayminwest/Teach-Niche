@@ -12,6 +12,7 @@ const ConnectStripeButton = ({ onConnect, className }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [loadingState, setLoadingState] = useState("idle"); // idle, checking, connecting
   const { user, loading: authLoading, error: authError } = useAuth();
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -96,6 +97,7 @@ const ConnectStripeButton = ({ onConnect, className }) => {
       if (error) throw error;
 
       if (data?.url) {
+        localStorage.setItem('stripeConnecting', 'true');
         window.open(data.url, "_blank");
 
         const checkConnectionInterval = setInterval(async () => {
@@ -113,6 +115,7 @@ const ConnectStripeButton = ({ onConnect, className }) => {
 
           if (profileData.stripe_onboarding_complete) {
             clearInterval(checkConnectionInterval);
+            localStorage.removeItem('stripeConnecting');
             setIsConnected(true);
             onConnect();
           }
@@ -120,13 +123,16 @@ const ConnectStripeButton = ({ onConnect, className }) => {
 
         setTimeout(() => {
           clearInterval(checkConnectionInterval);
+          localStorage.removeItem('stripeConnecting');
         }, 300000);
       } else {
         throw new Error("No authorization URL received from server");
       }
     } catch (error) {
-      console.error("Error connecting to Stripe:", error);
-      alert(`Failed to connect to Stripe: ${error.message}`);
+      setError(error.message);
+      if (error.message.includes('Platform Controls')) {
+        setError('Please reconnect your Stripe account to enable additional features.');
+      }
     } finally {
       setLoadingState("idle");
     }

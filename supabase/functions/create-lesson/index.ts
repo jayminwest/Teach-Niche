@@ -142,6 +142,7 @@ serve(async (req) => {
     }
 
     // Create or update the lesson record
+    const now = new Date().toISOString();
     const lessonData = {
       title,
       description,
@@ -153,7 +154,8 @@ serve(async (req) => {
       stripe_price_id,
       status,
       vimeo_video_id,
-      published_at: status === "published" ? new Date().toISOString() : null,
+      created_at: now,
+      updated_at: now
     };
 
     const { data: lesson, error: lessonError } = await supabase
@@ -197,7 +199,7 @@ serve(async (req) => {
       stripe_product_id,
       stripe_price_id,
       status: lesson.status,
-      published_at: lesson.published_at,
+      created_at: lesson.created_at
     }, origin);
   } catch (error) {
     console.error("Error in create-lesson:", error);

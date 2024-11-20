@@ -26,6 +26,7 @@ const usePurchasedLessons = (sortOption) => {
               created_at, 
               thumbnail_url, 
               creator_id,
+              reviews!tutorial_id(rating),
               profiles (
                 full_name
               )
@@ -35,11 +36,21 @@ const usePurchasedLessons = (sortOption) => {
 
         if (error) throw error;
 
-        const formattedLessons = data.map(purchase => ({
-          ...purchase.tutorials,
-          purchaseDate: purchase.purchase_date,
-          creator_name: purchase.tutorials.profiles?.full_name
-        }));
+        const formattedLessons = data.map(purchase => {
+          const reviews = purchase.tutorials.reviews || [];
+          let averageRating = 0;
+          if (reviews.length > 0) {
+            const totalRating = reviews.reduce((acc, curr) => acc + (curr.rating || 0), 0);
+            averageRating = totalRating / reviews.length;
+          }
+
+          return {
+            ...purchase.tutorials,
+            purchaseDate: purchase.purchase_date,
+            creator_name: purchase.tutorials.profiles?.full_name,
+            averageRating
+          };
+        });
 
         // Apply sorting
         let sortedLessons = [...formattedLessons];
