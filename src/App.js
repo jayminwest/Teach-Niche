@@ -37,7 +37,7 @@ const BetaAlert = () => (
       />
       <span className="text-sm font-semibold">
         Welcome to Teach Niche! The site is currently in Beta, so please be
-        patient as the site improves.
+        patient as the site improves. If you have feedback, please DM @teachniche
       </span>
     </div>
   </div>
