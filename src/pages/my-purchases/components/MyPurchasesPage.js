@@ -42,6 +42,7 @@ const MyPurchasesPage = () => {
                     isPurchased={true}
                     purchaseDate={lesson.purchaseDate}
                     creatorName={lesson.creator_name || "Unknown Creator"}
+                    averageRating={lesson.averageRating}
                   />
                 </div>
               ))}
