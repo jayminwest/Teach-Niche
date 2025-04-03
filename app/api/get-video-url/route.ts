@@ -24,13 +24,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required parameter: lessonId" }, { status: 400 });
     }
     
-    // If videoPath is not provided, try to get it from the lesson metadata
+    // If videoPath is not provided, try to get it from the lesson's video_url field
     let finalVideoPath = videoPath;
     if (!finalVideoPath) {
-      // Fetch the lesson to get the video path from metadata
+      // Fetch the lesson to get the video path from video_url
       const { data: lesson, error: lessonError } = await supabase
         .from("lessons")
-        .select("metadata")
+        .select("video_url")
         .eq("id", lessonId)
         .single();
       
@@ -39,11 +39,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Error fetching lesson" }, { status: 500 });
       }
       
-      if (!lesson?.metadata?.video_path) {
+      if (!lesson?.video_url) {
         return NextResponse.json({ error: "Video path not found for this lesson" }, { status: 404 });
       }
       
-      finalVideoPath = lesson.metadata.video_path;
+      finalVideoPath = lesson.video_url;
     }
     
     // Verify the user has purchased this lesson

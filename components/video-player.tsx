@@ -118,10 +118,10 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
     }
   };
 
-  // Function to fetch video path from lesson metadata if needed
+  // Function to fetch video path from lesson video_url if needed
   const fetchVideoPathFromLesson = async (): Promise<string | null> => {
     try {
-      const response = await fetch(`/api/lessons/${lessonId}/metadata`);
+      const response = await fetch(`/api/lessons/${lessonId}/video-url`);
       if (!response.ok) return null;
       
       const data = await response.json();
