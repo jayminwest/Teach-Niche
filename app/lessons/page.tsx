@@ -2,7 +2,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { LessonCard } from "@/components/lesson-card"
 
 export default async function LessonsPage() {
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
 
   // Get the current session
   const {
