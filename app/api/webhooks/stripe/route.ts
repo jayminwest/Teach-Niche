@@ -43,18 +43,30 @@ export async function POST(request: NextRequest) {
         
         if (lessonId) {
           // This is a lesson purchase
+          // First check if the purchases table has a video_id column with a not-null constraint
+          const { data: columnInfo } = await supabase.rpc('column_exists', {
+            table_name: 'purchases',
+            column_name: 'video_id'
+          })
+          
+          const purchaseData = {
+            user_id: userId,
+            lesson_id: lessonId,
+            stripe_payment_id: session.id,
+            amount: amount,
+            instructor_payout_amount: instructorAmount,
+            stripe_product_id: session.metadata?.productId,
+            stripe_price_id: session.metadata?.priceId,
+          }
+          
+          // Only add video_id if the column exists
+          if (columnInfo) {
+            purchaseData['video_id'] = null
+          }
+          
           const { error: purchaseError } = await supabase
             .from("purchases")
-            .insert({
-              user_id: userId,
-              lesson_id: lessonId,
-              video_id: null, // Explicitly set video_id to null
-              stripe_payment_id: session.id,
-              amount: amount,
-              instructor_payout_amount: instructorAmount,
-              stripe_product_id: session.metadata?.productId,
-              stripe_price_id: session.metadata?.priceId,
-            })
+            .insert(purchaseData)
           
           if (purchaseError) {
             console.error("Error recording lesson purchase:", purchaseError)

@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS public.purchases (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL,
     lesson_id UUID,
-    video_id UUID NULL,
+    video_id UUID,
     stripe_payment_id VARCHAR NOT NULL,
     stripe_product_id VARCHAR,
     stripe_price_id VARCHAR,
@@ -87,6 +87,21 @@ CREATE TABLE IF NOT EXISTS public.purchases (
     created_at TIMESTAMPTZ DEFAULT now(),
     FOREIGN KEY (lesson_id) REFERENCES public.lessons(id)
 );
+
+-- Alter video_id column to be nullable if it exists and has a not-null constraint
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' 
+        AND table_name = 'purchases' 
+        AND column_name = 'video_id' 
+        AND is_nullable = 'NO'
+    ) THEN
+        ALTER TABLE public.purchases ALTER COLUMN video_id DROP NOT NULL;
+    END IF;
+END
+$$;
 
 -- Create view for user purchased lessons
 CREATE OR REPLACE VIEW public.user_purchased_lessons AS
