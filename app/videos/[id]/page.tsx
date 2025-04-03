@@ -10,12 +10,10 @@ import { notFound } from "next/navigation"
 import VideoCheckoutButton from "@/components/video-checkout-button"
 import { format } from "date-fns"
 
-// Define props inline for the Page component
+// Define props inline for the Page component - using any for diagnosis
 export default async function VideoDetail({ 
   params 
-}: { 
-  params: { id: string }; 
-}) {
+}: any) {
   const supabase = createServerClient()
 
   // Get the current session

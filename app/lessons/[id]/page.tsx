@@ -20,14 +20,11 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 }
 
-// Define props inline for the Page component
+// Define props inline for the Page component - using any for diagnosis
 export default async function LessonDetail({ 
   params, 
   searchParams 
-}: { 
-  params: { id: string }; 
-  searchParams: { [key: string]: string | string[] | undefined }; 
-}) {
+}: any) {
   const supabase = createServerClient()
   
   // Store the ID in a variable to avoid direct property access on params
