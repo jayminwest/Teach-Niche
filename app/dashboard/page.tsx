@@ -55,7 +55,7 @@ export default async function Dashboard() {
   }
 
   // Fetch child lessons (videos) for counting
-  let childLessons = [];
+  let childLessons: Lesson[] = []; // Explicitly type as Lesson[]
   try {
     // First check if parent_lesson_id column exists
     const { error: columnCheckError } = await supabase.rpc('column_exists', { 
