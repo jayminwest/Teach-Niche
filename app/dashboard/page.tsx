@@ -11,6 +11,12 @@ import { AlertTriangle, CheckCircle, ExternalLink, XCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Lesson } from "@/types/supabase" // Import the Lesson type
 
+// Define a type for the selected purchase data
+interface PurchaseSummary {
+  amount: number | null; // Adjust type based on your schema, assuming number
+  instructor_payout_amount: number | null; // Adjust type based on your schema, assuming number
+}
+
 export default async function Dashboard() {
   const supabase = createServerComponentClient({ cookies })
 
@@ -48,7 +54,7 @@ export default async function Dashboard() {
   console.log("Lessons found:", lessons?.length || 0);
   
   // Calculate total earnings
-  let purchases = [];
+  let purchases: PurchaseSummary[] = []; // Explicitly type as PurchaseSummary[]
   try {
     // Get IDs only from the fetched lessons
     const lessonIds = lessons.map(lesson => lesson.id).filter(Boolean);
