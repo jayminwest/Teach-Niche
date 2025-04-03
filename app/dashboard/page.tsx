@@ -9,6 +9,7 @@ import { format } from "date-fns"
 import Image from "next/image"
 import { AlertTriangle, CheckCircle, ExternalLink, XCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Lesson } from "@/types/supabase" // Import the Lesson type
 
 export default async function Dashboard() {
   const supabase = createServerComponentClient({ cookies })
