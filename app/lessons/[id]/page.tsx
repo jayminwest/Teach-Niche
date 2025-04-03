@@ -116,8 +116,6 @@ export default async function LessonDetail({
             <span>Instructor: {instructorEmail}</span>
             <span>•</span>
             <span>Created on {createdDate}</span>
-            <span>•</span>
-            <span>{videos?.length || 0} videos</span>
           </div>
         </div>
         <div className="flex items-center gap-4">
