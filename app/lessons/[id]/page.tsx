@@ -150,34 +150,38 @@ export default async function LessonDetail({
 
   return (
     <div className="container py-8">
-      <div className="mb-6 p-4 border rounded-lg flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">{lesson.title}</h1>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-            <span>Instructor: {instructorName}</span>
-            <span>•</span>
-            <span>Created on {createdDate}</span>
+      <div className="mb-6 p-4 border rounded-lg">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">{lesson.title}</h1>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mt-1">
+              <span>Instructor: {instructorName}</span>
+              <span className="hidden md:inline">•</span>
+              <span>Created on {createdDate}</span>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <p className="text-2xl font-bold">{formatPrice(lesson.price)}</p>
-          
-          {!user ? (
-            <Button asChild>
-              <Link href={`/auth/sign-in?redirectedFrom=/lessons/${lesson.id}`}>Sign in to purchase</Link>
-            </Button>
-          ) : isInstructor ? (
-            <div className="px-3 py-2 bg-muted rounded-md text-sm">
-              <p>This is your lesson</p>
-            </div>
-          ) : hasPurchased ? (
-            <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-md">
-              <CheckCircle className="h-4 w-4 text-green-500" />
-              <p className="text-sm">You own this lesson</p>
-            </div>
-          ) : (
-            <LessonCheckoutButton lessonId={lesson.id} price={lesson.price} title={lesson.title} />
-          )}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <p className="text-2xl font-bold">{formatPrice(lesson.price)}</p>
+            
+            {!user ? (
+              <Button asChild className="w-full sm:w-auto">
+                <Link href={`/auth/sign-in?redirectedFrom=/lessons/${lesson.id}`}>Sign in to purchase</Link>
+              </Button>
+            ) : isInstructor ? (
+              <div className="px-3 py-2 bg-muted rounded-md text-sm w-full sm:w-auto text-center">
+                <p>This is your lesson</p>
+              </div>
+            ) : hasPurchased ? (
+              <div className="flex items-center justify-center gap-2 px-3 py-2 bg-muted rounded-md w-full sm:w-auto">
+                <CheckCircle className="h-4 w-4 text-green-500" />
+                <p className="text-sm">You own this lesson</p>
+              </div>
+            ) : (
+              <div className="w-full sm:w-auto">
+                <LessonCheckoutButton lessonId={lesson.id} price={lesson.price} title={lesson.title} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
