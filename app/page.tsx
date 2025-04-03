@@ -6,7 +6,7 @@ import { LessonCard } from "@/components/lesson-card"
 import { formatPrice } from "@/lib/utils"
 
 export default async function Home() {
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
 
   // Fetch a few recent videos for the homepage
   const { data: videos } = await supabase.from("videos").select("*").order("created_at", { ascending: false }).limit(3)
