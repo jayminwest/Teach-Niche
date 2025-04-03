@@ -1,17 +1,31 @@
 "use client"
 
 import type React from "react"
+import { Suspense } from "react"
+import { Card } from "@/components/ui/card"
 
+// Main page component
+export default function ResetPassword() {
+  return (
+    <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] py-8">
+      <Suspense fallback={<Card className="w-full max-w-md p-6">Loading...</Card>}>
+        <ResetPasswordForm />
+      </Suspense>
+    </div>
+  )
+}
+
+// Client component that uses useSearchParams
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast"
 
-export default function ResetPassword() {
+function ResetPasswordForm() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -88,48 +102,46 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Set New Password</CardTitle>
-          <CardDescription>Create a new password for your account</CardDescription>
-        </CardHeader>
-        <form onSubmit={handlePasswordReset}>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <p className="text-xs text-muted-foreground">Password must be at least 8 characters long</p>
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <CardTitle>Set New Password</CardTitle>
+        <CardDescription>Create a new password for your account</CardDescription>
+      </CardHeader>
+      <form onSubmit={handlePasswordReset}>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="password">New Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <p className="text-xs text-muted-foreground">Password must be at least 8 characters long</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+          </div>
+          {error && (
+            <div className="text-sm text-red-500">
+              {error}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-            </div>
-            {error && (
-              <div className="text-sm text-red-500">
-                {error}
-              </div>
-            )}
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full" type="submit" disabled={loading}>
-              {loading ? "Updating..." : "Reset Password"}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+          )}
+        </CardContent>
+        <CardFooter>
+          <Button className="w-full" type="submit" disabled={loading}>
+            {loading ? "Updating..." : "Reset Password"}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
   )
 }
