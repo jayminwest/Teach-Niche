@@ -24,10 +24,10 @@ import { format } from "date-fns"
 function ManageLesson() {
   const params = useParams<{ id: string }>() // Use the hook to get params
   const [lesson, setLesson] = useState<any>(null)
-  const [videos, setVideos] = useState<any[]>([])
+  // const [videos, setVideos] = useState<any[]>([]) // Removed videos state
   const [loading, setLoading] = useState(true)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [deletingVideo, setDeletingVideo] = useState<any>(null)
+  // const [deleteDialogOpen, setDeleteDialogOpen] = useState(false) // Removed video delete dialog state
+  // const [deletingVideo, setDeletingVideo] = useState<any>(null) // Removed deleting video state
   const [deletingLesson, setDeletingLesson] = useState(false)
   const [deleteLessonDialogOpen, setDeleteLessonDialogOpen] = useState(false)
   const { toast } = useToast()
@@ -78,18 +78,8 @@ function ManageLesson() {
 
         setLesson(lessonData)
 
-        // Fetch child lessons (videos) in this lesson
-        const { data: videosData, error: videosError } = await supabase
-          .from("lessons")
-          .select("*")
-          .eq("parent_lesson_id", params.id)
-          .order("created_at", { ascending: true })
-
-        if (videosError) {
-          console.error("Error fetching videos:", videosError)
-        } else {
-          setVideos(videosData || [])
-        }
+        // Removed fetching child lessons (videos)
+        
       } catch (error: any) {
         toast({
           variant: "destructive",
@@ -104,45 +94,15 @@ function ManageLesson() {
     fetchLessonData()
   }, [supabase, params.id, router, toast])
 
-  const handleRemoveVideo = async (videoId: string) => {
-    try {
-      // Update the child lesson to remove its parent (making it standalone)
-      const { error } = await supabase.from("lessons").update({ parent_lesson_id: null }).eq("id", videoId)
-
-      if (error) throw error
-
-      // Update local state
-      setVideos(videos.filter((video) => video.id !== videoId))
-
-      toast({
-        title: "Success",
-        description: "Video removed from lesson",
-      })
-
-      setDeleteDialogOpen(false)
-      setDeletingVideo(null)
-    } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to remove video from lesson",
-      })
-    }
-  }
+  // Removed handleRemoveVideo function
 
   const handleDeleteLesson = async () => {
     try {
       setDeletingLesson(true)
 
-      // First, remove parent_lesson_id from all child lessons
-      const { error: videosError } = await supabase
-        .from("lessons")
-        .update({ parent_lesson_id: null })
-        .eq("parent_lesson_id", params.id)
+      // No need to update child lessons anymore
 
-      if (videosError) throw videosError
-
-      // Then delete the lesson
+      // Delete the lesson directly
       const { error: lessonError } = await supabase.from("lessons").delete().eq("id", params.id)
 
       if (lessonError) throw lessonError
@@ -237,9 +197,10 @@ function ManageLesson() {
                   <span>{format(new Date(lesson.created_at), "MMM d, yyyy")}</span>
                 </div>
                 <div className="flex justify-between py-1">
-                  <span className="text-muted-foreground">Videos:</span>
-                  <span>{videos.length}</span>
+                  <span className="text-muted-foreground">Created:</span>
+                  <span>{format(new Date(lesson.created_at), "MMM d, yyyy")}</span>
                 </div>
+                {/* Removed Videos count */}
               </div>
             </CardContent>
             <CardFooter>
@@ -250,126 +211,12 @@ function ManageLesson() {
           </Card>
         </div>
 
-        <div className="md:col-span-2">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Videos in this Lesson</CardTitle>
-                <CardDescription>Manage the videos included in this lesson</CardDescription>
-              </div>
-              <Button asChild>
-                <Link href={`/dashboard/upload?lessonId=${params.id}`}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Upload New Video
-                </Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {videos.length > 0 ? (
-                <div className="space-y-4">
-                  {videos.map((video) => (
-                    <div key={video.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                      <div className="h-16 w-28 relative rounded overflow-hidden flex-shrink-0">
-                        <Image
-                          src={video.thumbnail_url || "/placeholder.svg?height=100&width=160"}
-                          alt={video.title}
-                          fill
-                          className="object-cover"
-                          sizes="112px"
-                        />
-                      </div>
-                      <div className="flex-grow">
-                        <h3 className="font-medium">{video.title}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-1">
-                          {video.description || "No description"}
-                        </p>
-                        <p className="text-sm mt-1">{formatPrice(video.price)}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/videos/${video.id}`}>
-                            <Eye className="h-4 w-4" />
-                            <span className="sr-only">View</span>
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => {
-                            setDeletingVideo(video)
-                            setDeleteDialogOpen(true)
-                          }}
-                        >
-                          <Trash className="h-4 w-4" />
-                          <span className="sr-only">Remove</span>
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 border rounded-lg bg-muted/20">
-                  <h3 className="text-xl font-semibold mb-2">No videos in this lesson yet</h3>
-                  <p className="text-muted-foreground mb-6">Upload videos or add existing ones to this lesson</p>
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Button asChild>
-                      <Link href={`/dashboard/upload?lessonId=${params.id}`}>Upload New Video</Link>
-                    </Button>
-                    <Button variant="outline" asChild>
-                      <Link href="/dashboard/add-videos-to-lesson">Add Existing Videos</Link>
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" asChild>
-                <Link href="/dashboard/add-videos-to-lesson">Add Existing Videos</Link>
-              </Button>
-              <Button asChild>
-                <Link href={`/dashboard/upload?lessonId=${params.id}`}>Upload New Video</Link>
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
+        {/* Removed the entire "Videos in this Lesson" Card */}
+        
       </div>
 
-      {/* Dialog for removing a video from the lesson */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Remove Video from Lesson</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to remove this video from the lesson? The video will still exist in your account,
-              but it will no longer be part of this lesson.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center gap-4 p-4 border rounded-lg">
-            <div className="h-16 w-28 relative rounded overflow-hidden flex-shrink-0">
-              <Image
-                src={deletingVideo?.thumbnail_url || "/placeholder.svg?height=100&width=160"}
-                alt={deletingVideo?.title || "Video"}
-                fill
-                className="object-cover"
-                sizes="112px"
-              />
-            </div>
-            <div>
-              <h3 className="font-medium">{deletingVideo?.title}</h3>
-              <p className="text-sm text-muted-foreground">{formatPrice(deletingVideo?.price || 0)}</p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={() => deletingVideo && handleRemoveVideo(deletingVideo.id)}>
-              Remove Video
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
+      {/* Removed Dialog for removing a video from the lesson */}
+      
       {/* Dialog for deleting the lesson */}
       <Dialog open={deleteLessonDialogOpen} onOpenChange={setDeleteLessonDialogOpen}>
         <DialogContent>
@@ -382,7 +229,8 @@ function ManageLesson() {
           </DialogHeader>
           <div className="p-4 border rounded-lg bg-destructive/10">
             <h3 className="font-medium">{lesson?.title}</h3>
-            <p className="text-sm text-muted-foreground mt-1">{videos.length} videos in this lesson</p>
+            {/* Removed video count from delete dialog */}
+            <p className="text-sm text-muted-foreground mt-1">This action cannot be undone.</p> 
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteLessonDialogOpen(false)} disabled={deletingLesson}>
