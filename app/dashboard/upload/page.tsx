@@ -588,13 +588,15 @@ export default function UploadContent() {
             <div className="space-y-2">
               <Label htmlFor="video">Video File</Label>
               <div className="border rounded-md p-4">
-                {previewUrl ? (
+                {/* Explicitly check for videoFile as well */}
+                {previewUrl && videoFile ? ( 
                   <div className="space-y-4">
                     <div className="aspect-video bg-muted rounded-md overflow-hidden">
                       <video ref={videoRef} src={previewUrl} className="w-full h-full object-contain" controls />
                     </div>
                     <p className="text-sm">
-                      {videoFile?.name} ({(videoFile?.size / (1024 * 1024)).toFixed(2)} MB)
+                      {/* Remove optional chaining as videoFile is guaranteed here */}
+                      {videoFile.name} ({(videoFile.size / (1024 * 1024)).toFixed(2)} MB) 
                     </p>
                     <Button
                       type="button"
