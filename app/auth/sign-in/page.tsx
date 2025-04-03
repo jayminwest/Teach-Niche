@@ -11,11 +11,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function SignIn() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirectedFrom") || "/"
@@ -25,6 +27,7 @@ export default function SignIn() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setAuthError(null) // Clear previous errors
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
@@ -43,6 +46,9 @@ export default function SignIn() {
       router.push(redirectTo)
       router.refresh()
     } catch (error: any) {
+      // Set the auth error message
+      setAuthError(error.message || "Invalid email or password")
+      
       toast({
         variant: "destructive",
         title: "Error",
@@ -62,6 +68,12 @@ export default function SignIn() {
         </CardHeader>
         <form onSubmit={handleSignIn}>
           <CardContent className="space-y-4">
+            {/* Display auth error if present */}
+            {authError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{authError}</AlertDescription>
+              </Alert>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -71,6 +83,7 @@ export default function SignIn() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className={authError ? "border-destructive" : ""}
               />
             </div>
             <div className="space-y-2">
@@ -83,6 +96,7 @@ export default function SignIn() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className={authError ? "border-destructive" : ""}
               />
             </div>
           </CardContent>
