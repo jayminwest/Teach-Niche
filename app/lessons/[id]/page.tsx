@@ -11,6 +11,7 @@ import { format } from "date-fns"
 
 export default async function LessonDetail({ params }: { params: { id: string } }) {
   const supabase = createServerClient()
+  const lessonId = params.id
 
   // Get the current session
   const {
@@ -19,7 +20,7 @@ export default async function LessonDetail({ params }: { params: { id: string } 
   const user = session?.user || null
 
   // Fetch the lesson without trying to join with instructor_id
-  const { data: lesson, error } = await supabase.from("lessons").select("*").eq("id", params.id).single()
+  const { data: lesson, error } = await supabase.from("lessons").select("*").eq("id", lessonId).single()
   
   if (error || !lesson) {
     console.error("Error fetching lesson:", error)
@@ -39,7 +40,7 @@ export default async function LessonDetail({ params }: { params: { id: string } 
 
   // Fetch instructor information separately if needed
   let instructorEmail = "Instructor"
-  if (lesson.instructor_id) {
+  if (lesson?.instructor_id) {
     const { data: instructorData } = await supabase
       .from("users")
       .select("email")
@@ -61,7 +62,7 @@ export default async function LessonDetail({ params }: { params: { id: string } 
   let { data: videos } = await supabase
     .from("lessons")
     .select("*")
-    .eq("parent_lesson_id", lesson.id)
+    .eq("parent_lesson_id", lessonId)
     .order("created_at", { ascending: true })
   
   // If no videos found in the lessons table, try the videos table (for backward compatibility)
@@ -69,7 +70,7 @@ export default async function LessonDetail({ params }: { params: { id: string } 
     const { data: legacyVideos } = await supabase
       .from("videos")
       .select("*")
-      .eq("lesson_id", lesson.id)
+      .eq("lesson_id", lessonId)
       .order("created_at", { ascending: true })
     
     videos = legacyVideos;
@@ -82,7 +83,7 @@ export default async function LessonDetail({ params }: { params: { id: string } 
       .from("purchases")
       .select("id")
       .eq("user_id", user.id)
-      .eq("lesson_id", lesson.id)
+      .eq("lesson_id", lessonId)
       .maybeSingle()
 
     if (purchaseError) {
