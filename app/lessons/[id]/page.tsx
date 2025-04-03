@@ -10,8 +10,9 @@ import LessonCheckoutButton from "@/components/lesson-checkout-button"
 import { format } from "date-fns"
 
 export default async function LessonDetail({ params }: { params: { id: string } }) {
+  // Properly handle the dynamic params by awaiting them
+  const lessonId = await Promise.resolve(params.id)
   const supabase = createServerClient()
-  const lessonId = params.id
 
   // Get the current session
   const {
