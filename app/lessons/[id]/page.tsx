@@ -9,12 +9,10 @@ import { notFound } from "next/navigation"
 import LessonCheckoutButton from "@/components/lesson-checkout-button"
 import { format } from "date-fns"
 
-import type { Params } from "next/navigation"
-
 export default async function LessonDetail({ 
   params 
 }: { 
-  params: Params
+  params: { id: string }
 }) {
   const supabase = createServerClient()
   
