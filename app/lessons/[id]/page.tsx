@@ -47,21 +47,28 @@ export default async function LessonDetail({
   }
 
   // Fetch instructor information separately if needed
-  let instructorEmail = "Instructor"
+  let instructorName = "Instructor"
   if (lesson?.instructor_id) {
-    const { data: instructorData } = await supabase
-      .from("users")
-      .select("email")
-      .eq("id", lesson.instructor_id)
+    // Try to get instructor profile first
+    const { data: instructorProfile } = await supabase
+      .from("instructor_profiles")
+      .select("*")
+      .eq("user_id", lesson.instructor_id)
       .single()
-
-    if (instructorData) {
-      instructorEmail = instructorData.email
-    } else {
-      // Fallback to auth.users if there's no users table
-      const { data: authUser } = await supabase.auth.admin.getUserById(lesson.instructor_id)
-      if (authUser?.user) {
-        instructorEmail = authUser.user.email || "Instructor"
+    
+    // Then try to get user data from auth
+    const { data: authUser } = await supabase.auth.admin.getUserById(lesson.instructor_id)
+    
+    if (authUser?.user) {
+      // Extract name from email if available (before the @ symbol)
+      if (authUser.user.email) {
+        const emailParts = authUser.user.email.split('@');
+        instructorName = emailParts[0].charAt(0).toUpperCase() + emailParts[0].slice(1);
+      }
+      
+      // Use user metadata name if available
+      if (authUser.user.user_metadata?.full_name) {
+        instructorName = authUser.user.user_metadata.full_name;
       }
     }
   }
@@ -113,7 +120,7 @@ export default async function LessonDetail({
         <div>
           <h1 className="text-2xl font-bold">{lesson.title}</h1>
           <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-            <span>Instructor: {instructorEmail}</span>
+            <span>Instructor: {instructorName}</span>
             <span>•</span>
             <span>Created on {createdDate}</span>
           </div>
