@@ -36,10 +36,11 @@ const nextConfig = {
       config.plugins.push(new MiniCssExtractPlugin());
       
       // Ensure react-server-dom-webpack is resolved
-      const moduleResolver = await import('module');
+      const path = await import('path');
+      const require = (await import('module')).createRequire(import.meta.url);
       config.resolve.alias = {
         ...config.resolve.alias,
-        'react-server-dom-webpack/client': moduleResolver.resolve('react-server-dom-webpack/client')
+        'react-server-dom-webpack/client': require.resolve('react-server-dom-webpack/client')
       };
     }
     return config;
