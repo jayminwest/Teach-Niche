@@ -9,10 +9,15 @@ import { notFound } from "next/navigation"
 import LessonCheckoutButton from "@/components/lesson-checkout-button"
 import { format } from "date-fns"
 
-export default async function LessonDetail({ params }: { params: { id: string } }) {
-  // Properly handle the dynamic params by awaiting them
-  const lessonId = await Promise.resolve(params.id)
+export default async function LessonDetail({ 
+  params 
+}: { 
+  params: { id: string } 
+}) {
   const supabase = createServerClient()
+  
+  // Extract the ID directly from params object without accessing it as a property
+  const { id: lessonId } = params
 
   // Get the current session
   const {
@@ -28,15 +33,17 @@ export default async function LessonDetail({ params }: { params: { id: string } 
     notFound()
   }
   
-  // If the lesson has a video URL, refresh it to ensure it's not expired
-  try {
-    if (lesson?.video_url) {
+  // Only try to refresh the video URL if it exists and is a valid URL
+  if (lesson?.video_url && typeof lesson.video_url === 'string' && lesson.video_url.startsWith('http')) {
+    try {
       const refreshedUrl = await refreshVideoUrl(lesson.video_url);
-      lesson.video_url = refreshedUrl;
+      if (refreshedUrl) {
+        lesson.video_url = refreshedUrl;
+      }
+    } catch (refreshError) {
+      console.error("Error refreshing lesson video URL:", refreshError);
+      // Keep the original URL if refresh fails
     }
-  } catch (refreshError) {
-    console.error("Error refreshing lesson video URL:", refreshError);
-    // Keep the original URL if refresh fails
   }
 
   // Fetch instructor information separately if needed
