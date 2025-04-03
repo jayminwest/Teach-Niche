@@ -12,7 +12,11 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Teach Niche | Kendama Tutorial Platform",
   description: "A platform for kendama instructors to share tutorial videos and for students to learn",
-  generator: 'v0.dev'
+  generator: 'v0.dev',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+  }
 }
 
 export default function RootLayout({
