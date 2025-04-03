@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,14 +14,9 @@ import { useToast } from "@/components/ui/use-toast"
 import { ArrowLeft, Loader2, Upload } from "lucide-react"
 import Link from "next/link"
 
-type Props = {
-  params: {
-    id: string
-  }
-}
-
-export default function EditLesson(props: Props) {
-  const { params } = props
+export default function EditLesson() {
+  const params = useParams()
+  const lessonId = params.id as string
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [price, setPrice] = useState("")
@@ -49,7 +44,7 @@ export default function EditLesson(props: Props) {
         }
 
         // Fetch the lesson
-        const { data: lesson, error } = await supabase.from("lessons").select("*").eq("id", params.id).single()
+        const { data: lesson, error } = await supabase.from("lessons").select("*").eq("id", lessonId).single()
 
         if (error || !lesson) {
           toast({
@@ -171,7 +166,7 @@ export default function EditLesson(props: Props) {
           thumbnail_url: thumbnailUrl,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", params.id)
+        .eq("id", lessonId)
 
       if (dbError) throw dbError
 
@@ -181,7 +176,7 @@ export default function EditLesson(props: Props) {
       })
 
       // Redirect to lesson management page
-      router.push(`/dashboard/lessons/${params.id}`)
+      router.push(`/dashboard/lessons/${lessonId}`)
       router.refresh()
     } catch (error: any) {
       toast({
@@ -209,7 +204,7 @@ export default function EditLesson(props: Props) {
     <div className="container max-w-3xl py-8">
       <div className="flex items-center gap-4 mb-8">
         <Button variant="outline" size="icon" asChild>
-          <Link href={`/dashboard/lessons/${params.id}`}>
+          <Link href={`/dashboard/lessons/${lessonId}`}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
@@ -316,7 +311,7 @@ export default function EditLesson(props: Props) {
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button type="button" variant="outline" asChild>
-              <Link href={`/dashboard/lessons/${params.id}`}>Cancel</Link>
+              <Link href={`/dashboard/lessons/${lessonId}`}>Cancel</Link>
             </Button>
             <Button type="submit" disabled={saving}>
               {saving ? (
