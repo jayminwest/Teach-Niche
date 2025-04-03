@@ -2,15 +2,9 @@ import Image from "next/image"
 import Link from "next/link"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { VideoCardProps } from "@/types/components"
 
-interface VideoCardProps {
-  id: string
-  title: string
-  thumbnailUrl: string
-  price: string
-}
-
-export function VideoCard({ id, title, thumbnailUrl, price }: VideoCardProps) {
+export function VideoCard({ id, title, thumbnailUrl, videoUrl, price }: VideoCardProps) {
   return (
     <Card className="overflow-hidden">
       <div className="aspect-video overflow-hidden relative">
@@ -26,7 +20,7 @@ export function VideoCard({ id, title, thumbnailUrl, price }: VideoCardProps) {
         <CardTitle className="line-clamp-1 text-lg">{title}</CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0 flex justify-between items-center">
-        <p className="font-medium text-lg">{price}</p>
+        <p className="font-medium text-lg">${price.toFixed(2)}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <Button asChild className="w-full">
@@ -36,4 +30,3 @@ export function VideoCard({ id, title, thumbnailUrl, price }: VideoCardProps) {
     </Card>
   )
 }
-
