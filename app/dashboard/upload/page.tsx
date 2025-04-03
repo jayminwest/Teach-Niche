@@ -314,17 +314,23 @@ export default function UploadContent() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create Stripe product");
+        const errorData = await response.text();
+        console.error("Stripe product creation error:", errorData);
+        throw new Error(`Failed to create Stripe product: ${response.status} ${errorData}`);
       }
 
       const { productId, priceId } = await response.json();
+      
+      if (!productId || !priceId) {
+        throw new Error("Invalid response from Stripe product creation");
+      }
 
       // 4. Create content in database
       if (isLesson) {
         // Create a parent lesson
         const { error: lessonError } = await supabase
           .from("lessons")
-          .insert({
+          .insert([{
             title,
             description,
             price: Number.parseFloat(price),
@@ -333,9 +339,12 @@ export default function UploadContent() {
             video_url: publicVideoUrl.publicUrl,
             stripe_product_id: productId,
             stripe_price_id: priceId,
-          })
+          }])
 
-        if (lessonError) throw lessonError
+        if (lessonError) {
+          console.error("Lesson insert error:", lessonError);
+          throw new Error(`Failed to create lesson: ${lessonError.message}`);
+        }
 
         toast({
           title: "Success",
@@ -355,7 +364,10 @@ export default function UploadContent() {
           stripe_price_id: priceId,
         }])
 
-        if (videoDbError) throw videoDbError
+        if (videoDbError) {
+          console.error("Video insert error:", videoDbError);
+          throw new Error(`Failed to add video to lesson: ${videoDbError.message}`);
+        }
 
         toast({
           title: "Success",
@@ -374,7 +386,10 @@ export default function UploadContent() {
           stripe_price_id: priceId,
         }])
 
-        if (dbError) throw dbError
+        if (dbError) {
+          console.error("Lesson insert error:", dbError);
+          throw new Error(`Failed to create lesson: ${dbError.message}`);
+        }
 
         toast({
           title: "Success",
@@ -390,6 +405,7 @@ export default function UploadContent() {
       }
       router.refresh()
     } catch (error: any) {
+      console.error("Upload error:", error);
       toast({
         variant: "destructive",
         title: "Error",
