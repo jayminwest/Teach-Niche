@@ -1,4 +1,3 @@
-
 import { createServerClient } from "@/lib/supabase/server"
 import { formatPrice } from "@/lib/utils"
 import { refreshVideoUrlServer } from "@/lib/supabase/server-utils"
@@ -9,6 +8,7 @@ import Image from "next/image"
 import { notFound } from "next/navigation"
 import VideoCheckoutButton from "@/components/video-checkout-button"
 import { format } from "date-fns"
+import SecureVideoPlayer from "@/components/secure-video-player"
 
 // Define props inline for the Page component - using any for diagnosis
 export default async function VideoDetail({ 
@@ -137,11 +137,10 @@ export default async function VideoDetail({
         <div className="col-span-3">
           <div className="aspect-video mb-4 relative rounded-lg overflow-hidden border">
             {(hasPurchased || isInstructor) && video.video_url ? (
-              <video 
-                src={video.video_url} 
-                controls 
-                className="w-full h-full object-contain"
-                poster={video.thumbnail_url || "/placeholder.svg?height=300&width=500"}
+              <SecureVideoPlayer
+                initialVideoUrl={video.video_url}
+                lessonId={video.id}
+                thumbnailUrl={video.thumbnail_url || "/placeholder.svg?height=300&width=500"}
               />
             ) : (
               <>
