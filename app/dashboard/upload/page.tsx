@@ -322,8 +322,7 @@ export default function UploadContent() {
         }
       }
 
-      // Store the video path instead of a signed URL
-      const videoPath = `${user.id}/${videoFileName}`
+      // Video path is already defined above
 
       // 3. Create Stripe product and price for the lesson
       const priceInCents = Math.round(Number.parseFloat(price) * 100);
