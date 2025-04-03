@@ -48,6 +48,7 @@ export async function POST(request: NextRequest) {
             .insert({
               user_id: userId,
               lesson_id: lessonId,
+              video_id: null, // Explicitly set video_id to null
               stripe_payment_id: session.id,
               amount: amount,
               instructor_payout_amount: instructorAmount,

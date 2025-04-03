@@ -80,6 +80,7 @@ export async function GET(request: NextRequest) {
       .insert({
         user_id: session.user.id,
         lesson_id: lessonId,
+        video_id: null, // Explicitly set video_id to null
         stripe_payment_id: checkoutSession.id,
         amount: checkoutSession.amount_total ? checkoutSession.amount_total / 100 : 0,
         stripe_product_id: checkoutSession.metadata?.productId,
