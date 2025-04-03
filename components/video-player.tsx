@@ -20,14 +20,16 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
   const [hasRefreshed, setHasRefreshed] = useState(false);
   const refreshAttempts = useRef(0);
   
-  // Use a ref to track if the component is mounted
+  // Use a ref to track if the component is mounted and a refresh is in progress
   const isMounted = useRef(false);
+  const isRefreshing = useRef(false);
   
   // Refresh the URL when the component mounts
   useEffect(() => {
     // Prevent multiple refreshes on the same render cycle
-    if (isMounted.current) return;
+    if (isMounted.current || isRefreshing.current) return;
     isMounted.current = true;
+    isRefreshing.current = true;
     
     const refreshUrl = async () => {
       try {
@@ -93,10 +95,12 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
         }
         
         setIsLoading(false);
+        isRefreshing.current = false;
       } catch (err) {
         console.error("Error in refreshUrl:", err);
         setError("Failed to load video. Please try again.");
         setIsLoading(false);
+        isRefreshing.current = false;
       }
     };
     
@@ -207,7 +211,11 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
       // If the URL contains the lesson ID as a prefix (common format in your DB)
       // Example: "4af4cd08-26b3-44be-9584-53bdd36e7e0c/1743721526247-cloud_bounce_lesson (1080p).mp4"
       if (url.includes(lessonId + '/')) {
-        console.log("URL contains lesson ID prefix, using as is");
+        // Try to extract just the filename part
+        const parts = url.split('/');
+        if (parts.length >= 2) {
+          return parts[parts.length - 1];
+        }
         return url;
       }
       
