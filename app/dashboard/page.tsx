@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { createServerClient } from "@/lib/supabase/server"
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
+import { cookies } from "next/headers"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatPrice } from "@/lib/utils"
@@ -10,7 +11,7 @@ import { AlertTriangle, CheckCircle, ExternalLink, XCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default async function Dashboard() {
-  const supabase = createServerClient()
+  const supabase = createServerComponentClient({ cookies })
 
   // Get the current user
   const {
