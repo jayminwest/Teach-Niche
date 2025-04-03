@@ -328,7 +328,7 @@ export default function UploadContent() {
       // 4. Create content in database
       if (isLesson) {
         // Create a parent lesson
-        const lessonData = {
+        const lessonData: LessonInsertData = { // Explicitly type lessonData
           title,
           description,
           price: Number.parseFloat(price),
@@ -360,7 +360,9 @@ export default function UploadContent() {
         })
       } else if (lessonIdFromUrl) {
         // Add video as a child lesson to existing parent lesson
-        const videoData = {
+        // NOTE: This logic seems related to the parent/child structure we removed.
+        // Consider if this 'else if' block is still needed or should be removed/refactored.
+        const videoData: LessonInsertData = { // Explicitly type videoData
           title,
           description,
           price: Number.parseFloat(price),
@@ -393,7 +395,7 @@ export default function UploadContent() {
         })
       } else {
         // Create a new lesson with video
-        const lessonData = {
+        const lessonData: LessonInsertData = { // Explicitly type lessonData
           title,
           description,
           price: Number.parseFloat(price),
