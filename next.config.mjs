@@ -60,5 +60,5 @@ for (const key in userConfig) {
   }
 }
 
-// Use CommonJS export to avoid promise in config
-module.exports = nextConfig;
+// Use ES module export
+export default nextConfig;
