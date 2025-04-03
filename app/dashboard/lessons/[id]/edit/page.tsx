@@ -249,11 +249,11 @@ export default function EditLesson({ params }: { params: { id: string } }) {
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder="19.99"
-                min="0.99"
+                min="0"
                 step="0.01"
                 required
               />
-              <p className="text-xs text-muted-foreground">Set a fair price for your lesson (minimum $0.99)</p>
+              <p className="text-xs text-muted-foreground">Set a fair price for your lesson (set to 0 for free lessons)</p>
             </div>
 
             <div className="space-y-2">
