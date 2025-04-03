@@ -81,13 +81,12 @@ export default async function Home() {
                 </Button>
               </div>
             </div>
-            <div className="mx-auto lg:mx-0 relative h-[350px] w-full max-w-[500px] rounded-lg bg-muted/30 p-2 shadow-lg">
-              <div className="absolute inset-0 flex items-center justify-center rounded-md bg-background/70 border">
-                <div className="text-center p-6">
-                  <h3 className="text-xl font-bold">Kendama Instruction</h3>
-                  <p className="text-muted-foreground">Tutorial video preview thumbnail</p>
-                </div>
-              </div>
+            <div className="mx-auto lg:mx-0 relative h-[350px] w-full max-w-[500px] rounded-lg overflow-hidden shadow-lg">
+              <img 
+                src="/303_group.png" 
+                alt="Kendama players group" 
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         </div>
