@@ -36,24 +36,22 @@ export default function SignIn() {
       })
 
       if (error) {
-        console.error("Authentication error:", error)
-        // Handle specific error cases
-        let errorMessage = "Invalid email or password";
+        console.error("Authentication error:", error);
         
-        if (error.message.includes("Invalid login credentials")) {
-          errorMessage = "Invalid email or password. Please check your credentials and try again.";
-        } else if (error.message.includes("Email not confirmed")) {
-          errorMessage = "Please confirm your email address before signing in.";
-        } else if (error.message) {
-          errorMessage = error.message;
-        }
+        // Force a specific error message for invalid credentials
+        const errorMessage = "Invalid email or password. Please check your credentials and try again.";
         
         setAuthError(errorMessage);
-        toast({
-          variant: "destructive",
-          title: "Authentication Failed",
-          description: errorMessage,
-        });
+        
+        // Use setTimeout to ensure the toast is shown after the component updates
+        setTimeout(() => {
+          toast({
+            variant: "destructive",
+            title: "Authentication Failed",
+            description: errorMessage,
+          });
+        }, 100);
+        
         setLoading(false);
         return;
       }
@@ -97,8 +95,8 @@ export default function SignIn() {
           <CardContent className="space-y-4">
             {/* Display auth error if present */}
             {authError && (
-              <Alert variant="destructive" className="mb-4">
-                <AlertDescription>{authError}</AlertDescription>
+              <Alert variant="destructive" className="mb-4 border-red-500 bg-red-50 text-red-900 dark:bg-red-900/20 dark:text-red-200">
+                <AlertDescription className="font-medium">{authError}</AlertDescription>
               </Alert>
             )}
             <div className="space-y-2">
