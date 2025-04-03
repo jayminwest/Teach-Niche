@@ -119,11 +119,27 @@ export async function POST(request: NextRequest) {
       finalVideoPath = `${lessonId}/${finalVideoPath}`;
     }
     
-    // Check for spaces in the path and encode them if needed
-    if (finalVideoPath.includes(' ')) {
-      console.log("Path contains spaces, encoding them");
-      // We don't want to encode the whole path, just the spaces
-      finalVideoPath = finalVideoPath.replace(/ /g, '%20');
+    // Handle URL encoding properly
+    try {
+      // First decode the path to handle any double-encoding issues
+      if (finalVideoPath.includes('%')) {
+        try {
+          finalVideoPath = decodeURIComponent(finalVideoPath);
+          console.log("Decoded path:", finalVideoPath);
+        } catch (e) {
+          console.error("Error decoding path:", e);
+          // Continue with original path if decoding fails
+        }
+      }
+      
+      // Then encode spaces properly
+      if (finalVideoPath.includes(' ')) {
+        console.log("Path contains spaces, encoding them");
+        // We don't want to encode the whole path, just the spaces
+        finalVideoPath = finalVideoPath.replace(/ /g, '%20');
+      }
+    } catch (e) {
+      console.error("Error handling path encoding:", e);
     }
     
     console.log("Final path with lesson ID prefix and encoding:", finalVideoPath);
@@ -146,9 +162,21 @@ export async function POST(request: NextRequest) {
           const fileName = pathParts[pathParts.length - 1];
           console.log("Trying without lesson ID prefix:", fileName);
           
+          // Try to decode the filename if it contains encoded characters
+          let decodedFileName = fileName;
+          try {
+            if (fileName.includes('%')) {
+              decodedFileName = decodeURIComponent(fileName);
+              console.log("Decoded filename:", decodedFileName);
+            }
+          } catch (e) {
+            console.error("Error decoding filename:", e);
+            // Continue with original filename if decoding fails
+          }
+          
           const { data: noIdData, error: noIdError } = await supabase.storage
             .from("videos")
-            .createSignedUrl(fileName, 3600);
+            .createSignedUrl(decodedFileName, 3600);
             
           if (!noIdError && noIdData?.signedUrl) {
             return NextResponse.json({ url: noIdData.signedUrl });

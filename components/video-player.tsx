@@ -132,9 +132,9 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
       setIsLoading(true);
       setError("Video playback error. Attempting to refresh...");
       
-      // Extract video path from URL
-      const extractedPath = extractVideoPathFromUrl(videoUrl || initialVideoUrl);
-      console.log("Extracted video path:", extractedPath);
+      // For error recovery, use a simpler approach - just use the lesson ID
+      // This avoids issues with URL encoding/decoding
+      console.log("Using lesson ID for recovery:", lessonId);
       
       // Try to get a fresh URL from the API
       const response = await fetch("/api/get-video-url", {
@@ -143,7 +143,6 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          videoPath: extractedPath,
           lessonId,
         }),
       });
@@ -182,9 +181,22 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
     try {
       if (!url) return "";
       
+      // First, decode the URL to handle any encoded characters
+      let decodedUrl = url;
+      try {
+        // Decode URL if it contains encoded characters
+        if (url.includes('%')) {
+          decodedUrl = decodeURIComponent(url);
+        }
+      } catch (e) {
+        console.error("Error decoding URL:", e);
+        // Continue with original URL if decoding fails
+        decodedUrl = url;
+      }
+      
       // Handle Supabase storage URLs
-      if (url.includes('/videos/')) {
-        const urlParts = url.split('/videos/');
+      if (decodedUrl.includes('/videos/')) {
+        const urlParts = decodedUrl.split('/videos/');
         if (urlParts.length < 2) return "";
         
         const pathParts = urlParts[1].split('?');
@@ -192,8 +204,8 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
       }
       
       // Handle direct file paths that might be in the format /lessons/{id}/{filename}
-      if (url.includes('/lessons/')) {
-        const pathParts = url.split('/lessons/');
+      if (decodedUrl.includes('/lessons/')) {
+        const pathParts = decodedUrl.split('/lessons/');
         if (pathParts.length < 2) return "";
         
         // Extract the filename after the lesson ID
@@ -203,29 +215,28 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
         } else {
           // If there's no second part, the URL might be in a different format
           // Just return the filename part after the last slash
-          const parts = url.split('/');
+          const parts = decodedUrl.split('/');
           return parts[parts.length - 1];
         }
       }
       
-      // If the URL contains the lesson ID as a prefix (common format in your DB)
-      // Example: "4af4cd08-26b3-44be-9584-53bdd36e7e0c/1743721526247-cloud_bounce_lesson (1080p).mp4"
-      if (url.includes(lessonId + '/')) {
-        // Try to extract just the filename part
-        const parts = url.split('/');
+      // If the URL contains the lesson ID as a prefix
+      if (decodedUrl.includes(lessonId + '/')) {
+        // Extract just the filename part
+        const parts = decodedUrl.split('/');
         if (parts.length >= 2) {
           return parts[parts.length - 1];
         }
-        return url;
+        return decodedUrl;
       }
       
       // If it's just a filename, return it directly
-      if (!url.includes('/')) {
-        return url;
+      if (!decodedUrl.includes('/')) {
+        return decodedUrl;
       }
       
       // Last resort: extract filename from the URL (anything after the last slash)
-      const parts = url.split('/');
+      const parts = decodedUrl.split('/');
       const lastPart = parts[parts.length - 1];
       if (lastPart && !lastPart.includes('?')) {
         return lastPart;
