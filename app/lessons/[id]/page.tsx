@@ -11,8 +11,8 @@ import { format } from "date-fns"
 
 import { Metadata } from 'next' 
 
-// Define props inline for generateMetadata
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+// Define props inline for generateMetadata - using any for diagnosis
+export async function generateMetadata({ params }: any): Promise<Metadata> {
   // TODO: Fetch lesson title using params.id and add it to the metadata title
   // Example: const lessonTitle = await fetchLessonTitle(params.id);
   return {
