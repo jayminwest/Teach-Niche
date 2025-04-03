@@ -45,6 +45,7 @@ export default function Header() {
       ? [
           { name: "Library", href: "/library" },
           { name: "Dashboard", href: "/dashboard" },
+          { name: "Profile", href: "/dashboard/profile" },
         ]
       : []),
   ]

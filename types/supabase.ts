@@ -3,6 +3,29 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export interface Database {
   public: {
     Tables: {
+      users: {
+        Row: {
+          id: string
+          name: string | null
+          bio: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          name?: string | null
+          bio?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string | null
+          bio?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       videos: {
         Row: {
           id: string
@@ -161,4 +184,5 @@ export type Purchase = Database["public"]["Tables"]["purchases"]["Row"]
 export type Lesson = Database["public"]["Tables"]["lessons"]["Row"]
 export type UserPurchasedLesson = Database["public"]["Views"]["user_purchased_lessons"]["Row"]
 export type InstructorProfile = Database["public"]["Tables"]["instructor_profiles"]["Row"]
+export type User = Database["public"]["Tables"]["users"]["Row"]
 

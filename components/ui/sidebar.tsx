@@ -761,3 +761,14 @@ export {
   SidebarTrigger,
   useSidebar,
 }
+
+// This component is exported to make it easier to add a profile link to the sidebar
+// You can use it in your dashboard layout like this:
+// <SidebarMenuItem>
+//   <SidebarMenuButton asChild>
+//     <Link href="/dashboard/profile">
+//       <User className="mr-2" />
+//       Profile
+//     </Link>
+//   </SidebarMenuButton>
+// </SidebarMenuItem>
