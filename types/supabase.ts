@@ -8,6 +8,7 @@ export interface Database {
           id: string
           name: string | null
           bio: string | null
+          role: string
           created_at: string
           updated_at: string
         }
@@ -15,6 +16,7 @@ export interface Database {
           id: string
           name?: string | null
           bio?: string | null
+          role?: string
           created_at?: string
           updated_at?: string
         }
@@ -22,6 +24,7 @@ export interface Database {
           id?: string
           name?: string | null
           bio?: string | null
+          role?: string
           created_at?: string
           updated_at?: string
         }
