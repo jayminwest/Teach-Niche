@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { formatPrice } from "@/lib/utils"
+import { refreshVideoUrl } from "@/lib/video-utils"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, Lock, PlayCircle } from "lucide-react"
 import Link from "next/link"
@@ -19,6 +20,11 @@ export default async function LessonDetail({ params }: { params: { id: string } 
 
   // Fetch the lesson without trying to join with instructor_id
   const { data: lesson, error } = await supabase.from("lessons").select("*").eq("id", params.id).single()
+  
+  // If the lesson has a video URL, refresh it to ensure it's not expired
+  if (lesson?.video_url) {
+    lesson.video_url = await refreshVideoUrl(lesson.video_url);
+  }
 
   if (error || !lesson) {
     console.error("Error fetching lesson:", error)
@@ -46,11 +52,22 @@ export default async function LessonDetail({ params }: { params: { id: string } 
   }
 
   // Fetch videos in this lesson
-  const { data: videos } = await supabase
-    .from("videos")
+  let { data: videos } = await supabase
+    .from("lessons")
     .select("*")
-    .eq("lesson_id", lesson.id)
+    .eq("parent_lesson_id", lesson.id)
     .order("created_at", { ascending: true })
+  
+  // If no videos found in the lessons table, try the videos table (for backward compatibility)
+  if (!videos || videos.length === 0) {
+    const { data: legacyVideos } = await supabase
+      .from("videos")
+      .select("*")
+      .eq("lesson_id", lesson.id)
+      .order("created_at", { ascending: true })
+    
+    videos = legacyVideos;
+  }
 
   // Check if the user has purchased this lesson
   let hasPurchased = false

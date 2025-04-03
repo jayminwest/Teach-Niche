@@ -295,8 +295,8 @@ export default function UploadContent() {
         }
       }
 
-      // Get video public URL
-      const { data: publicVideoUrl } = await supabase.storage.from("videos").getPublicUrl(`${user.id}/${videoFileName}`)
+      // Get video signed URL (valid for 7 days)
+      const { data: signedVideoUrl } = await supabase.storage.from("videos").createSignedUrl(`${user.id}/${videoFileName}`, 604800)
 
       // 3. Create Stripe product and price for the lesson
       const priceInCents = Math.round(Number.parseFloat(price) * 100);
@@ -339,8 +339,8 @@ export default function UploadContent() {
         };
         
         // Add video URL if available
-        if (publicVideoUrl?.publicUrl) {
-          lessonData['video_url'] = publicVideoUrl.publicUrl;
+        if (signedVideoUrl?.signedUrl) {
+          lessonData['video_url'] = signedVideoUrl.signedUrl;
         }
         
         console.log("Creating lesson with data:", lessonData);
@@ -372,8 +372,8 @@ export default function UploadContent() {
         };
         
         // Add video URL if available
-        if (publicVideoUrl?.publicUrl) {
-          videoData['video_url'] = publicVideoUrl.publicUrl;
+        if (signedVideoUrl?.signedUrl) {
+          videoData['video_url'] = signedVideoUrl.signedUrl;
         }
         
         console.log("Creating child lesson with data:", videoData);
@@ -404,8 +404,8 @@ export default function UploadContent() {
         };
         
         // Add video URL if available
-        if (publicVideoUrl?.publicUrl) {
-          lessonData['video_url'] = publicVideoUrl.publicUrl;
+        if (signedVideoUrl?.signedUrl) {
+          lessonData['video_url'] = signedVideoUrl.signedUrl;
         }
         
         console.log("Creating standalone lesson with data:", lessonData);

@@ -104,7 +104,7 @@ JOIN
 INSERT INTO storage.buckets (id, name, public, created_at, updated_at)
 VALUES 
     ('thumbnails', 'thumbnails', true, now(), now()),
-    ('videos', 'videos', true, now(), now())
+    ('videos', 'videos', false, now(), now())
 ON CONFLICT (id) DO NOTHING;
 
 -- Create policies for storage buckets to match existing policies (only if they don't exist)
