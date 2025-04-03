@@ -5,8 +5,8 @@ import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    // Pass the cookies function directly
+    const supabase = createRouteHandlerClient({ cookies }) 
 
     // Check if user is authenticated
     const {

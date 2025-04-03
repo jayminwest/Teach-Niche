@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     // Fetch the lesson to get information
     const { data: lesson, error: lessonError } = await supabase
       .from("lessons")
-      .select("video_url, instructor_id")
+      .select("video_url, instructor_id, price") // Added price here
       .eq("id", lessonId)
       .single();
     
