@@ -101,17 +101,6 @@ export default async function Dashboard() {
         </Alert>
       )}
 
-      <Alert variant="warning" className="mb-6">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertTitle>Storage Setup Required</AlertTitle>
-        <AlertDescription>
-          Before uploading videos, you need to set up storage buckets and permissions.{" "}
-          <Link href="/admin/setup" className="font-medium underline">
-            Go to the setup page
-          </Link>{" "}
-          for instructions.
-        </AlertDescription>
-      </Alert>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
@@ -119,9 +108,6 @@ export default async function Dashboard() {
           <p className="text-muted-foreground">Manage your tutorial lessons and track earnings</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" asChild>
-            <Link href="/admin/setup">Storage Setup</Link>
-          </Button>
           <Button variant="outline" asChild>
             <Link href="/dashboard/stripe-connect">
               <ExternalLink className="mr-2 h-4 w-4" />
@@ -193,58 +179,8 @@ export default async function Dashboard() {
         </div>
       </div>
 
-      <h2 className="text-2xl font-bold tracking-tight mb-6">Your Standalone Videos</h2>
 
-      {standaloneVideos && standaloneVideos.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {standaloneVideos.map((video) => (
-            <Card key={video.id} className="overflow-hidden">
-              <div className="aspect-video relative">
-                <Image
-                  src={video.thumbnail_url || "/placeholder.svg?height=200&width=300"}
-                  alt={video.title}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
-              </div>
-              <CardHeader>
-                <CardTitle className="line-clamp-1">{video.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Price:</span>
-                  <span className="font-medium">{formatPrice(video.price)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Created:</span>
-                  <span>{format(new Date(video.created_at), "MMM d, yyyy")}</span>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" asChild className="w-full">
-                  <Link href={`/lessons/${video.id}`}>View Video</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <h3 className="text-xl font-semibold mb-2">No standalone videos yet</h3>
-          <p className="text-muted-foreground mb-6">Upload your first kendama tutorial content to get started</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="outline" asChild>
-              <Link href="/admin/setup">Set Up Storage First</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/dashboard/upload">Upload Content</Link>
-            </Button>
-          </div>
-        </div>
-      )}
-
-      <h2 className="text-2xl font-bold tracking-tight mb-6 mt-12">Your Lesson Collections</h2>
+      <h2 className="text-2xl font-bold tracking-tight mb-6">Your Lessons</h2>
 
       <div className="flex justify-end mb-4">
         <Button asChild disabled={!stripeAccountEnabled}>
@@ -301,10 +237,10 @@ export default async function Dashboard() {
         </div>
       ) : (
         <div className="text-center py-12 border rounded-lg bg-muted/20">
-          <h3 className="text-xl font-semibold mb-2">No lesson collections yet</h3>
-          <p className="text-muted-foreground mb-6">Create your first lesson collection to organize your videos</p>
+          <h3 className="text-xl font-semibold mb-2">No lessons yet</h3>
+          <p className="text-muted-foreground mb-6">Create your first lesson with video content</p>
           <Button asChild disabled={!stripeAccountEnabled}>
-            <Link href="/dashboard/upload?type=lesson">Create Lesson Collection</Link>
+            <Link href="/dashboard/upload?type=lesson">Create Lesson</Link>
           </Button>
         </div>
       )}

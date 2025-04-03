@@ -45,7 +45,6 @@ export default function AddVideosToLesson() {
           .select("*")
           .eq("instructor_id", user.id)
           .is("parent_lesson_id", null)
-          .is("video_url", null)  // Only get parent lessons without videos
           .order("title", { ascending: true })
 
         if (lessonsError) throw lessonsError
@@ -60,12 +59,11 @@ export default function AddVideosToLesson() {
           }
         }
 
-        // Fetch user's standalone lessons with videos
+        // Fetch user's other lessons with videos that could be added
         const { data: userVideos, error: videosError } = await supabase
           .from("lessons")
           .select("*")
           .eq("instructor_id", user.id)
-          .is("parent_lesson_id", null)
           .not("video_url", "is", null)  // Only get lessons with videos
           .order("created_at", { ascending: false })
 

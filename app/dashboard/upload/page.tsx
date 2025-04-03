@@ -236,17 +236,6 @@ export default function UploadContent() {
         })
 
       if (videoError) {
-        // Check if it's an RLS error
-        if (
-          videoError.message &&
-          (videoError.message.includes("new row violates") ||
-            videoError.message.includes("permission denied") ||
-            videoError.message.includes("policy") ||
-            videoError.message.includes("not authorized"))
-        ) {
-          setShowSetupLink(true)
-          throw new Error("Permission denied. Please set up RLS policies first.")
-        }
         throw videoError
       }
 
@@ -320,27 +309,15 @@ export default function UploadContent() {
             price: Number.parseFloat(price),
             instructor_id: user.id,
             thumbnail_url: thumbnailUrl,
+            video_url: publicVideoUrl.publicUrl,
           })
           .select()
 
         if (lessonError) throw lessonError
 
-        // Create a child lesson (video) associated with the parent lesson
-        const { error: videoDbError } = await supabase.from("lessons").insert({
-          title,
-          description,
-          price: Number.parseFloat(price),
-          instructor_id: user.id,
-          video_url: publicVideoUrl.publicUrl,
-          thumbnail_url: thumbnailUrl,
-          parent_lesson_id: lesson[0].id,
-        })
-
-        if (videoDbError) throw videoDbError
-
         toast({
           title: "Success",
-          description: "Your lesson has been created successfully with its first video.",
+          description: "Your lesson has been created successfully.",
         })
       } else if (lessonIdFromUrl) {
         // Add video as a child lesson to existing parent lesson
@@ -361,7 +338,7 @@ export default function UploadContent() {
           description: "Your video has been added to the lesson successfully.",
         })
       } else {
-        // Create a standalone lesson with video
+        // Create a new lesson with video
         const { error: dbError } = await supabase.from("lessons").insert({
           title,
           description,
@@ -375,7 +352,7 @@ export default function UploadContent() {
 
         toast({
           title: "Success",
-          description: "Your video has been uploaded successfully.",
+          description: "Your lesson has been created successfully.",
         })
       }
 
@@ -404,15 +381,6 @@ export default function UploadContent() {
         <p className="text-muted-foreground">Share your kendama expertise with students around the world</p>
       </div>
 
-      {showSetupLink && (
-        <div className="bg-amber-50 border border-amber-200 rounded-md p-4 mb-6">
-          <h3 className="text-sm font-medium text-amber-800 mb-2">Storage Setup Required</h3>
-          <p className="text-sm text-amber-700 mb-2">You need to set up storage permissions before uploading videos.</p>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/admin/setup">Go to Setup Page</Link>
-          </Button>
-        </div>
-      )}
 
       {isLesson && !checkingStripeStatus && !stripeConnectStatus?.accountEnabled && (
         <Alert variant="warning" className="mb-6">
@@ -434,22 +402,6 @@ export default function UploadContent() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6">
-            {!lessonIdFromUrl && (
-              <div className="flex items-center justify-between space-x-2">
-                <Label htmlFor="content-type" className="flex flex-col space-y-1">
-                  <span>Content Type</span>
-                  <span className="font-normal text-sm text-muted-foreground">
-                    {isLesson ? "Create a lesson with this video as the first part" : "Upload a standalone video"}
-                  </span>
-                </Label>
-                <div className="flex items-center space-x-2">
-                  <Switch id="content-type" checked={isLesson} onCheckedChange={setIsLesson} />
-                  <Label htmlFor="content-type" className="font-medium">
-                    {isLesson ? "Lesson" : "Video"}
-                  </Label>
-                </div>
-              </div>
-            )}
 
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
