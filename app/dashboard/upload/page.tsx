@@ -37,6 +37,19 @@ export default function UploadContent() {
   const router = useRouter()
   const supabase = createClientComponentClient()
 
+  // Define the interface inside the component function
+  interface LessonInsertData {
+    title: string;
+    description: string;
+    price: number;
+    instructor_id: string;
+    thumbnail_url: string | null;
+    stripe_product_id: string;
+    stripe_price_id: string;
+    video_url?: string; // Make video_url optional
+    parent_lesson_id?: string; // Make parent_lesson_id optional
+  }
+
   const searchParams = useSearchParams()
   const typeFromUrl = searchParams.get("type")
   const lessonIdFromUrl = searchParams.get("lessonId")
