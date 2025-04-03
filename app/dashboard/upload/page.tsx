@@ -629,7 +629,7 @@ export default function UploadContent() {
                       Drag and drop your video file here, or click to browse
                     </p>
                     <p className="text-xs text-muted-foreground mb-4">
-                      Supported formats: MP4, MOV, AVI, WEBM (max 500MB)
+                      Supported formats: MP4, MOV, AVI, WEBM (max 2GB)
                     </p>
                     <Button type="button" variant="outline" asChild>
                       <label>
@@ -660,7 +660,7 @@ export default function UploadContent() {
               {uploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading... 
+                  Uploading... {uploadProgress > 0 ? `${uploadProgress}%` : ''}
                 </>
               ) : (
                 `Upload ${isLesson ? "Lesson" : "Video"}`
