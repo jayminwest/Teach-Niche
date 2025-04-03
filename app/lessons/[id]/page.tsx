@@ -12,8 +12,7 @@ import { format } from "date-fns"
 export default async function LessonDetail({ 
   params 
 }: { 
-  params: { id: string },
-  searchParams?: { [key: string]: string | string[] | undefined }
+  params: { id: string }
 }) {
   const supabase = createServerClient()
   
