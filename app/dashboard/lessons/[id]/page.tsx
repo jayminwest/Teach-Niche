@@ -1,6 +1,6 @@
 "use client"
 
-import type { PageProps } from "next/types"
+import type { PageProps } from "next"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
