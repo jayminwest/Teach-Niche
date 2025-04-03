@@ -12,14 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { AlertTriangle, Loader2, Upload } from "lucide-react"
-import { getVideoExtension, isValidVideoFormat } from "@/lib/utils"
-
-// Define the function locally to ensure it works correctly
-export function isValidVideoSize(fileSize: number): boolean {
-  console.log("Checking file size:", fileSize, "bytes");
-  const MAX_SIZE_IN_BYTES = 2 * 1024 * 1024 * 1024; // 2GB
-  return fileSize <= MAX_SIZE_IN_BYTES;
-}
+import { getVideoExtension, isValidVideoFormat, isValidVideoSize } from "@/lib/utils"
 import Link from "next/link"
 import { Switch } from "@/components/ui/switch"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"

@@ -23,7 +23,8 @@ export function isValidVideoFormat(extension: string | null): boolean {
 }
 
 export function isValidVideoSize(fileSize: number): boolean {
-  const MAX_SIZE_IN_BYTES = 500 * 1024 * 1024 // 500MB
+  console.log("Checking file size:", fileSize, "bytes")
+  const MAX_SIZE_IN_BYTES = 2 * 1024 * 1024 * 1024 // 2GB
   return fileSize <= MAX_SIZE_IN_BYTES
 }
 
