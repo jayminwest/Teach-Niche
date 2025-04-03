@@ -1,6 +1,24 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { stripe } from "@/lib/stripe"
+import { stripe, calculateFees } from "@/lib/stripe"
 import { NextResponse } from "next/server"
+
+// Helper function to get the instructor's Stripe account ID
+async function getInstructorStripeAccountId(supabase, instructorId) {
+  const { data, error } = await supabase
+    .from("instructor_profiles")
+    .select("stripe_account_id, stripe_account_enabled")
+    .eq("user_id", instructorId)
+    .single();
+  
+  if (error || !data) {
+    return { accountId: null, isEnabled: false };
+  }
+  
+  return { 
+    accountId: data.stripe_account_id, 
+    isEnabled: data.stripe_account_enabled 
+  };
+}
 
 export async function POST(request: Request) {
   try {
@@ -29,28 +47,49 @@ export async function POST(request: Request) {
     }
     
     // Fetch the video to get Stripe product and price IDs
-    const { data: video } = await supabase
-      .from("lessons")
+    let video;
+    const { data: videoData } = await supabase
+      .from("videos")
       .select("stripe_product_id, stripe_price_id, instructor_id")
       .eq("id", videoId)
       .single()
     
-    if (!video) {
-      // Try legacy videos table
-      const { data: legacyVideo } = await supabase
-        .from("videos")
+    if (!videoData) {
+      // Try lessons table
+      const { data: lessonData } = await supabase
+        .from("lessons")
         .select("stripe_product_id, stripe_price_id, instructor_id")
         .eq("id", videoId)
         .single()
       
-      if (!legacyVideo) {
+      if (!lessonData) {
         return NextResponse.json(
           { error: "Video not found" },
           { status: 404 }
         )
       }
       
-      video = legacyVideo
+      video = lessonData
+    } else {
+      video = videoData
+    }
+    
+    // Get the instructor's Stripe account ID
+    const { accountId: instructorStripeAccountId, isEnabled: isAccountEnabled } = 
+      await getInstructorStripeAccountId(supabase, video.instructor_id);
+    
+    if (!instructorStripeAccountId) {
+      return NextResponse.json(
+        { error: "Instructor payment account not set up" },
+        { status: 400 }
+      )
+    }
+    
+    if (!isAccountEnabled) {
+      return NextResponse.json(
+        { error: "Instructor payment account is not fully enabled" },
+        { status: 400 }
+      )
     }
     
     // Calculate the instructor payout amount
@@ -61,7 +100,7 @@ export async function POST(request: Request) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
     
-    // Create a Stripe Checkout Session
+    // Create a Stripe Checkout Session with Connect
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
@@ -80,6 +119,12 @@ export async function POST(request: Request) {
         productId: video.stripe_product_id,
         priceId: video.stripe_price_id,
         instructorPayoutAmount: instructorAmount
+      },
+      payment_intent_data: {
+        application_fee_amount: platformFee,
+        transfer_data: {
+          destination: instructorStripeAccountId,
+        },
       },
     })
     

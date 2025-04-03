@@ -91,6 +91,10 @@ export async function GET(request: NextRequest) {
       instructorPayoutAmount = instructorAmount / 100
     }
     
+    // Calculate platform fee
+    const amountInCents = checkoutSession.amount_total || 0
+    const { platformFee } = calculateFees(amountInCents)
+    
     const purchaseData = {
       user_id: session.user.id,
       lesson_id: lessonId,
@@ -98,7 +102,9 @@ export async function GET(request: NextRequest) {
       amount: checkoutSession.amount_total ? checkoutSession.amount_total / 100 : 0,
       stripe_product_id: checkoutSession.metadata?.productId,
       stripe_price_id: checkoutSession.metadata?.priceId,
-      instructor_payout_amount: instructorPayoutAmount
+      instructor_payout_amount: instructorPayoutAmount,
+      platform_fee_amount: platformFee / 100, // Convert to dollars
+      payout_status: 'pending_transfer' // Set initial status
     }
     
     // Only add video_id if the column exists
