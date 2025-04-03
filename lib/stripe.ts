@@ -6,7 +6,7 @@ let stripe: Stripe;
 // Only initialize if we have a key
 if (process.env.STRIPE_SECRET_KEY) {
   stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: "2023-10-16", // Use the latest API version
+    apiVersion: "2025-03-31.basil", // Update to expected version
     appInfo: {
       name: "Teach Niche",
       version: "0.1.0",
@@ -16,7 +16,7 @@ if (process.env.STRIPE_SECRET_KEY) {
   console.error("STRIPE_SECRET_KEY is missing. Stripe functionality will be limited.");
   // Create a placeholder to avoid null errors
   stripe = new Stripe('sk_test_placeholder', {
-    apiVersion: "2023-10-16",
+    apiVersion: "2025-03-31.basil", // Update to expected version
   });
 }
 

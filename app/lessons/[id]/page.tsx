@@ -9,11 +9,22 @@ import { notFound } from "next/navigation"
 import LessonCheckoutButton from "@/components/lesson-checkout-button"
 import { format } from "date-fns"
 
+import { Metadata } from 'next' 
+
+// Define props inline for generateMetadata - using any for diagnosis
+export async function generateMetadata({ params }: any): Promise<Metadata> {
+  // TODO: Fetch lesson title using params.id and add it to the metadata title
+  // Example: const lessonTitle = await fetchLessonTitle(params.id);
+  return {
+    title: `Lesson Details`, // Example: `Lesson: ${lessonTitle || 'Details'}`
+  }
+}
+
+// Define props inline for the Page component - using any for diagnosis
 export default async function LessonDetail({ 
-  params 
-}: { 
-  params: { id: string }
-}) {
+  params, 
+  searchParams 
+}: any) {
   const supabase = createServerClient()
   
   // Store the ID in a variable to avoid direct property access on params
@@ -78,23 +89,7 @@ export default async function LessonDetail({
     }
   }
 
-  // Fetch videos in this lesson
-  let { data: videos } = await supabase
-    .from("lessons")
-    .select("*")
-    .eq("parent_lesson_id", lessonId)
-    .order("created_at", { ascending: true })
-  
-  // If no videos found in the lessons table, try the videos table (for backward compatibility)
-  if (!videos || videos.length === 0) {
-    const { data: legacyVideos } = await supabase
-      .from("videos")
-      .select("*")
-      .eq("lesson_id", lessonId)
-      .order("created_at", { ascending: true })
-    
-    videos = legacyVideos;
-  }
+  // Removed fetching of child/legacy videos
 
   // Check if the user has purchased this lesson
   let hasPurchased = false
@@ -189,37 +184,8 @@ export default async function LessonDetail({
             <p className="text-muted-foreground">{lesson.description || "No description provided."}</p>
           </div>
 
-          {(hasPurchased || isInstructor) && videos && videos.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Lesson Videos</h2>
-              <div className="space-y-4">
-                {videos.map((video) => (
-                  <div key={video.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                    <div className="h-16 w-28 relative rounded overflow-hidden flex-shrink-0">
-                      <Image
-                        src={video.thumbnail_url || "/placeholder.svg?height=100&width=160"}
-                        alt={video.title}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <div className="flex-grow">
-                      <h3 className="font-medium">{video.title}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-1">
-                        {video.description || "No description"}
-                      </p>
-                    </div>
-                    <Button asChild size="sm" className="flex-shrink-0">
-                      <Link href={`/videos/${video.id}`}>
-                        <PlayCircle className="h-4 w-4 mr-2" />
-                        Watch
-                      </Link>
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Removed Lesson Videos section */}
+          
         </div>
       </div>
     </div>

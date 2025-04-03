@@ -25,7 +25,7 @@ export default function UploadContent() {
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
+  // const [uploadProgress, setUploadProgress] = useState(0) // Removed upload progress state
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [showSetupLink, setShowSetupLink] = useState(false)
   const [isLesson, setIsLesson] = useState(false)
@@ -36,6 +36,19 @@ export default function UploadContent() {
   const { toast } = useToast()
   const router = useRouter()
   const supabase = createClientComponentClient()
+
+  // Define the interface inside the component function
+  interface LessonInsertData {
+    title: string;
+    description: string;
+    price: number;
+    instructor_id: string;
+    thumbnail_url: string | null;
+    stripe_product_id: string;
+    stripe_price_id: string;
+    video_url?: string; // Make video_url optional
+    parent_lesson_id?: string; // Make parent_lesson_id optional
+  }
 
   const searchParams = useSearchParams()
   const typeFromUrl = searchParams.get("type")
@@ -214,7 +227,7 @@ export default function UploadContent() {
 
     try {
       setUploading(true)
-      setUploadProgress(0)
+      // setUploadProgress(0) // Removed this line as the state no longer exists
 
       // Get current user
       const {
@@ -229,10 +242,7 @@ export default function UploadContent() {
         .upload(`${user.id}/${videoFileName}`, videoFile, {
           cacheControl: "3600",
           upsert: false,
-          onUploadProgress: (progress) => {
-            const percentage = (progress.loaded / progress.total) * 100
-            setUploadProgress(percentage)
-          },
+          // Removed onUploadProgress callback
         })
 
       if (videoError) {
@@ -331,7 +341,7 @@ export default function UploadContent() {
       // 4. Create content in database
       if (isLesson) {
         // Create a parent lesson
-        const lessonData = {
+        const lessonData: LessonInsertData = { // Explicitly type lessonData
           title,
           description,
           price: Number.parseFloat(price),
@@ -363,7 +373,9 @@ export default function UploadContent() {
         })
       } else if (lessonIdFromUrl) {
         // Add video as a child lesson to existing parent lesson
-        const videoData = {
+        // NOTE: This logic seems related to the parent/child structure we removed.
+        // Consider if this 'else if' block is still needed or should be removed/refactored.
+        const videoData: LessonInsertData = { // Explicitly type videoData
           title,
           description,
           price: Number.parseFloat(price),
@@ -396,7 +408,7 @@ export default function UploadContent() {
         })
       } else {
         // Create a new lesson with video
-        const lessonData = {
+        const lessonData: LessonInsertData = { // Explicitly type lessonData
           title,
           description,
           price: Number.parseFloat(price),
@@ -576,13 +588,15 @@ export default function UploadContent() {
             <div className="space-y-2">
               <Label htmlFor="video">Video File</Label>
               <div className="border rounded-md p-4">
-                {previewUrl ? (
+                {/* Explicitly check for videoFile as well */}
+                {previewUrl && videoFile ? ( 
                   <div className="space-y-4">
                     <div className="aspect-video bg-muted rounded-md overflow-hidden">
                       <video ref={videoRef} src={previewUrl} className="w-full h-full object-contain" controls />
                     </div>
                     <p className="text-sm">
-                      {videoFile?.name} ({(videoFile?.size / (1024 * 1024)).toFixed(2)} MB)
+                      {/* Remove optional chaining as videoFile is guaranteed here */}
+                      {videoFile.name} ({(videoFile.size / (1024 * 1024)).toFixed(2)} MB) 
                     </p>
                     <Button
                       type="button"
@@ -635,7 +649,7 @@ export default function UploadContent() {
               {uploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading ({uploadProgress.toFixed(0)}%)
+                  Uploading... 
                 </>
               ) : (
                 `Upload ${isLesson ? "Lesson" : "Video"}`

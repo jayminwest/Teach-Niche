@@ -9,6 +9,13 @@ import { format } from "date-fns"
 import Image from "next/image"
 import { AlertTriangle, CheckCircle, ExternalLink, XCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Lesson } from "@/types/supabase" // Import the Lesson type
+
+// Define a type for the selected purchase data
+interface PurchaseSummary {
+  amount: number | null; // Adjust type based on your schema, assuming number
+  instructor_payout_amount: number | null; // Adjust type based on your schema, assuming number
+}
 
 export default async function Dashboard() {
   const supabase = createServerComponentClient({ cookies })
@@ -24,26 +31,14 @@ export default async function Dashboard() {
   const user = session.user
 
   // Fetch lessons created by this instructor
-  let lessons = [];
+  let lessons: Lesson[] = []; // Ensure lessons is typed
   try {
-    // Check if parent_lesson_id column exists
-    const { error: columnCheckError } = await supabase.rpc('column_exists', { 
-      table_name: 'lessons', 
-      column_name: 'parent_lesson_id' 
-    });
-    
-    let query = supabase
+    // Fetch all lessons for the instructor, regardless of parent_lesson_id
+    const { data, error } = await supabase
       .from("lessons")
       .select("*")
       .eq("instructor_id", user.id)
       .order("created_at", { ascending: false });
-    
-    // Only filter by parent_lesson_id if the column exists
-    if (!columnCheckError) {
-      query = query.is("parent_lesson_id", null);
-    }
-    
-    const { data, error } = await query;
     
     if (error) {
       console.error("Error fetching lessons:", error.message);
@@ -54,83 +49,15 @@ export default async function Dashboard() {
     console.error("Error fetching lessons:", error instanceof Error ? error.message : String(error));
   }
 
-  // Fetch child lessons (videos) for counting
-  let childLessons = [];
-  try {
-    // First check if parent_lesson_id column exists
-    const { error: columnCheckError } = await supabase.rpc('column_exists', { 
-      table_name: 'lessons', 
-      column_name: 'parent_lesson_id' 
-    });
-    
-    // If the RPC doesn't exist or fails, we'll try the query anyway
-    if (!columnCheckError) {
-      const { data, error } = await supabase
-        .from("lessons")
-        .select("parent_lesson_id")
-        .not("parent_lesson_id", "is", null)
-        .eq("instructor_id", user.id);
-      
-      if (error) {
-        console.error("Error fetching child lessons:", error.message);
-      } else {
-        childLessons = data || [];
-      }
-    }
-  } catch (error) {
-    console.error("Error fetching child lessons:", error instanceof Error ? error.message : String(error));
-  }
-
-  // Count videos per lesson
-  const lessonVideoCounts = childLessons.reduce((counts: Record<string, number>, child) => {
-    const parentId = child.parent_lesson_id as string
-    counts[parentId] = (counts[parentId] || 0) + 1
-    return counts
-  }, {}) || {}
-
-  // Fetch standalone lessons (those with video_url but no parent)
-  let standaloneVideos = [];
-  try {
-    // Check if parent_lesson_id column exists
-    const { error: columnCheckError } = await supabase.rpc('column_exists', { 
-      table_name: 'lessons', 
-      column_name: 'parent_lesson_id' 
-    });
-    
-    let query = supabase
-      .from("lessons")
-      .select("*")
-      .eq("instructor_id", user.id)
-      .not("video_url", "is", null)
-      .order("created_at", { ascending: false });
-    
-    // Only filter by parent_lesson_id if the column exists
-    if (!columnCheckError) {
-      query = query.is("parent_lesson_id", null);
-    }
-    
-    const { data, error } = await query;
-    
-    if (error) {
-      console.error("Error fetching standalone videos:", error.message);
-    } else {
-      standaloneVideos = data || [];
-    }
-  } catch (error) {
-    console.error("Error fetching standalone videos:", error instanceof Error ? error.message : String(error));
-  }
-  
-  console.log("Standalone videos found:", standaloneVideos?.length || 0);
+  // No need for child lessons, video counts, or standalone videos logic anymore
 
   console.log("Lessons found:", lessons?.length || 0);
   
   // Calculate total earnings
-  let purchases = [];
+  let purchases: PurchaseSummary[] = []; // Explicitly type as PurchaseSummary[]
   try {
-    const lessonIds = [
-      ...lessons.map(lesson => lesson.id),
-      ...standaloneVideos.map(video => video.id)
-    ].filter(Boolean);
+    // Get IDs only from the fetched lessons
+    const lessonIds = lessons.map(lesson => lesson.id).filter(Boolean);
     
     if (lessonIds.length > 0) {
       const { data, error } = await supabase
@@ -185,47 +112,7 @@ export default async function Dashboard() {
         </Alert>
       )}
       
-      {standaloneVideos && standaloneVideos.length > 0 && (
-        <>
-          <h2 className="text-2xl font-bold tracking-tight mt-12 mb-6">Your Standalone Videos</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {standaloneVideos.map((video) => (
-              <Card key={video.id} className="overflow-hidden">
-                <div className="aspect-video relative">
-                  <Image
-                    src={video.thumbnail_url || "/placeholder.svg?height=200&width=300"}
-                    alt={video.title}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
-                </div>
-                <CardHeader>
-                  <CardTitle className="line-clamp-1">{video.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Price:</span>
-                    <span className="font-medium">{formatPrice(video.price)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Type:</span>
-                    <span>Standalone Video</span>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex gap-2">
-                  <Button variant="outline" asChild className="flex-1">
-                    <Link href={`/lessons/${video.id}`}>View</Link>
-                  </Button>
-                  <Button variant="outline" asChild className="flex-1">
-                    <Link href={`/dashboard/lessons/${video.id}`}>Manage</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </>
-      )}
+      {/* Removed Standalone Videos Section */}
 
       {hasStripeAccount && !stripeAccountEnabled && (
         <Alert variant="warning" className="mb-6">
@@ -267,7 +154,8 @@ export default async function Dashboard() {
               <CardTitle className="text-sm font-medium">Total Lessons</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{(lessons?.length || 0) + (standaloneVideos?.length || 0)}</div>
+              {/* Count only lessons */}
+              <div className="text-2xl font-bold">{lessons?.length || 0}</div>
             </CardContent>
           </Card>
           <Card>
@@ -359,10 +247,7 @@ export default async function Dashboard() {
                   <span className="text-muted-foreground">Price:</span>
                   <span className="font-medium">{formatPrice(lesson.price)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Videos:</span>
-                  <span>{lessonVideoCounts[lesson.id] || 0}</span>
-                </div>
+                {/* Removed Videos count */}
               </CardContent>
               <CardFooter className="flex gap-2">
                 <Button variant="outline" asChild className="flex-1">
