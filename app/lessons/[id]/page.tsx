@@ -10,18 +10,10 @@ import LessonCheckoutButton from "@/components/lesson-checkout-button"
 import { format } from "date-fns"
 import { VideoPlayer } from "@/components/video-player"
 
-import { Metadata } from 'next' 
+import { Metadata } from 'next'
 
-// Define props type for the page component and metadata function
-type PageProps = {
-  params: {
-    id: string;
-  };
-  searchParams: { [key: string]: string | string[] | undefined };
-}
-
-// Define props inline for generateMetadata with proper typing
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+// Let Next.js infer the types for generateMetadata
+export async function generateMetadata({ params }): Promise<Metadata> {
   const lessonId = params.id;
   const supabase = await createServerClient();
   
@@ -37,11 +29,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-// Define props inline for the Page component with proper typing
-export default async function LessonDetail({ 
-  params, 
-  searchParams 
-}: PageProps) {
+// Let Next.js infer the types for the Page component
+export default async function LessonDetail({ params, searchParams }) {
   const supabase = await createServerClient()
   
   // Get the lesson ID from params
