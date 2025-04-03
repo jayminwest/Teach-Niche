@@ -9,10 +9,19 @@ import { notFound } from "next/navigation"
 import LessonCheckoutButton from "@/components/lesson-checkout-button"
 import { format } from "date-fns"
 
+import { Metadata } from 'next'
+
+export const generateMetadata = async ({ params }: { params: { id: string } }): Promise<Metadata> => {
+  return {
+    title: `Lesson Details`,
+  }
+}
+
 export default async function LessonDetail({ 
-  params 
-}: { 
-  params: { id: string } 
+  params,
+  searchParams 
+}: {
+  params: { id: string },
   searchParams?: { [key: string]: string | string[] | undefined }
 }) {
   const supabase = createServerClient()
