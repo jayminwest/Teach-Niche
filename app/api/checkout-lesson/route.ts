@@ -1,5 +1,5 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { stripe } from "@/lib/stripe"
+import { stripe, calculateFees } from "@/lib/stripe"
 import { NextResponse } from "next/server"
 
 // Helper function to create a Stripe product and price

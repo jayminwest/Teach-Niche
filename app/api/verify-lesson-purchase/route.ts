@@ -1,5 +1,5 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { stripe } from "@/lib/stripe"
+import { stripe, calculateFees } from "@/lib/stripe"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
