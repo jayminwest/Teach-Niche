@@ -9,7 +9,7 @@ import { notFound } from "next/navigation"
 import LessonCheckoutButton from "@/components/lesson-checkout-button"
 import { format } from "date-fns"
 
-import { Metadata } from 'next'
+import { Metadata, PageProps } from 'next'
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   // TODO: Fetch lesson title using params.id and add it to the metadata title
@@ -18,10 +18,8 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   }
 }
 
-export default async function LessonDetail({ params, searchParams }: { 
-  params: { id: string }; 
-  searchParams: { [key: string]: string | string[] | undefined } 
-}) {
+// Use PageProps with the specific params type
+export default async function LessonDetail({ params, searchParams }: PageProps<{ id: string }>) {
   const supabase = createServerClient()
   
   // Store the ID in a variable to avoid direct property access on params
