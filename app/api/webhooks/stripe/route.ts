@@ -3,9 +3,21 @@ import { stripe, calculateFees } from "@/lib/stripe"
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/supabase"
 
+// Check for required environment variables
+if (!process.env.SUPABASE_URL) {
+  console.error("Missing SUPABASE_URL environment variable");
+}
+
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable");
+}
+
 // Initialize Supabase client with service role for admin access
 // This is needed for webhook operations where we don't have a user session
-const supabase = createClient<Database>(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+const supabase = createClient<Database>(
+  process.env.SUPABASE_URL || "https://your-project.supabase.co",
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+)
 
 export async function POST(request: NextRequest) {
   let event

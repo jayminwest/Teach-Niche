@@ -20,7 +20,7 @@ export default async function VideoDetail({ params }: { params: { id: string } }
   const user = session?.user || null
 
   // Fetch the video
-  const { data: video, error } = await supabase.from("lessons").select("*").eq("id", params.id).single()
+  let { data: video, error } = await supabase.from("lessons").select("*").eq("id", params.id).single()
   
   let videoUrl = null;
   
@@ -33,7 +33,7 @@ export default async function VideoDetail({ params }: { params: { id: string } }
       .single()
     
     if (legacyError || !legacyVideo) {
-      console.error("Error fetching video:", error)
+      console.error("Error fetching video:", error, legacyError)
       notFound()
     }
     
