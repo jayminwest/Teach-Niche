@@ -68,7 +68,7 @@ export default async function Dashboard() {
     if (!columnCheckError) {
       const { data, error } = await supabase
         .from("lessons")
-        .select("parent_lesson_id")
+        .select("*") // Select all columns to match the Lesson type
         .not("parent_lesson_id", "is", null)
         .eq("instructor_id", user.id);
       
