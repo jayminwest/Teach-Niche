@@ -21,10 +21,10 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
-  webpack: (config, { isServer }) => {
+  webpack: async (config, { isServer }) => {
     // Only apply this to the client-side build
     if (!isServer) {
-      const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+      const { default: MiniCssExtractPlugin } = await import('mini-css-extract-plugin');
       config.plugins.push(new MiniCssExtractPlugin());
     }
     return config;
