@@ -151,16 +151,21 @@ export async function POST(request: NextRequest) {
     console.log("Final path with lesson ID prefix and encoding:", finalVideoPath);
     
     try {
-      console.log("Using direct public URL approach for video:", finalVideoPath);
-      
-      // Always use a direct public URL approach, but verify permissions first
-      // We've already checked above that the user has permission to access this video
-      // (either they're the instructor, they've purchased it, or it's free)
-      
-      const publicUrl = `https://fduuujxzwwrbshamtriy.supabase.co/storage/v1/object/public/videos/${finalVideoPath}`;
-      console.log("Using direct URL:", publicUrl);
-      
-      return NextResponse.json({ url: publicUrl });
+      console.log("Using signed URL approach for video:", finalVideoPath);
+
+      // Generate a signed URL with a 30-minute expiration
+      const { data, error } = await supabase
+        .storage
+        .from('videos')
+        .createSignedUrl(finalVideoPath, 1800); // 30 minutes = 1800 seconds
+
+      if (error) {
+        console.error("Error creating signed URL:", error);
+        return NextResponse.json({ error: "Failed to generate video URL" }, { status: 500 });
+      }
+
+      console.log("Generated signed URL with 30-minute expiration");
+      return NextResponse.json({ url: data.signedUrl });
     } catch (error) {
       console.error("Error creating signed URL:", error);
       return NextResponse.json({ error: "Failed to generate video URL" }, { status: 500 });
