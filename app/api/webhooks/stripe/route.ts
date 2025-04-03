@@ -66,7 +66,19 @@ export async function POST(request: NextRequest) {
             column_name: 'video_id'
           })
           
-          const purchaseData = {
+          // Create purchase data with proper typing
+          const purchaseData: {
+            user_id: string;
+            lesson_id: string;
+            stripe_payment_id: string;
+            amount: number;
+            instructor_payout_amount: number;
+            platform_fee_amount: number;
+            payout_status: string;
+            stripe_product_id?: string;
+            stripe_price_id?: string;
+            video_id?: null;
+          } = {
             user_id: userId,
             lesson_id: lessonId,
             stripe_payment_id: session.id,
@@ -80,7 +92,7 @@ export async function POST(request: NextRequest) {
           
           // Only add video_id if the column exists
           if (columnInfo) {
-            purchaseData['video_id'] = null
+            purchaseData.video_id = null
           }
           
           const { error: purchaseError } = await supabase
