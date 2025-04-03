@@ -360,10 +360,17 @@ export default function UploadContent() {
       // Video path is already defined above
 
       // 3. Create Stripe product and price for the lesson
-      const priceInCents = Math.round(Number.parseFloat(price) * 100);
+      const priceInCents = Math.round(Number.parseFloat(price || "0") * 100);
       
       // Use absolute URL for API call to ensure it works in all environments
       const apiUrl = window.location.origin + "/api/stripe/create-product";
+      console.log("Creating Stripe product with data:", {
+        name: title,
+        description: description || title, // Fallback to title if description is empty
+        price: priceInCents,
+        images: thumbnailUrl ? [thumbnailUrl] : undefined,
+      });
+      
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
@@ -371,19 +378,30 @@ export default function UploadContent() {
         },
         body: JSON.stringify({
           name: title,
-          description: description,
+          description: description || title, // Fallback to title if description is empty
           price: priceInCents,
           images: thumbnailUrl ? [thumbnailUrl] : undefined,
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.text();
-        console.error("Stripe product creation error:", errorData);
-        throw new Error(`Failed to create Stripe product: ${response.status} ${errorData}`);
+        let errorMessage = `Failed to create Stripe product: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          console.error("Stripe product creation error:", errorData);
+          errorMessage += ` ${JSON.stringify(errorData)}`;
+        } catch (e) {
+          const errorText = await response.text();
+          console.error("Stripe product creation error:", errorText);
+          errorMessage += ` ${errorText}`;
+        }
+        throw new Error(errorMessage);
       }
 
-      const { productId, priceId } = await response.json();
+      const responseData = await response.json();
+      console.log("Stripe product created successfully:", responseData);
+      
+      const { productId, priceId } = responseData;
       
       if (!productId || !priceId) {
         throw new Error("Invalid response from Stripe product creation");
@@ -571,6 +589,12 @@ export default function UploadContent() {
                 min="0"
                 step="0.01"
                 required
+                onBlur={(e) => {
+                  // Ensure we have a valid price value (default to 0 if empty)
+                  if (e.target.value === '') {
+                    setPrice('0');
+                  }
+                }}
               />
               <p className="text-xs text-muted-foreground">
                 Set a fair price for your {isLesson ? "lesson" : "tutorial"} (set to 0 for free lessons)
