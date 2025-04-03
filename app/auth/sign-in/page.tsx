@@ -36,14 +36,26 @@ export default function SignIn() {
       })
 
       if (error) {
-        console.error("Authentication error:", error.message)
-        setAuthError(error.message || "Invalid email or password")
+        console.error("Authentication error:", error)
+        // Handle specific error cases
+        let errorMessage = "Invalid email or password";
+        
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Invalid email or password. Please check your credentials and try again.";
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Please confirm your email address before signing in.";
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        setAuthError(errorMessage);
         toast({
           variant: "destructive",
           title: "Authentication Failed",
-          description: error.message || "Invalid email or password",
-        })
-        return
+          description: errorMessage,
+        });
+        setLoading(false);
+        return;
       }
 
       toast({
@@ -54,15 +66,21 @@ export default function SignIn() {
       router.refresh()
     } catch (error: any) {
       console.error("Sign-in error:", error)
-      // Set the auth error message
-      const errorMessage = error.message || "Invalid email or password"
-      setAuthError(errorMessage)
+      
+      // Handle network or unexpected errors
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      setAuthError(errorMessage);
       
       toast({
         variant: "destructive",
         title: "Sign-in Failed",
         description: errorMessage,
-      })
+      });
     } finally {
       setLoading(false)
     }
