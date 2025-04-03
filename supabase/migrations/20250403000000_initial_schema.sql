@@ -59,19 +59,44 @@ VALUES
     ('videos', 'videos', false, now(), now())
 ON CONFLICT (id) DO NOTHING;
 
--- Create policies for storage buckets to match existing policies
-CREATE POLICY "Allow Public Access 16v3daf_0"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'thumbnails');
-
-CREATE POLICY "Allow authenticated uploads 16v3daf_0"
-ON storage.objects FOR INSERT
-WITH CHECK (bucket_id = 'thumbnails' AND auth.role() = 'authenticated');
-
-CREATE POLICY "Allow Owner Access"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'videos' AND auth.uid()::text = (storage.foldername(name))[1]);
-
-CREATE POLICY "Allow authenticated uploads"
-ON storage.objects FOR INSERT
-WITH CHECK (bucket_id = 'videos' AND auth.role() = 'authenticated');
+-- Create policies for storage buckets to match existing policies (only if they don't exist)
+DO $$
+BEGIN
+    -- Check if policy exists before creating
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE schemaname = 'storage' AND tablename = 'objects' AND policyname = 'Allow Public Access 16v3daf_0'
+    ) THEN
+        CREATE POLICY "Allow Public Access 16v3daf_0"
+        ON storage.objects FOR SELECT
+        USING (bucket_id = 'thumbnails');
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE schemaname = 'storage' AND tablename = 'objects' AND policyname = 'Allow authenticated uploads 16v3daf_0'
+    ) THEN
+        CREATE POLICY "Allow authenticated uploads 16v3daf_0"
+        ON storage.objects FOR INSERT
+        WITH CHECK (bucket_id = 'thumbnails' AND auth.role() = 'authenticated');
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE schemaname = 'storage' AND tablename = 'objects' AND policyname = 'Allow Owner Access'
+    ) THEN
+        CREATE POLICY "Allow Owner Access"
+        ON storage.objects FOR SELECT
+        USING (bucket_id = 'videos' AND auth.uid()::text = (storage.foldername(name))[1]);
+    END IF;
+    
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies 
+        WHERE schemaname = 'storage' AND tablename = 'objects' AND policyname = 'Allow authenticated uploads'
+    ) THEN
+        CREATE POLICY "Allow authenticated uploads"
+        ON storage.objects FOR INSERT
+        WITH CHECK (bucket_id = 'videos' AND auth.role() = 'authenticated');
+    END IF;
+END
+$$;
