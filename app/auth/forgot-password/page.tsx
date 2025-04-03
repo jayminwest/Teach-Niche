@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -12,55 +12,74 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast"
 
-export default function SignIn() {
+export default function ForgotPassword() {
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const redirectTo = searchParams.get("redirectedFrom") || "/"
   const { toast } = useToast()
   const supabase = createClient()
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
       })
 
       if (error) {
         throw error
       }
 
+      setSubmitted(true)
       toast({
-        title: "Success",
-        description: "You have been signed in.",
+        title: "Password Reset Email Sent",
+        description: "Check your email for a link to reset your password.",
       })
-      router.push(redirectTo)
-      router.refresh()
     } catch (error: any) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to sign in. Please try again.",
+        description: error.message || "Failed to send reset email. Please try again.",
       })
     } finally {
       setLoading(false)
     }
   }
 
+  if (submitted) {
+    return (
+      <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] py-8">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Check Your Email</CardTitle>
+            <CardDescription>
+              We've sent a password reset link to {email}. Please check your inbox and spam folders.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => setSubmitted(false)}>
+              Try Again
+            </Button>
+            <Button onClick={() => router.push("/auth/sign-in")}>
+              Back to Sign In
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] py-8">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Sign In</CardTitle>
-          <CardDescription>Enter your email and password to sign in to your account</CardDescription>
+          <CardTitle>Reset Password</CardTitle>
+          <CardDescription>Enter your email to receive a password reset link</CardDescription>
         </CardHeader>
-        <form onSubmit={handleSignIn}>
+        <form onSubmit={handlePasswordReset}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -73,30 +92,15 @@ export default function SignIn() {
                 required
               />
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link href="/auth/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
-                  Forgot Password?
-                </Link>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button className="w-full" type="submit" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
+              {loading ? "Sending..." : "Send Reset Link"}
             </Button>
             <div className="text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <Link href="/auth/sign-up" className="underline underline-offset-4 hover:text-primary">
-                Sign up
+              Remember your password?{" "}
+              <Link href="/auth/sign-in" className="underline underline-offset-4 hover:text-primary">
+                Sign in
               </Link>
             </div>
           </CardFooter>
