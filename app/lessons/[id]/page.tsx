@@ -11,10 +11,13 @@ import { format } from "date-fns"
 import { VideoPlayer } from "@/components/video-player"
 
 import { Metadata } from 'next'
+// Import the generated PageProps type
+import type { PageProps } from ".next/types/app/lessons/[id]/page";
 
-// Let Next.js infer types for generateMetadata props
-export async function generateMetadata({ params }): Promise<Metadata> {
-  const lessonId = params.id;
+// Use the imported PageProps for generateMetadata
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  // Note: PageProps might contain more than just params, but TS allows destructuring
+  const lessonId = params.id; 
   const supabase = await createServerClient();
   
   // Fetch lesson title for metadata
