@@ -25,7 +25,7 @@ export default function UploadContent() {
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
-  // const [uploadProgress, setUploadProgress] = useState(0) // Removed upload progress state
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [showSetupLink, setShowSetupLink] = useState(false)
   const [isLesson, setIsLesson] = useState(false)
@@ -46,7 +46,7 @@ export default function UploadContent() {
     thumbnail_url: string | null;
     stripe_product_id: string;
     stripe_price_id: string;
-    video_url?: string; // Make video_url optional
+    video_path?: string; // Changed from video_url to video_path
     parent_lesson_id?: string; // Make parent_lesson_id optional
   }
 
@@ -151,12 +151,15 @@ export default function UploadContent() {
     }
 
     if (!isValidVideoSize(file.size)) {
+      const sizeMB = Math.round(file.size / (1024 * 1024));
       toast({
         variant: "destructive",
         title: "File too large",
-        description: "The maximum file size is 500MB.",
-      })
-      return
+        description: `Your file is ${sizeMB}MB. The maximum file size is 2GB.`,
+      });
+      // Reset the input
+      e.target.value = '';
+      return;
     }
 
     setVideoFile(file)
@@ -237,12 +240,26 @@ export default function UploadContent() {
 
       // 1. Upload the video file
       const videoFileName = `${Date.now()}-${videoFile.name}`
+      const videoPath = `${user.id}/${videoFileName}`
+      
       const { data: videoData, error: videoError } = await supabase.storage
         .from("videos")
-        .upload(`${user.id}/${videoFileName}`, videoFile, {
+        .upload(videoPath, videoFile, {
           cacheControl: "3600",
           upsert: false,
-          // Removed onUploadProgress callback
+          onUploadProgress: (progress) => {
+            // Calculate percentage
+            const percentage = (progress.loaded / progress.total) * 100
+            setUploadProgress(Math.round(percentage))
+            
+            // Show toast for large uploads (only once at 10%)
+            if (Math.round(percentage) === 10 && videoFile.size > 100 * 1024 * 1024) {
+              toast({
+                title: "Large File Upload",
+                description: "Your video is large and may take several minutes to upload. Please be patient.",
+              })
+            }
+          }
         })
 
       if (videoError) {
@@ -305,8 +322,8 @@ export default function UploadContent() {
         }
       }
 
-      // Get video signed URL (valid for 7 days)
-      const { data: signedVideoUrl } = await supabase.storage.from("videos").createSignedUrl(`${user.id}/${videoFileName}`, 604800)
+      // Store the video path instead of a signed URL
+      const videoPath = `${user.id}/${videoFileName}`
 
       // 3. Create Stripe product and price for the lesson
       const priceInCents = Math.round(Number.parseFloat(price) * 100);
@@ -351,10 +368,8 @@ export default function UploadContent() {
           stripe_price_id: priceId,
         };
         
-        // Add video URL if available
-        if (signedVideoUrl?.signedUrl) {
-          lessonData['video_url'] = signedVideoUrl.signedUrl;
-        }
+        // Store the video path instead of URL
+        lessonData['video_path'] = videoPath;
         
         console.log("Creating lesson with data:", lessonData);
         
@@ -386,10 +401,8 @@ export default function UploadContent() {
           stripe_price_id: priceId,
         };
         
-        // Add video URL if available
-        if (signedVideoUrl?.signedUrl) {
-          videoData['video_url'] = signedVideoUrl.signedUrl;
-        }
+        // Store the video path instead of URL
+        videoData['video_path'] = videoPath;
         
         console.log("Creating child lesson with data:", videoData);
         
@@ -418,10 +431,8 @@ export default function UploadContent() {
           stripe_price_id: priceId,
         };
         
-        // Add video URL if available
-        if (signedVideoUrl?.signedUrl) {
-          lessonData['video_url'] = signedVideoUrl.signedUrl;
-        }
+        // Store the video path instead of URL
+        lessonData['video_path'] = videoPath;
         
         console.log("Creating standalone lesson with data:", lessonData);
         
@@ -656,6 +667,17 @@ export default function UploadContent() {
               )}
             </Button>
           </CardFooter>
+          {uploading && uploadProgress > 0 && (
+            <div className="px-6 pb-6">
+              <div className="text-sm mb-2">Upload Progress</div>
+              <div className="w-full bg-muted rounded-full h-2.5">
+                <div 
+                  className="bg-primary h-2.5 rounded-full" 
+                  style={{ width: `${uploadProgress}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
         </form>
       </Card>
     </div>
