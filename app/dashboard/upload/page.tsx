@@ -362,39 +362,56 @@ export default function UploadContent() {
       // 3. Create Stripe product and price for the lesson
       const priceInCents = Math.round(Number.parseFloat(price || "0") * 100);
       
+      // Ensure we have all required fields for Stripe
+      if (!title) {
+        throw new Error("Title is required");
+      }
+      
       // Use absolute URL for API call to ensure it works in all environments
       const apiUrl = window.location.origin + "/api/stripe/create-product";
-      console.log("Creating Stripe product with data:", {
-        name: title,
-        description: description || title, // Fallback to title if description is empty
+      
+      // Prepare the product data with all required fields
+      const productData = {
+        name: title.trim(),
+        description: (description || title).trim(), // Fallback to title if description is empty
         price: priceInCents,
         images: thumbnailUrl ? [thumbnailUrl] : undefined,
-      });
+        // Add any other required fields here
+      };
+      
+      console.log("Creating Stripe product with data:", productData);
       
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name: title,
-          description: description || title, // Fallback to title if description is empty
-          price: priceInCents,
-          images: thumbnailUrl ? [thumbnailUrl] : undefined,
-        }),
+        body: JSON.stringify(productData),
       });
 
       if (!response.ok) {
         let errorMessage = `Failed to create Stripe product: ${response.status}`;
+        let errorDetails = "";
+        
         try {
           const errorData = await response.json();
           console.error("Stripe product creation error:", errorData);
-          errorMessage += ` ${JSON.stringify(errorData)}`;
+          errorDetails = JSON.stringify(errorData);
+          
+          // Check for specific error messages
+          if (errorData.message === "Missing required fields") {
+            errorMessage = "Missing required fields for Stripe product. Please ensure title and price are provided.";
+          } else {
+            errorMessage += ` ${errorDetails}`;
+          }
         } catch (e) {
           const errorText = await response.text();
           console.error("Stripe product creation error:", errorText);
-          errorMessage += ` ${errorText}`;
+          errorDetails = errorText;
+          errorMessage += ` ${errorDetails}`;
         }
+        
+        console.error("Full request data:", productData);
         throw new Error(errorMessage);
       }
 
