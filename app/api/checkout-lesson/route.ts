@@ -85,7 +85,22 @@ async function recordFreeLessonAccess(
       column_name: 'video_id'
     });
     
-    const purchaseData = {
+    // Define the purchase data with proper typing
+    interface PurchaseData {
+      user_id: string;
+      lesson_id: string;
+      stripe_payment_id: string;
+      amount: number;
+      stripe_product_id: null;
+      stripe_price_id: null;
+      instructor_payout_amount: number;
+      platform_fee_amount: number;
+      payout_status: string;
+      is_free: boolean;
+      [key: string]: any; // Allow for dynamic properties
+    }
+    
+    const purchaseData: PurchaseData = {
       user_id: userId,
       lesson_id: lessonId,
       stripe_payment_id: `free_${userId}_${lessonId}_${Date.now()}`, // Generate a unique ID for free lessons
