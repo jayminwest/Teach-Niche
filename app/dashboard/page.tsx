@@ -34,12 +34,12 @@ export default async function Dashboard() {
       .order("created_at", { ascending: false });
     
     if (error) {
-      console.error("Error fetching lessons:", error);
+      console.error("Error fetching lessons:", error.message);
     } else {
       lessons = data || [];
     }
   } catch (error) {
-    console.error("Error fetching lessons:", error);
+    console.error("Error fetching lessons:", error instanceof Error ? error.message : String(error));
   }
 
   // Fetch child lessons (videos) for counting
@@ -52,12 +52,12 @@ export default async function Dashboard() {
       .eq("instructor_id", user.id);
     
     if (error) {
-      console.error("Error fetching child lessons:", error);
+      console.error("Error fetching child lessons:", error.message);
     } else {
       childLessons = data || [];
     }
   } catch (error) {
-    console.error("Error fetching child lessons:", error);
+    console.error("Error fetching child lessons:", error instanceof Error ? error.message : String(error));
   }
 
   // Count videos per lesson
@@ -79,12 +79,12 @@ export default async function Dashboard() {
       .order("created_at", { ascending: false });
     
     if (error) {
-      console.error("Error fetching standalone videos:", error);
+      console.error("Error fetching standalone videos:", error.message);
     } else {
       standaloneVideos = data || [];
     }
   } catch (error) {
-    console.error("Error fetching standalone videos:", error);
+    console.error("Error fetching standalone videos:", error instanceof Error ? error.message : String(error));
   }
   
   console.log("Standalone videos found:", standaloneVideos?.length || 0);
@@ -106,13 +106,13 @@ export default async function Dashboard() {
         .in("lesson_id", lessonIds);
       
       if (error) {
-        console.error("Error fetching purchases:", error);
+        console.error("Error fetching purchases:", error.message);
       } else {
         purchases = data || [];
       }
     }
   } catch (error) {
-    console.error("Error fetching purchases:", error);
+    console.error("Error fetching purchases:", error instanceof Error ? error.message : String(error));
   }
 
   const totalEarnings = purchases.reduce((sum, purchase) => sum + (purchase.instructor_payout_amount || 0), 0) || 0
