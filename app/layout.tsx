@@ -5,13 +5,14 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import Header from "@/components/header"
+import Footer from "@/components/footer"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Teach Niche | Kendama Tutorial Platform",
   description: "A platform for kendama instructors to share tutorial videos and for students to learn",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -26,13 +27,7 @@ export default function RootLayout({
           <div className="min-h-screen flex flex-col">
             <Header />
             <main className="flex-1">{children}</main>
-            <footer className="border-t py-6 md:py-8">
-              <div className="container flex flex-col gap-4 md:flex-row md:items-center md:justify-between text-center md:text-left">
-                <div className="text-sm text-muted-foreground">
-                  © {new Date().getFullYear()} Teach Niche. All rights reserved.
-                </div>
-              </div>
-            </footer>
+            <Footer />
           </div>
           <Toaster />
         </ThemeProvider>
@@ -40,7 +35,3 @@ export default function RootLayout({
     </html>
   )
 }
-
-
-
-import './globals.css'
