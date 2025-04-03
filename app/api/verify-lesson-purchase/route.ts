@@ -143,13 +143,6 @@ export async function GET(request: NextRequest) {
       })
     }
     
-    // Record the purchase in the database
-    // First check if the purchases table has a video_id column with a not-null constraint
-    const { data: columnInfo } = await supabase.rpc('column_exists', {
-      table_name: 'purchases',
-      column_name: 'video_id'
-    })
-    
     // Calculate instructor payout if not provided in metadata
     let instructorPayoutAmount = null
     if (checkoutSession.metadata?.instructorPayoutAmount) {
@@ -177,11 +170,7 @@ export async function GET(request: NextRequest) {
       is_free: false
     }
     
-    // Only add video_id if the column exists
-    if (columnInfo) {
-      (purchaseData as any)['video_id'] = null
-    }
-    
+    // Remove the check for video_id column since it's not part of the new data model
     const { error: purchaseError } = await supabase
       .from("purchases")
       .insert(purchaseData)
