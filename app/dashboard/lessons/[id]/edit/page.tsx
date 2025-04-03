@@ -14,7 +14,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { ArrowLeft, Loader2, Upload } from "lucide-react"
 import Link from "next/link"
 
-export default function EditLesson({ params }: { params: { id: string } }) {
+export default function EditLesson({ params }: { params: { id: string } } & { searchParams?: Record<string, string | string[]> }) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [price, setPrice] = useState("")
