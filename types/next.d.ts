@@ -8,3 +8,10 @@ declare module 'next' {
     searchParams?: any
   }
 }
+
+// Add specific type for page components
+declare module 'next/dist/server/future/route-modules/app-page/module' {
+  interface AppPageRouteModule {
+    default: (props: { params: Record<string, string> }) => Promise<JSX.Element> | JSX.Element
+  }
+}
