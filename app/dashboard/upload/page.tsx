@@ -298,7 +298,28 @@ export default function UploadContent() {
       // Get video public URL
       const { data: publicVideoUrl } = await supabase.storage.from("videos").getPublicUrl(`${user.id}/${videoFileName}`)
 
-      // 3. Create content in database
+      // 3. Create Stripe product and price for the lesson
+      const priceInCents = Math.round(Number.parseFloat(price) * 100);
+      const response = await fetch("/api/stripe/create-product", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: title,
+          description: description,
+          price: priceInCents,
+          images: thumbnailUrl ? [thumbnailUrl] : undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create Stripe product");
+      }
+
+      const { productId, priceId } = await response.json();
+
+      // 4. Create content in database
       if (isLesson) {
         // Create a parent lesson
         const { data: lesson, error: lessonError } = await supabase
@@ -310,6 +331,8 @@ export default function UploadContent() {
             instructor_id: user.id,
             thumbnail_url: thumbnailUrl,
             video_url: publicVideoUrl.publicUrl,
+            stripe_product_id: productId,
+            stripe_price_id: priceId,
           })
           .select()
 
@@ -329,6 +352,8 @@ export default function UploadContent() {
           video_url: publicVideoUrl.publicUrl,
           thumbnail_url: thumbnailUrl,
           parent_lesson_id: lessonIdFromUrl,
+          stripe_product_id: productId,
+          stripe_price_id: priceId,
         })
 
         if (videoDbError) throw videoDbError
@@ -346,6 +371,8 @@ export default function UploadContent() {
           instructor_id: user.id,
           video_url: publicVideoUrl.publicUrl,
           thumbnail_url: thumbnailUrl,
+          stripe_product_id: productId,
+          stripe_price_id: priceId,
         })
 
         if (dbError) throw dbError

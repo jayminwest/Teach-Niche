@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS public.lessons (
     thumbnail_url TEXT,
     video_url TEXT,
     parent_lesson_id UUID,
+    stripe_product_id TEXT,
+    stripe_price_id TEXT,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now(),
     FOREIGN KEY (parent_lesson_id) REFERENCES public.lessons(id)
@@ -28,7 +30,10 @@ CREATE TABLE IF NOT EXISTS public.purchases (
     user_id UUID NOT NULL,
     lesson_id UUID NOT NULL,
     stripe_payment_id VARCHAR NOT NULL,
+    stripe_product_id VARCHAR,
+    stripe_price_id VARCHAR,
     amount NUMERIC NOT NULL,
+    instructor_payout_amount NUMERIC,
     created_at TIMESTAMPTZ DEFAULT now(),
     FOREIGN KEY (lesson_id) REFERENCES public.lessons(id)
 );
