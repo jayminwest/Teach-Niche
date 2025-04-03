@@ -34,32 +34,36 @@ export async function GET(request: NextRequest) {
 
     if (bucketName === "videos") {
       // For videos bucket: only authenticated users can upload, only owners can access
-      const insertPolicy = await supabase.storage.from(bucketName).createPolicy("authenticated_uploads", {
-        name: "authenticated_uploads",
-        definition: `(auth.role() = 'authenticated')`,
-        action: "INSERT",
+      const insertPolicy = await supabase.rpc('create_storage_policy', {
+        bucket_name: bucketName,
+        policy_name: "authenticated_uploads",
+        policy_definition: `(auth.role() = 'authenticated')`,
+        policy_action: "INSERT"
       })
 
-      const selectPolicy = await supabase.storage.from(bucketName).createPolicy("owner_access", {
-        name: "owner_access",
-        definition: `(auth.uid() = owner)`,
-        action: "SELECT",
+      const selectPolicy = await supabase.rpc('create_storage_policy', {
+        bucket_name: bucketName,
+        policy_name: "owner_access",
+        policy_definition: `(auth.uid() = owner)`,
+        policy_action: "SELECT"
       })
 
       policies.push({ name: "authenticated_uploads", result: insertPolicy })
       policies.push({ name: "owner_access", result: selectPolicy })
     } else if (bucketName === "thumbnails") {
       // For thumbnails bucket: public access for reading, only authenticated for uploading
-      const selectPolicy = await supabase.storage.from(bucketName).createPolicy("public_access", {
-        name: "public_access",
-        definition: `(true)`,
-        action: "SELECT",
+      const selectPolicy = await supabase.rpc('create_storage_policy', {
+        bucket_name: bucketName,
+        policy_name: "public_access",
+        policy_definition: `(true)`,
+        policy_action: "SELECT"
       })
 
-      const insertPolicy = await supabase.storage.from(bucketName).createPolicy("authenticated_uploads", {
-        name: "authenticated_uploads",
-        definition: `(auth.role() = 'authenticated')`,
-        action: "INSERT",
+      const insertPolicy = await supabase.rpc('create_storage_policy', {
+        bucket_name: bucketName,
+        policy_name: "authenticated_uploads",
+        policy_definition: `(auth.role() = 'authenticated')`,
+        policy_action: "INSERT"
       })
 
       policies.push({ name: "public_access", result: selectPolicy })
