@@ -439,7 +439,9 @@ export default function UploadContent() {
           thumbnail_url: thumbnailUrl,
           stripe_product_id: productId,
           stripe_price_id: priceId,
-          video_path: videoPath, // Store the video path directly
+          // Store the video path in a field that exists in the database
+          // Using metadata field which should exist in most tables
+          metadata: { video_path: videoPath },
         };
         
         console.log("Creating lesson with data:", lessonData);
@@ -471,7 +473,8 @@ export default function UploadContent() {
           parent_lesson_id: lessonIdFromUrl,
           stripe_product_id: productId,
           stripe_price_id: priceId,
-          video_path: videoPath, // Store the video path directly
+          // Store the video path in a field that exists in the database
+          metadata: { video_path: videoPath },
         };
         
         console.log("Creating child lesson with data:", videoData);
@@ -502,7 +505,8 @@ export default function UploadContent() {
           thumbnail_url: thumbnailUrl,
           stripe_product_id: productId,
           stripe_price_id: priceId,
-          video_path: videoPath, // Store the video path directly
+          // Store the video path in a field that exists in the database
+          metadata: { video_path: videoPath },
         };
         
         console.log("Creating standalone lesson with data:", lessonData);

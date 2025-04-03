@@ -17,11 +17,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     
-    // Get the video path from the request
+    // Get the video path and lesson ID from the request
     const { videoPath, lessonId } = await request.json();
     
-    if (!videoPath || !lessonId) {
-      return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
+    if (!lessonId) {
+      return NextResponse.json({ error: "Missing required parameter: lessonId" }, { status: 400 });
+    }
+    
+    // If videoPath is not provided, try to get it from the lesson metadata
+    let finalVideoPath = videoPath;
+    if (!finalVideoPath) {
+      // Fetch the lesson to get the video path from metadata
+      const { data: lesson, error: lessonError } = await supabase
+        .from("lessons")
+        .select("metadata")
+        .eq("id", lessonId)
+        .single();
+      
+      if (lessonError) {
+        console.error("Error fetching lesson:", lessonError);
+        return NextResponse.json({ error: "Error fetching lesson" }, { status: 500 });
+      }
+      
+      if (!lesson?.metadata?.video_path) {
+        return NextResponse.json({ error: "Video path not found for this lesson" }, { status: 404 });
+      }
+      
+      finalVideoPath = lesson.metadata.video_path;
     }
     
     // Verify the user has purchased this lesson
@@ -44,7 +66,7 @@ export async function POST(request: NextRequest) {
     // Generate a signed URL valid for 30 days
     const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from("videos")
-      .createSignedUrl(videoPath, 2592000); // 30 days in seconds
+      .createSignedUrl(finalVideoPath, 2592000); // 30 days in seconds
     
     if (signedUrlError) {
       console.error("Error generating signed URL:", signedUrlError);

@@ -57,6 +57,15 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
       setIsLoading(true);
       setError("Video playback error. Attempting to refresh...");
       
+      // Extract video path from URL or fetch from lesson metadata
+      const extractedPath = extractVideoPathFromUrl(videoUrl);
+      let videoPath = extractedPath;
+      
+      // If we couldn't extract a path, try to fetch it from the lesson metadata
+      if (!videoPath) {
+        videoPath = await fetchVideoPathFromLesson();
+      }
+      
       // Try to get a fresh URL from the API
       const response = await fetch("/api/get-video-url", {
         method: "POST",
@@ -64,7 +73,7 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          videoPath: extractVideoPathFromUrl(videoUrl),
+          videoPath,
           lessonId,
         }),
       });
@@ -106,6 +115,20 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
     } catch (error) {
       console.error("Error extracting video path:", error);
       return "";
+    }
+  };
+
+  // Function to fetch video path from lesson metadata if needed
+  const fetchVideoPathFromLesson = async (): Promise<string | null> => {
+    try {
+      const response = await fetch(`/api/lessons/${lessonId}/metadata`);
+      if (!response.ok) return null;
+      
+      const data = await response.json();
+      return data.videoPath || null;
+    } catch (error) {
+      console.error("Error fetching video path from lesson:", error);
+      return null;
     }
   };
   
