@@ -56,19 +56,24 @@ export default async function LessonDetail({
       .eq("user_id", lesson.instructor_id)
       .single()
     
-    // Then try to get user data from auth
-    const { data: authUser } = await supabase.auth.admin.getUserById(lesson.instructor_id)
-    
-    if (authUser?.user) {
-      // Extract name from email if available (before the @ symbol)
-      if (authUser.user.email) {
-        const emailParts = authUser.user.email.split('@');
-        instructorName = emailParts[0].charAt(0).toUpperCase() + emailParts[0].slice(1);
-      }
+    // Use instructor profile name if available
+    if (instructorProfile?.name) {
+      instructorName = instructorProfile.name;
+    } else {
+      // Then try to get user data from auth
+      const { data: authUser } = await supabase.auth.admin.getUserById(lesson.instructor_id)
       
-      // Use user metadata name if available
-      if (authUser.user.user_metadata?.full_name) {
-        instructorName = authUser.user.user_metadata.full_name;
+      if (authUser?.user) {
+        // Extract name from email if available (before the @ symbol)
+        if (authUser.user.email) {
+          const emailParts = authUser.user.email.split('@');
+          instructorName = emailParts[0].charAt(0).toUpperCase() + emailParts[0].slice(1);
+        }
+        
+        // Use user metadata name if available
+        if (authUser.user.user_metadata?.full_name) {
+          instructorName = authUser.user.user_metadata.full_name;
+        }
       }
     }
   }
