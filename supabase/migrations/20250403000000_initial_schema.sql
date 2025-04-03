@@ -9,6 +9,20 @@ CREATE TABLE IF NOT EXISTS public.instructor_profiles (
     updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Add columns to lessons table if they don't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'lessons' AND column_name = 'stripe_product_id') THEN
+        ALTER TABLE public.lessons ADD COLUMN stripe_product_id TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'lessons' AND column_name = 'stripe_price_id') THEN
+        ALTER TABLE public.lessons ADD COLUMN stripe_price_id TEXT;
+    END IF;
+END
+$$;
+
+-- Create lessons table if it doesn't exist
 CREATE TABLE IF NOT EXISTS public.lessons (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
@@ -25,6 +39,24 @@ CREATE TABLE IF NOT EXISTS public.lessons (
     FOREIGN KEY (parent_lesson_id) REFERENCES public.lessons(id)
 );
 
+-- Add columns to purchases table if they don't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'purchases' AND column_name = 'stripe_product_id') THEN
+        ALTER TABLE public.purchases ADD COLUMN stripe_product_id VARCHAR;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'purchases' AND column_name = 'stripe_price_id') THEN
+        ALTER TABLE public.purchases ADD COLUMN stripe_price_id VARCHAR;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'purchases' AND column_name = 'instructor_payout_amount') THEN
+        ALTER TABLE public.purchases ADD COLUMN instructor_payout_amount NUMERIC;
+    END IF;
+END
+$$;
+
+-- Create purchases table if it doesn't exist
 CREATE TABLE IF NOT EXISTS public.purchases (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL,

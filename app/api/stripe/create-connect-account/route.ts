@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const user = session.user
 
     // Check if the user already has a Stripe account
-    const { data: existingProfile } = await supabase
+    let { data: existingProfile } = await supabase
       .from("instructor_profiles")
       .select("*")
       .eq("user_id", user.id)
