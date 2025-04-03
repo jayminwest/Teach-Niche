@@ -10,7 +10,9 @@ import { notFound } from "next/navigation"
 import VideoCheckoutButton from "@/components/video-checkout-button"
 import { format } from "date-fns"
 
-export default async function VideoDetail({ params }: { params: { id: string } }) {
+import type { Params } from "next/navigation"
+
+export default async function VideoDetail({ params }: { params: Params }) {
   const supabase = createServerClient()
 
   // Get the current session
