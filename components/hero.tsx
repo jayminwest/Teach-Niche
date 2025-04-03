@@ -1,71 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function Hero() {
-  const [titleNumber, setTitleNumber] = useState(0);
-
-  const titles = useMemo(
-    () => ["tricks", "kendama", "skills", "community", "passion"],
-    []
-  );
-
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (titleNumber === titles.length - 1) {
-        setTitleNumber(0);
-      } else {
-        setTitleNumber(titleNumber + 1);
-      }
-    }, 2000);
-    return () => clearTimeout(timeoutId);
-  }, [titleNumber, titles]);
-
   return (
     <div className="w-full relative h-[600px]" data-testid="hero-section">
-      <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(100px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes fadeOutDown {
-          from {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          to {
-            opacity: 0;
-            transform: translateY(100px);
-          }
-        }
-        
-        .title-animation-active {
-          animation: fadeInUp 0.5s forwards;
-        }
-        
-        .title-animation-inactive {
-          animation: fadeOutDown 0.5s forwards;
-          opacity: 0;
-        }
-      `}</style>
-      
       <div className="absolute inset-0 z-0 overflow-hidden">
         <Image
           src="/303_group.png"
           alt="Kendama players group"
           fill
-          className="w-full h-full object-cover filter grayscale brightness-[0.85]"
+          className="w-full h-full object-cover filter grayscale brightness-[0.6]"
           priority
         />
       </div>
@@ -73,22 +21,8 @@ export function Hero() {
         <div className="flex gap-8 py-20 lg:py-40 items-center justify-center flex-col">
           <div className="flex gap-4 flex-col">
             <h1 className="text-3xl sm:text-5xl md:text-7xl max-w-2xl tracking-tighter text-center font-regular px-4 text-white">
-              <span className="text-primary">Master</span>
-              <span className="relative flex w-full justify-center overflow-hidden text-center md:pb-4 md:pt-1">
-                &nbsp;
-                {titles.map((title, index) => (
-                  <span
-                    key={index}
-                    className={`absolute font-semibold ${
-                      titleNumber === index 
-                        ? "title-animation-active" 
-                        : "title-animation-inactive"
-                    }`}
-                  >
-                    {title}
-                  </span>
-                ))}
-              </span>
+              <span className="text-primary">Support</span>
+              <span className="font-semibold"> Community</span>
             </h1>
 
             <p className="text-base sm:text-lg md:text-xl leading-relaxed tracking-tight text-white/80 max-w-2xl text-center px-4">
