@@ -114,7 +114,14 @@ export async function POST(request: NextRequest) {
       finalVideoPath = `${lessonId}/${finalVideoPath}`;
     }
     
-    console.log("Final path with lesson ID prefix (if needed):", finalVideoPath);
+    // Check for spaces in the path and encode them if needed
+    if (finalVideoPath.includes(' ')) {
+      console.log("Path contains spaces, encoding them");
+      // We don't want to encode the whole path, just the spaces
+      finalVideoPath = finalVideoPath.replace(/ /g, '%20');
+    }
+    
+    console.log("Final path with lesson ID prefix and encoding:", finalVideoPath);
     
     try {
       // Generate a signed URL valid for 1 hour (shorter expiration for security)

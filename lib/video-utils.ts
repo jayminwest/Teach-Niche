@@ -86,15 +86,17 @@ export async function refreshVideoUrl(videoUrl: string): Promise<string> {
         return videoUrl;
       }
       
-      // Cache the URL for 1 minute to prevent infinite loops
+      // Cache the URL for 1 hour to prevent infinite loops
       try {
-        sessionStorage?.setItem(cacheKey, data.signedUrl);
-        sessionStorage?.setItem(`${cacheKey}_timestamp`, Date.now().toString());
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          sessionStorage.setItem(cacheKey, data.signedUrl);
+          sessionStorage.setItem(`${cacheKey}_timestamp`, Date.now().toString());
+        }
       } catch (e) {
         // Ignore storage errors
       }
       
-      console.log('Created signed URL');
+      console.log('Created signed URL (cached for 1 hour)');
       return data.signedUrl;
     } catch (error) {
       console.error('Error creating signed URL for path:', error);
