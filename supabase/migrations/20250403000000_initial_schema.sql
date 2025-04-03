@@ -59,19 +59,19 @@ VALUES
     ('videos', 'videos', false, now(), now())
 ON CONFLICT (id) DO NOTHING;
 
--- Create policies for storage buckets (example policies)
-CREATE POLICY "Public Access to Thumbnails"
+-- Create policies for storage buckets to match existing policies
+CREATE POLICY "Allow Public Access 16v3daf_0"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'thumbnails');
 
-CREATE POLICY "Authenticated users can upload thumbnails"
+CREATE POLICY "Allow authenticated uploads 16v3daf_0"
 ON storage.objects FOR INSERT
 WITH CHECK (bucket_id = 'thumbnails' AND auth.role() = 'authenticated');
 
-CREATE POLICY "Video owners can access their videos"
+CREATE POLICY "Allow Owner Access"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'videos' AND auth.uid()::text = (storage.foldername(name))[1]);
 
-CREATE POLICY "Video owners can upload videos"
+CREATE POLICY "Allow authenticated uploads"
 ON storage.objects FOR INSERT
 WITH CHECK (bucket_id = 'videos' AND auth.role() = 'authenticated');
