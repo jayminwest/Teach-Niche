@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react" // Import React
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
@@ -25,7 +25,8 @@ interface ManageLessonProps {
   params: { id: string };
 }
 
-export default function ManageLesson(props: ManageLessonProps) {
+// Define as a React Functional Component
+const ManageLesson: React.FC<ManageLessonProps> = (props) => {
   const { params } = props; // Destructure params here
   const [lesson, setLesson] = useState<any>(null)
   const [videos, setVideos] = useState<any[]>([])
@@ -408,4 +409,6 @@ export default function ManageLesson(props: ManageLessonProps) {
     </div>
   )
 }
+
+export default ManageLesson; // Export the component
 
