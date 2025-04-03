@@ -11,10 +11,11 @@ import { format } from "date-fns"
 
 import { Metadata, PageProps } from 'next'
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps<{ id: string }>): Promise<Metadata> {
   // TODO: Fetch lesson title using params.id and add it to the metadata title
+  // Example: const lessonTitle = await fetchLessonTitle(params.id);
   return {
-    title: `Lesson Details`, // Example: `Lesson: ${lessonTitle}`
+    title: `Lesson Details`, // Example: `Lesson: ${lessonTitle || 'Details'}`
   }
 }
 
