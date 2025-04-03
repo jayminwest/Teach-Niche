@@ -28,17 +28,18 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
-  webpack: (config, { isServer }) => {
+  webpack: async (config, { isServer }) => {
     // Add necessary dependencies to the webpack config
     if (!isServer) {
       // Add MiniCssExtractPlugin
-      const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+      const { default: MiniCssExtractPlugin } = await import('mini-css-extract-plugin');
       config.plugins.push(new MiniCssExtractPlugin());
       
       // Ensure react-server-dom-webpack is resolved
+      const { resolve: resolveModule } = await import('module');
       config.resolve.alias = {
         ...config.resolve.alias,
-        'react-server-dom-webpack/client': require.resolve('react-server-dom-webpack/client')
+        'react-server-dom-webpack/client': resolveModule('react-server-dom-webpack/client')
       };
     }
     return config;
