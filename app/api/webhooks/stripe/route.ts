@@ -35,7 +35,8 @@ export async function POST(request: NextRequest) {
 
   // Handle the event
   try {
-    switch (event.type) {
+    // Use type assertion to handle all Stripe event types
+    switch (event.type as string) {
       case "checkout.session.completed": {
         const session = event.data.object
         
@@ -179,7 +180,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Handle transfer events
-      case "transfer.created": {
+      case "transfer.created" as string: {
         const transfer = event.data.object
         
         // Get the payment intent ID from the transfer
@@ -216,7 +217,7 @@ export async function POST(request: NextRequest) {
       }
       
       // Handle transfer failures
-      case "transfer.failed": {
+      case "transfer.failed" as string: {
         const transfer = event.data.object
         
         // Get the payment intent ID from the transfer
