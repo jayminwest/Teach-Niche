@@ -71,7 +71,6 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          video_id: string
           stripe_payment_id: string
           amount: number
           created_at: string
@@ -79,11 +78,14 @@ export interface Database {
           instructor_payout_amount: number | null
           platform_fee_amount: number | null
           payout_status: string | null
+          stripe_product_id: string | null
+          stripe_price_id: string | null
+          is_free: boolean
+          stripe_transfer_id: string | null
         }
         Insert: {
           id?: string
           user_id: string
-          video_id: string
           stripe_payment_id: string
           amount: number
           created_at?: string
@@ -91,11 +93,14 @@ export interface Database {
           instructor_payout_amount?: number | null
           platform_fee_amount?: number | null
           payout_status?: string | null
+          stripe_product_id?: string | null
+          stripe_price_id?: string | null
+          is_free?: boolean
+          stripe_transfer_id?: string | null
         }
         Update: {
           id?: string
           user_id?: string
-          video_id?: string
           stripe_payment_id?: string
           amount?: number
           created_at?: string
@@ -103,6 +108,10 @@ export interface Database {
           instructor_payout_amount?: number | null
           platform_fee_amount?: number | null
           payout_status?: string | null
+          stripe_product_id?: string | null
+          stripe_price_id?: string | null
+          is_free?: boolean
+          stripe_transfer_id?: string | null
         }
       }
       lessons: {
