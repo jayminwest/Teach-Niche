@@ -2,8 +2,14 @@ import { createServerClient } from "@/lib/supabase/server"
 import { stripe, calculateFees } from "@/lib/stripe"
 import { NextResponse } from "next/server"
 
+import { SupabaseClient } from '@supabase/supabase-js';
+import { Database } from '@/types/supabase';
+
 // Helper function to get the instructor's Stripe account ID
-async function getInstructorStripeAccountId(supabase, instructorId) {
+async function getInstructorStripeAccountId(
+  supabase: SupabaseClient<Database>, 
+  instructorId: string
+) {
   const { data, error } = await supabase
     .from("instructor_profiles")
     .select("stripe_account_id, stripe_account_enabled")
