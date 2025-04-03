@@ -104,6 +104,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid video path" }, { status: 400 });
     }
     
+    // Handle paths that include the lesson ID as a prefix (common format in your DB)
+    if (finalVideoPath.includes(lessonId + '/')) {
+      console.log("Path includes lesson ID prefix, using as is");
+    } 
+    // If the path doesn't include the lesson ID but should, add it
+    else if (!finalVideoPath.includes('/') && lessonId) {
+      console.log("Adding lesson ID prefix to path");
+      finalVideoPath = `${lessonId}/${finalVideoPath}`;
+    }
+    
+    console.log("Final path with lesson ID prefix (if needed):", finalVideoPath);
+    
     try {
       // Generate a signed URL valid for 1 hour (shorter expiration for security)
       const { data: signedUrlData, error: signedUrlError } = await supabase.storage
@@ -143,7 +155,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to generate video URL" }, { status: 500 });
     }
     
-    return NextResponse.json({ url: signedUrlData.signedUrl });
   } catch (error) {
     console.error("Error in get-video-url:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

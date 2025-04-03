@@ -136,6 +136,13 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
         }
       }
       
+      // If the URL contains the lesson ID as a prefix (common format in your DB)
+      // Example: "4af4cd08-26b3-44be-9584-53bdd36e7e0c/1743721526247-cloud_bounce_lesson (1080p).mp4"
+      if (url.includes(lessonId + '/')) {
+        console.log("URL contains lesson ID prefix, using as is");
+        return url;
+      }
+      
       // If it's just a filename, return it directly
       if (!url.includes('/')) {
         return url;

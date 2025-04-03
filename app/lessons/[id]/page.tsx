@@ -67,22 +67,11 @@ export default async function LessonDetail({
     notFound()
   }
   
-  // Extract the video filename if it's a path
+  // For video URLs, we'll pass them as-is to the VideoPlayer component
+  // which will handle the path extraction and URL refreshing
   if (lesson?.video_url && typeof lesson.video_url === 'string') {
     try {
-      // If the URL contains a path structure, extract just the filename
-      if (lesson.video_url.includes('/')) {
-        const parts = lesson.video_url.split('/');
-        const filename = parts[parts.length - 1];
-        
-        // If we have a filename and it doesn't contain query parameters
-        if (filename && !filename.includes('?')) {
-          console.log("Extracted filename from URL:", filename);
-          lesson.video_url = filename;
-        }
-      }
-      
-      // If it's a URL, try to refresh it
+      // Only refresh HTTP URLs, leave file paths as-is for the VideoPlayer
       if (lesson.video_url.startsWith('http')) {
         try {
           const refreshedUrl = await refreshVideoUrl(lesson.video_url);
@@ -93,6 +82,8 @@ export default async function LessonDetail({
           console.error("Error refreshing URL:", refreshError);
           // Keep the original URL if refresh fails
         }
+      } else {
+        console.log("Using original video path:", lesson.video_url);
       }
     } catch (error) {
       console.error("Error processing video URL:", error);
