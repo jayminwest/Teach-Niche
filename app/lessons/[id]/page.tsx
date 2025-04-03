@@ -97,21 +97,32 @@ export default async function LessonDetail({ params }: { params: { id: string } 
       <div className="grid gap-8 md:grid-cols-5">
         <div className="col-span-3">
           <div className="aspect-video mb-4 relative rounded-lg overflow-hidden border">
-            <Image
-              src={lesson.thumbnail_url || "/placeholder.svg?height=300&width=500"}
-              alt={lesson.title}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 50vw"
-            />
-            {!hasPurchased && !isInstructor && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-                <div className="text-center p-4">
-                  <Lock className="mx-auto h-12 w-12 mb-2 text-muted-foreground" />
-                  <h3 className="text-xl font-bold mb-2">Purchase Required</h3>
-                  <p className="text-muted-foreground mb-4">Purchase this lesson to access all videos</p>
-                </div>
-              </div>
+            {(hasPurchased || isInstructor) && lesson.video_url ? (
+              <video 
+                src={lesson.video_url} 
+                controls 
+                className="w-full h-full object-contain"
+                poster={lesson.thumbnail_url || "/placeholder.svg?height=300&width=500"}
+              />
+            ) : (
+              <>
+                <Image
+                  src={lesson.thumbnail_url || "/placeholder.svg?height=300&width=500"}
+                  alt={lesson.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 50vw"
+                />
+                {!hasPurchased && !isInstructor && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+                    <div className="text-center p-4">
+                      <Lock className="mx-auto h-12 w-12 mb-2 text-muted-foreground" />
+                      <h3 className="text-xl font-bold mb-2">Purchase Required</h3>
+                      <p className="text-muted-foreground mb-4">Purchase this lesson to access all videos</p>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
