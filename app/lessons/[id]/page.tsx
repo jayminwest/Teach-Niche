@@ -12,13 +12,14 @@ import { VideoPlayer } from "@/components/video-player"
 
 import { Metadata } from 'next'
 
-// Restore explicit types for generateMetadata props
+// Updated for Next.js 15: params is now a Promise
 export async function generateMetadata({ 
   params 
 }: { 
-  params: { id: string } 
+  params: Promise<{ id: string }> 
 }): Promise<Metadata> {
-  const lessonId = params.id;
+  const resolvedParams = await params; // Await the params Promise
+  const lessonId = resolvedParams.id;
   const supabase = await createServerClient();
   
   // Fetch lesson title for metadata
@@ -33,18 +34,21 @@ export async function generateMetadata({
   }
 }
 
-// Restore explicit types for the Page component props
+// Updated for Next.js 15: params and searchParams are now Promises
 export default async function LessonDetail({
   params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const supabase = await createServerClient()
   
-  // Get the lesson ID from params
-  const lessonId = params.id
+  // Await the params Promise before accessing its properties
+  const resolvedParams = await params;
+  const lessonId = resolvedParams.id;
+
+  // Note: searchParams would also need to be awaited if used directly
 
   // Get the current session - properly awaited
   const {
