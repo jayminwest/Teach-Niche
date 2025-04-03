@@ -112,6 +112,11 @@ export async function POST(request: Request) {
       lesson.stripe_price_id = priceId
     }
     
+    // Calculate the instructor payout amount
+    const priceInCents = Math.round(Number(price) * 100)
+    const { platformFee, instructorAmount } = calculateFees(priceInCents)
+    const instructorPayoutAmount = instructorAmount / 100 // Convert back to dollars for database
+    
     // Get the base URL for redirects
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
@@ -133,7 +138,8 @@ export async function POST(request: Request) {
         userId: session.user.id,
         instructorId: lesson.instructor_id,
         productId: lesson.stripe_product_id,
-        priceId: lesson.stripe_price_id
+        priceId: lesson.stripe_price_id,
+        instructorPayoutAmount: instructorAmount
       },
     })
     

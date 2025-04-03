@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
     // Calculate the price in cents and the platform fee
     const priceInCents = Math.round(lesson.price * 100)
     const { platformFee, instructorAmount } = calculateFees(priceInCents)
+    const instructorPayoutAmount = instructorAmount / 100 // Convert back to dollars for database
 
     // Create a Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
         userId: userSession.user.id,
         stripeProductId: lesson.stripe_product_id,
         stripePriceId: lesson.stripe_price_id,
-        instructorPayoutAmount: instructorAmount,
+        instructorPayoutAmount: instructorPayoutAmount,
       },
       payment_intent_data: {
         application_fee_amount: platformFee,

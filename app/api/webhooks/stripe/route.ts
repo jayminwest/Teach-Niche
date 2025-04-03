@@ -39,7 +39,9 @@ export async function POST(request: NextRequest) {
         
         // Calculate platform fee and instructor amount
         const amount = session.amount_total ? session.amount_total / 100 : 0
-        const { platformFee, instructorAmount } = calculateFees(amount)
+        const amountInCents = session.amount_total || 0
+        const { platformFee, instructorAmount } = calculateFees(amountInCents)
+        const instructorPayoutAmount = instructorAmount / 100 // Convert back to dollars
         
         if (lessonId) {
           // This is a lesson purchase
@@ -54,7 +56,7 @@ export async function POST(request: NextRequest) {
             lesson_id: lessonId,
             stripe_payment_id: session.id,
             amount: amount,
-            instructor_payout_amount: instructorAmount,
+            instructor_payout_amount: instructorPayoutAmount,
             stripe_product_id: session.metadata?.productId,
             stripe_price_id: session.metadata?.priceId,
           }
@@ -98,7 +100,7 @@ export async function POST(request: NextRequest) {
               video_id: videoId,
               stripe_payment_id: session.id,
               amount: amount,
-              instructor_payout_amount: instructorAmount,
+              instructor_payout_amount: instructorPayoutAmount,
               stripe_product_id: session.metadata?.productId,
               stripe_price_id: session.metadata?.priceId,
             })

@@ -81,6 +81,16 @@ export async function GET(request: NextRequest) {
       column_name: 'video_id'
     })
     
+    // Calculate instructor payout if not provided in metadata
+    let instructorPayoutAmount = null
+    if (checkoutSession.metadata?.instructorPayoutAmount) {
+      instructorPayoutAmount = parseFloat(checkoutSession.metadata.instructorPayoutAmount) / 100
+    } else if (checkoutSession.amount_total) {
+      const amountInCents = checkoutSession.amount_total
+      const { instructorAmount } = calculateFees(amountInCents)
+      instructorPayoutAmount = instructorAmount / 100
+    }
+    
     const purchaseData = {
       user_id: session.user.id,
       lesson_id: lessonId,
@@ -88,6 +98,7 @@ export async function GET(request: NextRequest) {
       amount: checkoutSession.amount_total ? checkoutSession.amount_total / 100 : 0,
       stripe_product_id: checkoutSession.metadata?.productId,
       stripe_price_id: checkoutSession.metadata?.priceId,
+      instructor_payout_amount: instructorPayoutAmount
     }
     
     // Only add video_id if the column exists
