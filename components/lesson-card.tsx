@@ -13,9 +13,10 @@ interface LessonCardProps {
   price: number
   isPurchased?: boolean
   videoCount?: number
+  instructorName?: string
 }
 
-export function LessonCard({ id, title, thumbnailUrl, price, isPurchased = false, videoCount = 0 }: LessonCardProps) {
+export function LessonCard({ id, title, thumbnailUrl, price, isPurchased = false, videoCount = 0, instructorName = "Instructor" }: LessonCardProps) {
   return (
     <Card className="overflow-hidden">
       <div className="aspect-video overflow-hidden relative">
@@ -40,7 +41,7 @@ export function LessonCard({ id, title, thumbnailUrl, price, isPurchased = false
       </CardHeader>
       <CardContent className="p-4 pt-0 flex justify-between items-center">
         <p className="font-medium text-lg">{formatPrice(price)}</p>
-        <p className="text-sm text-muted-foreground">{videoCount} videos</p>
+        <p className="text-sm text-muted-foreground">{instructorName}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <Button asChild className="w-full" variant={isPurchased ? "outline" : "default"}>
