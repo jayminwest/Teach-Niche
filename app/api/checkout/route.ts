@@ -18,61 +18,76 @@ export async function POST(request: NextRequest) {
 
     const user = userSession.user
 
-    // Parse request body
-    const { videoId, price, title } = await request.json()
-
-    if (!videoId || !price || !title) {
-      return NextResponse.json({ message: "Missing required fields" }, { status: 400 })
+    // Get the lesson ID from the request
+    const { lessonId } = await request.json()
+    if (!lessonId) {
+      return NextResponse.json({ message: "Lesson ID is required" }, { status: 400 })
     }
 
-    // Fetch video details from DB to verify price and availability
-    const { data: video, error } = await supabase.from("videos").select("*").eq("id", videoId).single()
+    // Get the lesson details
+    const { data: lesson, error: lessonError } = await supabase
+      .from("lessons")
+      .select("*, instructor_profiles:instructor_id(stripe_account_id)")
+      .eq("id", lessonId)
+      .single()
 
-    if (error || !video) {
-      return NextResponse.json({ message: "Video not found" }, { status: 404 })
+    if (lessonError || !lesson) {
+      return NextResponse.json({ message: "Lesson not found" }, { status: 404 })
     }
 
-    // Verify price matches (security measure)
-    if (video.price !== price) {
-      return NextResponse.json({ message: "Price mismatch" }, { status: 400 })
-    }
-
-    // Check if user has already purchased this video
+    // Check if the user has already purchased this lesson
     const { data: existingPurchase } = await supabase
       .from("purchases")
       .select("id")
-      .eq("user_id", user.id)
-      .eq("video_id", videoId)
-      .maybeSingle()
+      .eq("user_id", userSession.user.id)
+      .eq("lesson_id", lessonId)
+      .single()
 
     if (existingPurchase) {
-      return NextResponse.json({ message: "You already own this video" }, { status: 400 })
+      return NextResponse.json({ message: "You have already purchased this lesson" }, { status: 400 })
     }
 
-    // Create a Stripe checkout session
+    // Get the instructor's Stripe account ID
+    const instructorStripeAccountId = lesson.instructor_profiles?.stripe_account_id
+
+    if (!instructorStripeAccountId) {
+      return NextResponse.json({ message: "Instructor payment account not set up" }, { status: 400 })
+    }
+
+    // Check if the lesson has a Stripe price ID
+    if (!lesson.stripe_price_id) {
+      return NextResponse.json({ message: "Lesson payment setup is incomplete" }, { status: 400 })
+    }
+
+    // Calculate the price in cents and the platform fee
+    const priceInCents = Math.round(lesson.price * 100)
+    const { platformFee, instructorAmount } = calculateFees(priceInCents)
+
+    // Create a Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
         {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: title,
-              description: `Kendama tutorial video: ${title}`,
-            },
-            unit_amount: Math.round(price * 100), // Convert to cents
-          },
+          price: lesson.stripe_price_id,
           quantity: 1,
         },
       ],
       mode: "payment",
-      success_url: `${request.nextUrl.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${request.nextUrl.origin}/videos/${videoId}`,
+      success_url: `${request.nextUrl.origin}/checkout/lesson-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${request.nextUrl.origin}/lessons/${lessonId}`,
       metadata: {
-        videoId,
-        userId: user.id,
+        lessonId: lessonId,
+        userId: userSession.user.id,
+        stripeProductId: lesson.stripe_product_id,
+        stripePriceId: lesson.stripe_price_id,
+        instructorPayoutAmount: instructorAmount,
       },
-      customer_email: user.email,
+      payment_intent_data: {
+        application_fee_amount: platformFee,
+        transfer_data: {
+          destination: instructorStripeAccountId,
+        },
+      },
     })
 
     return NextResponse.json({ url: session.url })

@@ -25,99 +25,32 @@ export async function POST(request: NextRequest) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as any
 
-    // Extract the metadata
-    const { videoId, lessonId, userId, type, instructorId, platformFeePercentage } = session.metadata
+    // Extract metadata
+    const lessonId = session.metadata?.lessonId
+    const userId = session.metadata?.userId
+    const stripeProductId = session.metadata?.stripeProductId
+    const stripePriceId = session.metadata?.stripePriceId
+    const instructorPayoutAmount = session.metadata?.instructorPayoutAmount ? 
+      parseInt(session.metadata.instructorPayoutAmount) / 100 : null
 
-    if (!userId) {
-      return NextResponse.json({ message: "Missing user ID in metadata" }, { status: 400 })
+    if (!lessonId || !userId) {
+      console.error("Missing metadata in checkout session", session.id)
+      return NextResponse.json({ received: true })
     }
 
-    try {
-      if (type === "lesson" && lessonId) {
-        // Handle lesson purchase
-        // Fetch the lesson to get the price
-        const { data: lesson, error: lessonError } = await supabase
-          .from("lessons")
-          .select("price")
-          .eq("id", lessonId)
-          .single()
+    // Record the purchase in the database
+    const { error: purchaseError } = await supabase.from("purchases").insert({
+      user_id: userId,
+      lesson_id: lessonId,
+      stripe_payment_id: session.payment_intent as string,
+      stripe_product_id: stripeProductId,
+      stripe_price_id: stripePriceId,
+      amount: session.amount_total ? session.amount_total / 100 : 0,
+      instructor_payout_amount: instructorPayoutAmount,
+    })
 
-        if (lessonError || !lesson) {
-          console.error("Lesson not found:", lessonError)
-          throw new Error("Lesson not found")
-        }
-
-        // Calculate the platform fee and instructor amount
-        const amountInCents = Math.round(lesson.price * 100)
-        const { platformFee, instructorAmount } = calculateFees(amountInCents)
-
-        // Convert back to dollars for database storage
-        const platformFeeAmount = platformFee / 100
-        const instructorPayoutAmount = instructorAmount / 100
-
-        // Create a purchase record with fee details
-        const { error } = await supabase.from("purchases").insert({
-          user_id: userId,
-          video_id: videoId || null, // May be null for lesson purchases
-          lesson_id: lessonId,
-          stripe_payment_id: session.payment_intent,
-          amount: lesson.price,
-          instructor_payout_amount: instructorPayoutAmount,
-          platform_fee_amount: platformFeeAmount,
-          payout_status: "paid", // Since Stripe Connect handles the transfer automatically
-        })
-
-        if (error) {
-          console.error("Error creating purchase record:", error)
-          throw error
-        }
-
-        console.log(`Successfully processed lesson purchase for user ${userId}, lesson ${lessonId}`)
-      } else if (videoId) {
-        // Handle legacy video purchase
-        // Fetch the video to get the price
-        const { data: video, error: videoError } = await supabase
-          .from("videos")
-          .select("price, instructor_id")
-          .eq("id", videoId)
-          .single()
-
-        if (videoError || !video) {
-          throw new Error("Video not found")
-        }
-
-        // For legacy purchases, we'll still calculate the split but may not have a Connect account
-        const amountInCents = Math.round(video.price * 100)
-        const { platformFee, instructorAmount } = calculateFees(amountInCents)
-
-        // Convert back to dollars for database storage
-        const platformFeeAmount = platformFee / 100
-        const instructorPayoutAmount = instructorAmount / 100
-
-        // Create a purchase record
-        const { error } = await supabase.from("purchases").insert({
-          user_id: userId,
-          video_id: videoId,
-          stripe_payment_id: session.payment_intent,
-          amount: video.price,
-          lesson_id: null,
-          instructor_payout_amount: instructorPayoutAmount,
-          platform_fee_amount: platformFeeAmount,
-          payout_status: "pending", // May need manual processing for legacy purchases
-        })
-
-        if (error) {
-          throw error
-        }
-      } else {
-        throw new Error("Missing product ID in metadata")
-      }
-
-      // Here you could send a confirmation email to the user
-      // For simplicity, we're skipping that part in this implementation
-    } catch (error: any) {
-      console.error("Error processing webhook:", error)
-      return NextResponse.json({ message: `Webhook processing error: ${error.message}` }, { status: 500 })
+    if (purchaseError) {
+      console.error("Error recording purchase:", purchaseError)
     }
   }
 
