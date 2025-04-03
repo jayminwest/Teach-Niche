@@ -20,8 +20,13 @@ import {
 } from "@/components/ui/dialog"
 import { format } from "date-fns"
 
-// Define params type inline for Client Component page
-export default function ManageLesson({ params }: { params: { id: string } }) {
+// Define props type for Client Component page
+interface ManageLessonProps {
+  params: { id: string };
+}
+
+export default function ManageLesson(props: ManageLessonProps) {
+  const { params } = props; // Destructure params here
   const [lesson, setLesson] = useState<any>(null)
   const [videos, setVideos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
