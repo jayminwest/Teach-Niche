@@ -12,8 +12,8 @@ import { VideoPlayer } from "@/components/video-player"
 
 import { Metadata } from 'next' 
 
-// Define proper types for the params
-type PageParams = {
+// Define props type for the page component and metadata function
+type PageProps = {
   params: {
     id: string;
   };
@@ -41,7 +41,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function LessonDetail({ 
   params, 
   searchParams 
-}: PageParams) {
+}: PageProps) {
   const supabase = await createServerClient()
   
   // Get the lesson ID from params
