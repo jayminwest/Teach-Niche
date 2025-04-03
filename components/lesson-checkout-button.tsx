@@ -2,9 +2,9 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { useToast } from "@/components/ui/use-toast"
-import { Loader2, Lock, Download } from "lucide-react" // Added Download icon
+import { Loader2, Lock } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useToast } from "@/components/ui/use-toast"
 
 interface LessonCheckoutButtonProps {
   lessonId: string
@@ -14,46 +14,13 @@ interface LessonCheckoutButtonProps {
 
 export default function LessonCheckoutButton({ lessonId, price, title }: LessonCheckoutButtonProps) {
   const [loading, setLoading] = useState(false)
-  const { toast } = useToast()
   const router = useRouter()
+  const { toast } = useToast()
 
   const handleCheckout = async () => {
     try {
       setLoading(true)
-
-      // For free lessons, bypass Stripe checkout
-      if (price === 0) {
-        // Call our API to record free lesson access
-        const response = await fetch(`/api/checkout-lesson`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            lessonId,
-            price: 0,
-            title,
-            isFree: true,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to access free lesson");
-        }
-
-        const data = await response.json();
-        
-        // Redirect to the lesson success page
-        if (data.lessonId) {
-          router.push(`/checkout/lesson-success?free=true&lessonId=${data.lessonId}`);
-        } else {
-          throw new Error("No lesson ID returned from server");
-        }
-        return;
-      }
-
-      // For paid lessons, continue with existing Stripe checkout flow
+      
       const response = await fetch("/api/checkout-lesson", {
         method: "POST",
         headers: {
@@ -81,7 +48,7 @@ export default function LessonCheckoutButton({ lessonId, price, title }: LessonC
       }
 
       const data = await response.json();
-
+      
       // Redirect to Stripe Checkout
       if (data.url) {
         window.location.href = data.url;
@@ -89,14 +56,14 @@ export default function LessonCheckoutButton({ lessonId, price, title }: LessonC
         throw new Error("No checkout URL returned from server");
       }
     } catch (error: any) {
-      console.error("Checkout error:", error);
+      console.error("Checkout error:", error)
       toast({
         variant: "destructive",
-        title: "Error",
+        title: "Checkout Error",
         description: error.message || "Something went wrong. Please try again.",
-      });
+      })
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   }
 
@@ -107,18 +74,12 @@ export default function LessonCheckoutButton({ lessonId, price, title }: LessonC
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Processing...
         </>
-      ) : price === 0 ? (
-        <>
-          <Download className="mr-2 h-4 w-4" />
-          Get Free Access
-        </>
       ) : (
         <>
           <Lock className="mr-2 h-4 w-4" />
-          Purchase Access
+          Purchase Lesson
         </>
       )}
     </Button>
   )
 }
-

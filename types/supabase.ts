@@ -29,44 +29,6 @@ export interface Database {
           updated_at?: string
         }
       }
-      videos: {
-        Row: {
-          id: string
-          title: string
-          description: string | null
-          instructor_id: string
-          thumbnail_url: string | null
-          video_url: string
-          price: number
-          created_at: string
-          updated_at: string
-          lesson_id: string | null
-        }
-        Insert: {
-          id?: string
-          title: string
-          description?: string | null
-          instructor_id: string
-          thumbnail_url?: string | null
-          video_url: string
-          price: number
-          created_at?: string
-          updated_at?: string
-          lesson_id?: string | null
-        }
-        Update: {
-          id?: string
-          title?: string
-          description?: string | null
-          instructor_id?: string
-          thumbnail_url?: string | null
-          video_url?: string
-          price?: number
-          created_at?: string
-          updated_at?: string
-          lesson_id?: string | null
-        }
-      }
       purchases: {
         Row: {
           id: string
@@ -187,6 +149,7 @@ export interface Database {
           title: string | null
           description: string | null
           thumbnail_url: string | null
+          video_url: string | null
           purchase_date: string | null
         }
       }
@@ -194,7 +157,21 @@ export interface Database {
   }
 }
 
-export type Video = Database["public"]["Tables"]["videos"]["Row"]
+// For backward compatibility, keeping the Video type but marking it as deprecated
+/** @deprecated The videos table has been removed. Use Lesson instead. */
+export type Video = {
+  id: string
+  title: string
+  description: string | null
+  instructor_id: string
+  thumbnail_url: string | null
+  video_url: string
+  price: number
+  created_at: string
+  updated_at: string
+  lesson_id: string | null
+}
+
 export type Purchase = Database["public"]["Tables"]["purchases"]["Row"]
 export type Lesson = Database["public"]["Tables"]["lessons"]["Row"]
 export type UserPurchasedLesson = Database["public"]["Views"]["user_purchased_lessons"]["Row"]
