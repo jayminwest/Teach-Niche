@@ -11,19 +11,19 @@ import { format } from "date-fns"
 
 import { Metadata } from 'next'
 
-export const generateMetadata = async ({ params }: { params: { id: string } }): Promise<Metadata> => {
+type Props = {
+  params: { id: string }
+  searchParams: { [key: string]: string | string[] | undefined }
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `Lesson Details`,
   }
 }
 
-export default async function LessonDetail({ 
-  params,
-  searchParams 
-}: {
-  params: { id: string },
-  searchParams?: { [key: string]: string | string[] | undefined }
-}) {
+export default async function LessonDetail(props: Props) {
+  const { params, searchParams } = props
   const supabase = createServerClient()
   
   // Store the ID in a variable to avoid direct property access on params
