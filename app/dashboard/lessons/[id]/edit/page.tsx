@@ -14,10 +14,11 @@ import { useToast } from "@/components/ui/use-toast"
 import { ArrowLeft, Loader2, Upload } from "lucide-react"
 import Link from "next/link"
 
-// @ts-ignore - Next.js page props type issue
 export default function EditLesson({ 
   params 
-}: { params: { id: string } }) {
+}: { 
+  params: { id: string } 
+}) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [price, setPrice] = useState("")
