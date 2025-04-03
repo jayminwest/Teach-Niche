@@ -43,14 +43,12 @@ export default function SignIn() {
         
         setAuthError(errorMessage);
         
-        // Use setTimeout to ensure the toast is shown after the component updates
-        setTimeout(() => {
-          toast({
-            variant: "destructive",
-            title: "Authentication Failed",
-            description: errorMessage,
-          });
-        }, 100);
+        // Show toast immediately without setTimeout
+        toast({
+          variant: "destructive",
+          title: "Authentication Failed",
+          description: errorMessage,
+        });
         
         setLoading(false);
         return;
