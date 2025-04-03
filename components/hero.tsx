@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -28,6 +27,39 @@ export function Hero() {
 
   return (
     <div className="w-full relative h-[600px]" data-testid="hero-section">
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(100px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        @keyframes fadeOutDown {
+          from {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          to {
+            opacity: 0;
+            transform: translateY(100px);
+          }
+        }
+        
+        .title-animation-active {
+          animation: fadeInUp 0.5s forwards;
+        }
+        
+        .title-animation-inactive {
+          animation: fadeOutDown 0.5s forwards;
+          opacity: 0;
+        }
+      `}</style>
+      
       <div className="absolute inset-0 z-0 overflow-hidden">
         <Image
           src="/303_group.png"
@@ -45,25 +77,16 @@ export function Hero() {
               <span className="relative flex w-full justify-center overflow-hidden text-center md:pb-4 md:pt-1">
                 &nbsp;
                 {titles.map((title, index) => (
-                  <motion.span
+                  <span
                     key={index}
-                    className="absolute font-semibold"
-                    initial={{ opacity: 0, y: "-100" }}
-                    transition={{ type: "spring", stiffness: 50 }}
-                    animate={
-                      titleNumber === index
-                        ? {
-                            y: 0,
-                            opacity: 1,
-                          }
-                        : {
-                            y: titleNumber > index ? -150 : 150,
-                            opacity: 0,
-                          }
-                    }
+                    className={`absolute font-semibold ${
+                      titleNumber === index 
+                        ? "title-animation-active" 
+                        : "title-animation-inactive"
+                    }`}
                   >
                     {title}
-                  </motion.span>
+                  </span>
                 ))}
               </span>
             </h1>
