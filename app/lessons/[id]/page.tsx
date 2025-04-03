@@ -12,17 +12,18 @@ import { VideoPlayer } from "@/components/video-player"
 
 import { Metadata } from 'next' 
 
-// Define proper types for the params
+// Updated type definition to include Promise wrappers for Next.js 15
 type PageParams = {
-  params: {
+  params: Promise<{
     id: string;
-  };
-  searchParams: { [key: string]: string | string[] | undefined };
+  }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-// Define props inline for generateMetadata with proper typing
+// Updated to properly await params before accessing
 export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
-  const lessonId = params.id;
+  const resolvedParams = await params;
+  const lessonId = resolvedParams.id;
   const supabase = await createServerClient();
   
   // Fetch lesson title for metadata
@@ -37,15 +38,16 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   }
 }
 
-// Define props inline for the Page component with proper typing
+// Updated to properly await params before accessing
 export default async function LessonDetail({ 
   params, 
   searchParams 
 }: PageParams) {
+  const resolvedParams = await params;
   const supabase = await createServerClient()
   
-  // Get the lesson ID from params
-  const lessonId = params.id
+  // Get the lesson ID from resolved params
+  const lessonId = resolvedParams.id
 
   // Get the current session - properly awaited
   const {
@@ -228,4 +230,3 @@ export default async function LessonDetail({
     </div>
   )
 }
-
