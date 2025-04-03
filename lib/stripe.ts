@@ -1,4 +1,7 @@
 import Stripe from "stripe"
+import { SupabaseClient } from "@supabase/supabase-js"
+import { Database } from "@/types/supabase"
+import { StripeAccountStatus } from "@/types/api"
 
 // Initialize Stripe
 let stripe: Stripe;
@@ -49,7 +52,11 @@ export function isStripeInitialized(): boolean {
  * @param stripeAccountId Stripe account ID
  * @returns The updated account status
  */
-export async function syncStripeAccountStatus(supabase: any, userId: string, stripeAccountId: string) {
+export async function syncStripeAccountStatus(
+  supabase: SupabaseClient<Database>, 
+  userId: string, 
+  stripeAccountId: string
+): Promise<StripeAccountStatus> {
   try {
     if (!stripe) {
       throw new Error("Stripe is not initialized");
@@ -88,4 +95,3 @@ export async function syncStripeAccountStatus(supabase: any, userId: string, str
     throw error;
   }
 }
-
