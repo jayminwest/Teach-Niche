@@ -2,22 +2,22 @@ import { createServerClient } from "@/lib/supabase/server"
 import { LessonCard } from "@/components/lesson-card"
 
 export default async function LessonsPage() {
-  const supabase = createServerClient()
+  const supabase = await createServerClient()
 
-  // Get the current session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  const user = session?.user || null
+  // Get the authenticated user (more secure than session)
+  const { data: { user } } = await supabase.auth.getUser()
 
   // Fetch all lessons
-  const { data: rawLessons } = await supabase
+  const { data: rawLessons, error: lessonsError } = await supabase
     .from("lessons")
-    .select("*, videos(count), instructor_id")
+    .select("*")
     .order("created_at", { ascending: false })
+  
+  console.log("Lessons query result:", { rawLessons, lessonsError })
     
   // Process lessons to add instructor names
   const lessons = await Promise.all((rawLessons || []).map(async (lesson) => {
+    console.log("Processing lesson:", lesson)
     // Get instructor name
     let instructorName = "Instructor";
     if (lesson?.instructor_id) {
@@ -66,6 +66,9 @@ export default async function LessonsPage() {
 
     purchasedLessonIds = purchasedLessons?.map((p) => p.lesson_id) || []
   }
+
+  console.log("Final processed lessons:", lessons)
+  console.log("Purchased lesson IDs:", purchasedLessonIds)
 
   return (
     <div className="container py-8">

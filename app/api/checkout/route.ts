@@ -53,6 +53,17 @@ export async function POST(request: NextRequest) {
     if (!instructorStripeAccountId) {
       return NextResponse.json({ message: "Instructor payment account not set up" }, { status: 400 })
     }
+    
+    // Check if the instructor's account is enabled
+    const { data: instructorProfile } = await supabase
+      .from("instructor_profiles")
+      .select("stripe_account_enabled")
+      .eq("user_id", lesson.instructor_id)
+      .single()
+      
+    if (!instructorProfile?.stripe_account_enabled) {
+      return NextResponse.json({ message: "Instructor payment account is not fully enabled" }, { status: 400 })
+    }
 
     // Check if the lesson has a Stripe price ID
     if (!lesson.stripe_price_id) {
@@ -62,6 +73,7 @@ export async function POST(request: NextRequest) {
     // Calculate the price in cents and the platform fee
     const priceInCents = Math.round(lesson.price * 100)
     const { platformFee, instructorAmount } = calculateFees(priceInCents)
+    const instructorPayoutAmount = instructorAmount / 100 // Convert back to dollars for database
 
     // Create a Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
@@ -80,7 +92,7 @@ export async function POST(request: NextRequest) {
         userId: userSession.user.id,
         stripeProductId: lesson.stripe_product_id,
         stripePriceId: lesson.stripe_price_id,
-        instructorPayoutAmount: instructorAmount,
+        instructorPayoutAmount: instructorPayoutAmount,
       },
       payment_intent_data: {
         application_fee_amount: platformFee,

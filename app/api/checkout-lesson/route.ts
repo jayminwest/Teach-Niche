@@ -1,6 +1,24 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { stripe } from "@/lib/stripe"
+import { stripe, calculateFees } from "@/lib/stripe"
 import { NextResponse } from "next/server"
+
+// Helper function to get the instructor's Stripe account ID
+async function getInstructorStripeAccountId(supabase, instructorId) {
+  const { data, error } = await supabase
+    .from("instructor_profiles")
+    .select("stripe_account_id, stripe_account_enabled")
+    .eq("user_id", instructorId)
+    .single();
+  
+  if (error || !data) {
+    return { accountId: null, isEnabled: false };
+  }
+  
+  return { 
+    accountId: data.stripe_account_id, 
+    isEnabled: data.stripe_account_enabled 
+  };
+}
 
 // Helper function to create a Stripe product and price
 async function createStripeProduct({ name, description, price, images }: { 
@@ -75,6 +93,24 @@ export async function POST(request: Request) {
       )
     }
     
+    // Get the instructor's Stripe account ID
+    const { accountId: instructorStripeAccountId, isEnabled: isAccountEnabled } = 
+      await getInstructorStripeAccountId(supabase, lesson.instructor_id);
+    
+    if (!instructorStripeAccountId) {
+      return NextResponse.json(
+        { error: "Instructor payment account not set up" },
+        { status: 400 }
+      )
+    }
+    
+    if (!isAccountEnabled) {
+      return NextResponse.json(
+        { error: "Instructor payment account is not fully enabled" },
+        { status: 400 }
+      )
+    }
+    
     // Validate that the lesson has the required Stripe IDs
     if (!lesson.stripe_product_id || !lesson.stripe_price_id) {
       console.error("Lesson missing Stripe product or price ID:", lesson)
@@ -112,11 +148,16 @@ export async function POST(request: Request) {
       lesson.stripe_price_id = priceId
     }
     
+    // Calculate the instructor payout amount
+    const priceInCents = Math.round(Number(price) * 100)
+    const { platformFee, instructorAmount } = calculateFees(priceInCents)
+    const instructorPayoutAmount = instructorAmount / 100 // Convert back to dollars for database
+    
     // Get the base URL for redirects
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
     
-    // Create a Stripe Checkout Session
+    // Create a Stripe Checkout Session with Connect
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
@@ -133,7 +174,14 @@ export async function POST(request: Request) {
         userId: session.user.id,
         instructorId: lesson.instructor_id,
         productId: lesson.stripe_product_id,
-        priceId: lesson.stripe_price_id
+        priceId: lesson.stripe_price_id,
+        instructorPayoutAmount: instructorAmount
+      },
+      payment_intent_data: {
+        application_fee_amount: platformFee,
+        transfer_data: {
+          destination: instructorStripeAccountId,
+        },
       },
     })
     

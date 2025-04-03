@@ -3,9 +3,21 @@ import { stripe, calculateFees } from "@/lib/stripe"
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/supabase"
 
+// Check for required environment variables
+if (!process.env.SUPABASE_URL) {
+  console.error("Missing SUPABASE_URL environment variable");
+}
+
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error("Missing SUPABASE_SERVICE_ROLE_KEY environment variable");
+}
+
 // Initialize Supabase client with service role for admin access
 // This is needed for webhook operations where we don't have a user session
-const supabase = createClient<Database>(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+const supabase = createClient<Database>(
+  process.env.SUPABASE_URL || "https://your-project.supabase.co",
+  process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+)
 
 export async function POST(request: NextRequest) {
   let event
@@ -39,7 +51,12 @@ export async function POST(request: NextRequest) {
         
         // Calculate platform fee and instructor amount
         const amount = session.amount_total ? session.amount_total / 100 : 0
-        const { platformFee, instructorAmount } = calculateFees(amount)
+        const amountInCents = session.amount_total || 0
+        const { platformFee, instructorAmount } = calculateFees(amountInCents)
+        const instructorPayoutAmount = instructorAmount / 100 // Convert back to dollars
+        
+        // Set payout status to 'pending' since we're using Connect
+        const payoutStatus = 'pending_transfer'
         
         if (lessonId) {
           // This is a lesson purchase
@@ -54,7 +71,9 @@ export async function POST(request: NextRequest) {
             lesson_id: lessonId,
             stripe_payment_id: session.id,
             amount: amount,
-            instructor_payout_amount: instructorAmount,
+            instructor_payout_amount: instructorPayoutAmount,
+            platform_fee_amount: platformFee / 100, // Convert to dollars
+            payout_status: payoutStatus,
             stripe_product_id: session.metadata?.productId,
             stripe_price_id: session.metadata?.priceId,
           }
@@ -75,15 +94,23 @@ export async function POST(request: NextRequest) {
           // If there's an instructor ID, update their earnings
           const instructorId = session.metadata?.instructorId
           if (instructorId) {
+            // Get current earnings first
+            const { data: instructorProfile } = await supabase
+              .from("instructor_profiles")
+              .select("total_earnings")
+              .eq("user_id", instructorId)
+              .single()
+            
+            const currentEarnings = instructorProfile?.total_earnings || 0
+            const newEarnings = currentEarnings + instructorPayoutAmount
+            
             const { error: instructorError } = await supabase
               .from("instructor_profiles")
-              .upsert({
-                user_id: instructorId,
-                total_earnings: instructorAmount,
-              }, {
-                onConflict: 'user_id',
-                ignoreDuplicates: false
+              .update({
+                total_earnings: newEarnings,
+                updated_at: new Date().toISOString()
               })
+              .eq("user_id", instructorId)
             
             if (instructorError) {
               console.error("Error updating instructor earnings:", instructorError)
@@ -98,7 +125,9 @@ export async function POST(request: NextRequest) {
               video_id: videoId,
               stripe_payment_id: session.id,
               amount: amount,
-              instructor_payout_amount: instructorAmount,
+              instructor_payout_amount: instructorPayoutAmount,
+              platform_fee_amount: platformFee / 100, // Convert to dollars
+              payout_status: payoutStatus,
               stripe_product_id: session.metadata?.productId,
               stripe_price_id: session.metadata?.priceId,
             })
@@ -110,19 +139,101 @@ export async function POST(request: NextRequest) {
           // If there's an instructor ID, update their earnings
           const instructorId = session.metadata?.instructorId
           if (instructorId) {
+            // Get current earnings first
+            const { data: instructorProfile } = await supabase
+              .from("instructor_profiles")
+              .select("total_earnings")
+              .eq("user_id", instructorId)
+              .single()
+            
+            const currentEarnings = instructorProfile?.total_earnings || 0
+            const newEarnings = currentEarnings + instructorPayoutAmount
+            
             const { error: instructorError } = await supabase
               .from("instructor_profiles")
-              .upsert({
-                user_id: instructorId,
-                total_earnings: instructorAmount,
-              }, {
-                onConflict: 'user_id',
-                ignoreDuplicates: false
+              .update({
+                total_earnings: newEarnings,
+                updated_at: new Date().toISOString()
               })
+              .eq("user_id", instructorId)
             
             if (instructorError) {
               console.error("Error updating instructor earnings:", instructorError)
             }
+          }
+        }
+        
+        break
+      }
+      
+      // Handle transfer events
+      case "transfer.created": {
+        const transfer = event.data.object
+        
+        // Get the payment intent ID from the transfer
+        const paymentIntentId = transfer.source_transaction
+        
+        if (paymentIntentId) {
+          // Find the purchase with this payment intent
+          const { data: purchases, error: purchaseError } = await supabase
+            .from("purchases")
+            .select("id")
+            .eq("stripe_payment_id", paymentIntentId)
+            .limit(1)
+          
+          if (purchaseError || !purchases || purchases.length === 0) {
+            console.error("Could not find purchase for transfer:", purchaseError)
+            break
+          }
+          
+          // Update the purchase with the transfer information
+          const { error: updateError } = await supabase
+            .from("purchases")
+            .update({
+              payout_status: 'transferred',
+              stripe_transfer_id: transfer.id
+            })
+            .eq("id", purchases[0].id)
+          
+          if (updateError) {
+            console.error("Error updating purchase with transfer info:", updateError)
+          }
+        }
+        
+        break
+      }
+      
+      // Handle transfer failures
+      case "transfer.failed": {
+        const transfer = event.data.object
+        
+        // Get the payment intent ID from the transfer
+        const paymentIntentId = transfer.source_transaction
+        
+        if (paymentIntentId) {
+          // Find the purchase with this payment intent
+          const { data: purchases, error: purchaseError } = await supabase
+            .from("purchases")
+            .select("id")
+            .eq("stripe_payment_id", paymentIntentId)
+            .limit(1)
+          
+          if (purchaseError || !purchases || purchases.length === 0) {
+            console.error("Could not find purchase for failed transfer:", purchaseError)
+            break
+          }
+          
+          // Update the purchase with the failure information
+          const { error: updateError } = await supabase
+            .from("purchases")
+            .update({
+              payout_status: 'failed',
+              stripe_transfer_id: transfer.id
+            })
+            .eq("id", purchases[0].id)
+          
+          if (updateError) {
+            console.error("Error updating purchase with transfer failure:", updateError)
           }
         }
         

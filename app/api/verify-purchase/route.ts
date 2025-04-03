@@ -1,5 +1,5 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { stripe } from "@/lib/stripe"
+import { stripe, calculateFees } from "@/lib/stripe"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
@@ -74,6 +74,20 @@ export async function GET(request: NextRequest) {
       })
     }
     
+    // Calculate instructor payout if not provided in metadata
+    let instructorPayoutAmount = null
+    if (checkoutSession.metadata?.instructorPayoutAmount) {
+      instructorPayoutAmount = parseFloat(checkoutSession.metadata.instructorPayoutAmount) / 100
+    } else if (checkoutSession.amount_total) {
+      const amountInCents = checkoutSession.amount_total
+      const { instructorAmount } = calculateFees(amountInCents)
+      instructorPayoutAmount = instructorAmount / 100
+    }
+    
+    // Calculate platform fee
+    const amountInCents = checkoutSession.amount_total || 0
+    const { platformFee } = calculateFees(amountInCents)
+    
     // Record the purchase in the database
     const { error: purchaseError } = await supabase
       .from("purchases")
@@ -84,6 +98,9 @@ export async function GET(request: NextRequest) {
         amount: checkoutSession.amount_total ? checkoutSession.amount_total / 100 : 0,
         stripe_product_id: checkoutSession.metadata?.productId,
         stripe_price_id: checkoutSession.metadata?.priceId,
+        instructor_payout_amount: instructorPayoutAmount,
+        platform_fee_amount: platformFee / 100, // Convert to dollars
+        payout_status: 'pending_transfer' // Set initial status
       })
     
     if (purchaseError) {
