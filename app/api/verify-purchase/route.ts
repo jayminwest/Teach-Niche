@@ -47,12 +47,12 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    // Get the video ID from the metadata
-    const videoId = checkoutSession.metadata?.videoId
+    // Get the lesson ID from the metadata
+    const lessonId = checkoutSession.metadata?.lessonId
     
-    if (!videoId) {
+    if (!lessonId) {
       return NextResponse.json(
-        { error: "Video ID not found in session metadata" },
+        { error: "Lesson ID not found in session metadata" },
         { status: 400 }
       )
     }
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
       .from("purchases")
       .select("id")
       .eq("user_id", session.user.id)
-      .eq("video_id", videoId)
+      .eq("lesson_id", lessonId)
       .eq("stripe_payment_id", checkoutSession.id)
       .maybeSingle()
     
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       // Purchase already recorded, return success
       return NextResponse.json({ 
         success: true,
-        videoId
+        lessonId
       })
     }
     
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
       .from("purchases")
       .insert({
         user_id: session.user.id,
-        video_id: videoId,
+        lesson_id: lessonId,
         stripe_payment_id: checkoutSession.id,
         amount: checkoutSession.amount_total ? checkoutSession.amount_total / 100 : 0,
         stripe_product_id: checkoutSession.metadata?.productId,
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({ 
       success: true,
-      videoId
+      lessonId
     })
   } catch (error: any) {
     console.error("Error verifying purchase:", error)
