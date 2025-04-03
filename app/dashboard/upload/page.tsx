@@ -214,7 +214,7 @@ export default function UploadContent() {
 
     try {
       setUploading(true)
-      setUploadProgress(0)
+      // setUploadProgress(0) // Removed this line as the state no longer exists
 
       // Get current user
       const {
