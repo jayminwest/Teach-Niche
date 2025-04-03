@@ -11,13 +11,14 @@ import { format } from "date-fns"
 import { VideoPlayer } from "@/components/video-player"
 
 import { Metadata } from 'next'
-// Import the generated PageProps type
-import type { PageProps } from ".next/types/app/lessons/[id]/page";
 
-// Use the imported PageProps for generateMetadata
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  // Note: PageProps might contain more than just params, but TS allows destructuring
-  const lessonId = params.id; 
+// Restore explicit types for generateMetadata props
+export async function generateMetadata({ 
+  params 
+}: { 
+  params: { id: string } 
+}): Promise<Metadata> {
+  const lessonId = params.id;
   const supabase = await createServerClient();
   
   // Fetch lesson title for metadata
@@ -32,11 +33,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 }
 
-// Use the imported PageProps for the Page component props
+// Restore explicit types for the Page component props
 export default async function LessonDetail({
   params,
   searchParams,
-}: PageProps) {
+}: {
+  params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const supabase = await createServerClient()
   
   // Get the lesson ID from params
