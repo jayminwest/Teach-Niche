@@ -65,7 +65,7 @@ export function Hero() {
           src="/303_group.png"
           alt="Kendama players group"
           fill
-          className="w-full h-full object-cover filter brightness-[0.85]"
+          className="w-full h-full object-cover filter grayscale brightness-[0.85]"
           priority
         />
       </div>
