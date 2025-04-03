@@ -97,14 +97,50 @@ export async function POST(request: NextRequest) {
     
     console.log("Generating signed URL for path:", finalVideoPath);
     
-    // Generate a signed URL valid for 1 hour (shorter expiration for security)
-    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
-      .from("videos")
-      .createSignedUrl(finalVideoPath, 3600); // 1 hour in seconds
+    console.log("Final video path before signing:", finalVideoPath);
     
-    if (signedUrlError) {
-      console.error("Error generating signed URL:", signedUrlError);
-      return NextResponse.json({ error: "Error generating video URL" }, { status: 500 });
+    // Check if the path is valid before trying to create a signed URL
+    if (!finalVideoPath) {
+      return NextResponse.json({ error: "Invalid video path" }, { status: 400 });
+    }
+    
+    try {
+      // Generate a signed URL valid for 1 hour (shorter expiration for security)
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+        .from("videos")
+        .createSignedUrl(finalVideoPath, 3600); // 1 hour in seconds
+      
+      if (signedUrlError) {
+        console.error("Error generating signed URL:", signedUrlError);
+        
+        // Check if the error is due to file not found
+        if (signedUrlError.message?.includes("not found") || signedUrlError.message?.includes("does not exist")) {
+          // Try with the original video_url as a fallback
+          if (lesson?.video_url && lesson.video_url !== finalVideoPath) {
+            console.log("Trying original video_url as fallback:", lesson.video_url);
+            const { data: fallbackData, error: fallbackError } = await supabase.storage
+              .from("videos")
+              .createSignedUrl(lesson.video_url, 3600);
+              
+            if (!fallbackError && fallbackData?.signedUrl) {
+              return NextResponse.json({ url: fallbackData.signedUrl });
+            }
+          }
+          
+          return NextResponse.json({ error: "Video file not found" }, { status: 404 });
+        }
+        
+        return NextResponse.json({ error: "Error generating video URL" }, { status: 500 });
+      }
+      
+      if (!signedUrlData?.signedUrl) {
+        return NextResponse.json({ error: "Failed to generate signed URL" }, { status: 500 });
+      }
+      
+      return NextResponse.json({ url: signedUrlData.signedUrl });
+    } catch (error) {
+      console.error("Error creating signed URL:", error);
+      return NextResponse.json({ error: "Failed to generate video URL" }, { status: 500 });
     }
     
     return NextResponse.json({ url: signedUrlData.signedUrl });

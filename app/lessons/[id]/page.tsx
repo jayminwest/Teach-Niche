@@ -67,36 +67,36 @@ export default async function LessonDetail({
     notFound()
   }
   
-  // Only try to refresh the video URL if it exists
+  // Extract the video filename if it's a path
   if (lesson?.video_url && typeof lesson.video_url === 'string') {
     try {
-      // If it's a direct file path (not a URL), construct a proper path
-      if (!lesson.video_url.startsWith('http')) {
-        // If it's just a filename, it's likely stored in the videos bucket
-        if (!lesson.video_url.includes('/')) {
-          // We'll let the VideoPlayer component handle this
-        } 
-        // If it's a path like /lessons/{id}/{filename}, extract the filename
-        else if (lesson.video_url.includes('/lessons/')) {
-          const pathParts = lesson.video_url.split('/lessons/');
-          if (pathParts.length >= 2) {
-            const lessonParts = pathParts[1].split('/');
-            if (lessonParts.length >= 2) {
-              lesson.video_url = lessonParts[1];
-            }
-          }
-        }
-      } 
-      // If it's a URL, try to refresh it
-      else if (lesson.video_url.startsWith('http')) {
-        const refreshedUrl = await refreshVideoUrl(lesson.video_url);
-        if (refreshedUrl) {
-          lesson.video_url = refreshedUrl;
+      // If the URL contains a path structure, extract just the filename
+      if (lesson.video_url.includes('/')) {
+        const parts = lesson.video_url.split('/');
+        const filename = parts[parts.length - 1];
+        
+        // If we have a filename and it doesn't contain query parameters
+        if (filename && !filename.includes('?')) {
+          console.log("Extracted filename from URL:", filename);
+          lesson.video_url = filename;
         }
       }
-    } catch (refreshError) {
-      console.error("Error refreshing lesson video URL:", refreshError);
-      // Keep the original URL if refresh fails
+      
+      // If it's a URL, try to refresh it
+      if (lesson.video_url.startsWith('http')) {
+        try {
+          const refreshedUrl = await refreshVideoUrl(lesson.video_url);
+          if (refreshedUrl) {
+            lesson.video_url = refreshedUrl;
+          }
+        } catch (refreshError) {
+          console.error("Error refreshing URL:", refreshError);
+          // Keep the original URL if refresh fails
+        }
+      }
+    } catch (error) {
+      console.error("Error processing video URL:", error);
+      // Keep the original URL if processing fails
     }
   }
 

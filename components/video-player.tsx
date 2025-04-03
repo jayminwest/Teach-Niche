@@ -65,14 +65,9 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
       setIsLoading(true);
       setError("Video playback error. Attempting to refresh...");
       
-      // Extract video path from URL or fetch from lesson metadata
-      const extractedPath = extractVideoPathFromUrl(videoUrl);
-      let videoPath = extractedPath;
-      
-      // If we couldn't extract a path, try to fetch it from the lesson metadata
-      if (!videoPath) {
-        videoPath = await fetchVideoPathFromLesson();
-      }
+      // Extract video path from URL
+      const extractedPath = extractVideoPathFromUrl(videoUrl || initialVideoUrl);
+      console.log("Extracted video path:", extractedPath);
       
       // Try to get a fresh URL from the API
       const response = await fetch("/api/get-video-url", {
@@ -81,7 +76,7 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          videoPath,
+          videoPath: extractedPath,
           lessonId,
         }),
       });
@@ -133,12 +128,27 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
         const lessonParts = pathParts[1].split('/');
         if (lessonParts.length >= 2) {
           return lessonParts[1];
+        } else {
+          // If there's no second part, the URL might be in a different format
+          // Just return the filename part after the last slash
+          const parts = url.split('/');
+          return parts[parts.length - 1];
         }
       }
       
       // If it's just a filename, return it directly
       if (!url.includes('/')) {
         return url;
+      }
+      
+      // Last resort: extract filename from the URL (anything after the last slash)
+      const parts = url.split('/');
+      const lastPart = parts[parts.length - 1];
+      if (lastPart && !lastPart.includes('?')) {
+        return lastPart;
+      } else if (lastPart) {
+        // Remove query parameters if present
+        return lastPart.split('?')[0];
       }
       
       return "";
