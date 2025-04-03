@@ -8,6 +8,7 @@ import Image from "next/image"
 import { notFound } from "next/navigation"
 import LessonCheckoutButton from "@/components/lesson-checkout-button"
 import { format } from "date-fns"
+import { VideoPlayer } from "@/components/video-player"
 
 import { Metadata } from 'next' 
 
@@ -171,16 +172,15 @@ export default async function LessonDetail({
 
       <div className="grid gap-8 md:grid-cols-1">
         <div>
-          <div className="aspect-video mb-4 relative rounded-lg overflow-hidden border">
+          <div className="mb-4 relative rounded-lg overflow-hidden border">
             {(hasPurchased || isInstructor) && lesson.video_url ? (
-              <video 
-                src={lesson.video_url} 
-                controls 
-                className="w-full h-full object-contain"
-                poster={lesson.thumbnail_url || "/placeholder.svg?height=300&width=500"}
+              <VideoPlayer 
+                initialVideoUrl={lesson.video_url} 
+                lessonId={lesson.id}
+                title={lesson.title}
               />
             ) : (
-              <>
+              <div className="aspect-video relative">
                 <Image
                   src={lesson.thumbnail_url || "/placeholder.svg?height=300&width=500"}
                   alt={lesson.title}
@@ -197,7 +197,7 @@ export default async function LessonDetail({
                     </div>
                   </div>
                 )}
-              </>
+              </div>
             )}
           </div>
 

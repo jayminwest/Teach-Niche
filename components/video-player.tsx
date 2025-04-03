@@ -29,14 +29,22 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
           return;
         }
         
+        console.log("Refreshing video URL:", initialVideoUrl);
         const freshUrl = await refreshVideoUrl(initialVideoUrl);
-        if (freshUrl !== initialVideoUrl) {
+        console.log("Refreshed URL:", freshUrl);
+        
+        if (freshUrl) {
           setVideoUrl(freshUrl);
+        } else {
+          // If refreshVideoUrl returns falsy, try to get a fresh URL from the API
+          await handleVideoError({} as any);
         }
         setError(null);
       } catch (err) {
         console.error("Error refreshing video URL:", err);
         setError("Failed to load video. Please try again.");
+        // Try the API-based refresh as a fallback
+        await handleVideoError({} as any);
       } finally {
         setIsLoading(false);
       }
