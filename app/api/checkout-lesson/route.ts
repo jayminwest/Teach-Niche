@@ -2,6 +2,38 @@ import { createServerClient } from "@/lib/supabase/server"
 import { stripe } from "@/lib/stripe"
 import { NextResponse } from "next/server"
 
+// Helper function to create a Stripe product and price
+async function createStripeProduct({ name, description, price, images }: { 
+  name: string, 
+  description: string, 
+  price: number,
+  images?: string[]
+}) {
+  try {
+    // Create a product in Stripe
+    const product = await stripe.products.create({
+      name,
+      description,
+      images,
+    });
+
+    // Create a price for the product
+    const priceObj = await stripe.prices.create({
+      product: product.id,
+      unit_amount: price,
+      currency: 'usd',
+    });
+
+    return {
+      productId: product.id,
+      priceId: priceObj.id,
+    };
+  } catch (error) {
+    console.error('Error creating Stripe product:', error);
+    throw error;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = createServerClient()
@@ -49,17 +81,17 @@ export async function POST(request: Request) {
       
       // Create a new Stripe product and price if missing
       const priceInCents = Math.round(Number(price) * 100)
-      const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/stripe/create-product`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: title,
-          description: `Lesson: ${title}`,
-          price: priceInCents,
-        }),
+      
+      // Use direct API call instead of fetch to avoid URL issues
+      const { productId, priceId } = await createStripeProduct({
+        name: title,
+        description: `Lesson: ${title}`,
+        price: priceInCents,
       })
+      
+      if (!productId || !priceId) {
+        throw new Error("Failed to create Stripe product and price")
+      }
       
       if (!response.ok) {
         const errorText = await response.text()
@@ -87,6 +119,10 @@ export async function POST(request: Request) {
       lesson.stripe_price_id = priceId
     }
     
+    // Get the base URL for redirects
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+    
     // Create a Stripe Checkout Session
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -97,8 +133,8 @@ export async function POST(request: Request) {
         },
       ],
       mode: "payment",
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/lesson-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/lessons/${lessonId}`,
+      success_url: `${baseUrl}/checkout/lesson-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/lessons/${lessonId}`,
       metadata: {
         lessonId,
         userId: session.user.id,
