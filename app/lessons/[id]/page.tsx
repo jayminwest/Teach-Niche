@@ -12,8 +12,12 @@ import { VideoPlayer } from "@/components/video-player"
 
 import { Metadata } from 'next'
 
-// Let Next.js infer the types for generateMetadata
-export async function generateMetadata({ params }): Promise<Metadata> {
+// Add explicit types for generateMetadata props
+export async function generateMetadata({ 
+  params 
+}: { 
+  params: { id: string } 
+}): Promise<Metadata> {
   const lessonId = params.id;
   const supabase = await createServerClient();
   
@@ -29,8 +33,14 @@ export async function generateMetadata({ params }): Promise<Metadata> {
   }
 }
 
-// Let Next.js infer the types for the Page component
-export default async function LessonDetail({ params, searchParams }) {
+// Add explicit types for the Page component props
+export default async function LessonDetail({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const supabase = await createServerClient()
   
   // Get the lesson ID from params

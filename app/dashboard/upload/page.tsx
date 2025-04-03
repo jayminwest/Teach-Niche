@@ -174,7 +174,7 @@ export default function UploadContent() {
     // Check if filename contains spaces
     if (file.name.includes(' ')) {
       toast({
-        variant: "warning",
+        variant: "default", // Changed from "warning" to "default"
         title: "Filename contains spaces",
         description: "Spaces in filenames will be replaced with underscores to prevent playback issues.",
       })
@@ -452,8 +452,7 @@ export default function UploadContent() {
           thumbnail_url: thumbnailUrl,
           stripe_product_id: productId,
           stripe_price_id: priceId,
-          // Store the video path in the video_url field
-          video_url: videoPath,
+          video_path: videoPath, // Corrected property name
         };
         
         console.log("Creating lesson with data:", lessonData);
@@ -485,8 +484,7 @@ export default function UploadContent() {
           parent_lesson_id: lessonIdFromUrl,
           stripe_product_id: productId,
           stripe_price_id: priceId,
-          // Store the video path in the video_url field
-          video_url: videoPath,
+          video_path: videoPath, // Corrected property name
         };
         
         console.log("Creating child lesson with data:", videoData);
@@ -517,8 +515,7 @@ export default function UploadContent() {
           thumbnail_url: thumbnailUrl,
           stripe_product_id: productId,
           stripe_price_id: priceId,
-          // Store the video path in the video_url field
-          video_url: videoPath,
+          video_path: videoPath, // Corrected property name
         };
         
         console.log("Creating standalone lesson with data:", lessonData);
