@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import type { PageProps } from "next/types"
+import type { Params } from "next/navigation"
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
@@ -17,7 +17,7 @@ import Link from "next/link"
 
 export default function EditLesson({ 
   params 
-}: PageProps) {
+}: { params: Params }) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [price, setPrice] = useState("")
