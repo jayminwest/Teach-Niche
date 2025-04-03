@@ -36,7 +36,14 @@ export default function SignIn() {
       })
 
       if (error) {
-        throw error
+        console.error("Authentication error:", error.message)
+        setAuthError(error.message || "Invalid email or password")
+        toast({
+          variant: "destructive",
+          title: "Authentication Failed",
+          description: error.message || "Invalid email or password",
+        })
+        return
       }
 
       toast({
@@ -46,13 +53,15 @@ export default function SignIn() {
       router.push(redirectTo)
       router.refresh()
     } catch (error: any) {
+      console.error("Sign-in error:", error)
       // Set the auth error message
-      setAuthError(error.message || "Invalid email or password")
+      const errorMessage = error.message || "Invalid email or password"
+      setAuthError(errorMessage)
       
       toast({
         variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to sign in. Please try again.",
+        title: "Sign-in Failed",
+        description: errorMessage,
       })
     } finally {
       setLoading(false)
