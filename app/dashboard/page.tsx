@@ -22,27 +22,42 @@ export default async function Dashboard() {
 
   const user = session.user
 
-  // Fetch videos created by this instructor
-  const { data: videos } = await supabase
-    .from("videos")
-    .select("*")
-    .eq("instructor_id", user.id)
-    .order("created_at", { ascending: false })
-
   // Fetch lessons created by this instructor
   const { data: lessons } = await supabase
     .from("lessons")
-    .select("*, videos(count)")
+    .select("*")
     .eq("instructor_id", user.id)
+    .is("parent_lesson_id", null)
     .order("created_at", { ascending: false })
 
-  // Calculate total earnings (simplified - in a real app, you'd need to account for fees, refunds, etc.)
+  // Fetch child lessons (videos) for counting
+  const { data: childLessons } = await supabase
+    .from("lessons")
+    .select("parent_lesson_id")
+    .not("parent_lesson_id", "is", null)
+    .eq("instructor_id", user.id)
+
+  // Count videos per lesson
+  const lessonVideoCounts = childLessons?.reduce((counts: Record<string, number>, child) => {
+    const parentId = child.parent_lesson_id as string
+    counts[parentId] = (counts[parentId] || 0) + 1
+    return counts
+  }, {}) || {}
+
+  // Fetch standalone lessons (those with video_url but no parent)
+  const { data: standaloneVideos } = await supabase
+    .from("lessons")
+    .select("*")
+    .eq("instructor_id", user.id)
+    .is("parent_lesson_id", null)
+    .not("video_url", "is", null)
+    .order("created_at", { ascending: false })
+
+  // Calculate total earnings
   const { data: purchases } = await supabase
     .from("purchases")
     .select("amount, instructor_payout_amount")
-    .or(
-      `video_id.in.(${videos?.map((video) => video.id).join(",")}),lesson_id.in.(${lessons?.map((lesson) => lesson.id).join(",")})`,
-    )
+    .in("lesson_id", [...(lessons?.map(lesson => lesson.id) || []), ...(standaloneVideos?.map(video => video.id) || [])])
 
   const totalEarnings = purchases?.reduce((sum, purchase) => sum + (purchase.instructor_payout_amount || 0), 0) || 0
 
@@ -101,7 +116,7 @@ export default async function Dashboard() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Instructor Dashboard</h1>
-          <p className="text-muted-foreground">Manage your tutorial videos and track earnings</p>
+          <p className="text-muted-foreground">Manage your tutorial lessons and track earnings</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" asChild>
@@ -123,10 +138,10 @@ export default async function Dashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Videos</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Lessons</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{videos?.length || 0}</div>
+              <div className="text-2xl font-bold">{(lessons?.length || 0) + (standaloneVideos?.length || 0)}</div>
             </CardContent>
           </Card>
           <Card>
@@ -178,11 +193,11 @@ export default async function Dashboard() {
         </div>
       </div>
 
-      <h2 className="text-2xl font-bold tracking-tight mb-6">Your Videos</h2>
+      <h2 className="text-2xl font-bold tracking-tight mb-6">Your Standalone Videos</h2>
 
-      {videos && videos.length > 0 ? (
+      {standaloneVideos && standaloneVideos.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {videos.map((video) => (
+          {standaloneVideos.map((video) => (
             <Card key={video.id} className="overflow-hidden">
               <div className="aspect-video relative">
                 <Image
@@ -208,7 +223,7 @@ export default async function Dashboard() {
               </CardContent>
               <CardFooter>
                 <Button variant="outline" asChild className="w-full">
-                  <Link href={`/videos/${video.id}`}>View Video</Link>
+                  <Link href={`/lessons/${video.id}`}>View Video</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -216,7 +231,7 @@ export default async function Dashboard() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <h3 className="text-xl font-semibold mb-2">No videos yet</h3>
+          <h3 className="text-xl font-semibold mb-2">No standalone videos yet</h3>
           <p className="text-muted-foreground mb-6">Upload your first kendama tutorial content to get started</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="outline" asChild>
@@ -229,7 +244,7 @@ export default async function Dashboard() {
         </div>
       )}
 
-      <h2 className="text-2xl font-bold tracking-tight mb-6 mt-12">Your Lessons</h2>
+      <h2 className="text-2xl font-bold tracking-tight mb-6 mt-12">Your Lesson Collections</h2>
 
       <div className="flex justify-end mb-4">
         <Button asChild disabled={!stripeAccountEnabled}>
@@ -247,7 +262,6 @@ export default async function Dashboard() {
         </Alert>
       )}
 
-      {/* Fetch and display lessons */}
       {lessons && lessons.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {lessons.map((lesson) => (
@@ -271,7 +285,7 @@ export default async function Dashboard() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Videos:</span>
-                  <span>{(lesson.videos as any)?.count || 0}</span>
+                  <span>{lessonVideoCounts[lesson.id] || 0}</span>
                 </div>
               </CardContent>
               <CardFooter className="flex gap-2">
@@ -287,10 +301,10 @@ export default async function Dashboard() {
         </div>
       ) : (
         <div className="text-center py-12 border rounded-lg bg-muted/20">
-          <h3 className="text-xl font-semibold mb-2">No lessons yet</h3>
-          <p className="text-muted-foreground mb-6">Create your first lesson to organize your videos</p>
+          <h3 className="text-xl font-semibold mb-2">No lesson collections yet</h3>
+          <p className="text-muted-foreground mb-6">Create your first lesson collection to organize your videos</p>
           <Button asChild disabled={!stripeAccountEnabled}>
-            <Link href="/dashboard/upload?type=lesson">Create Lesson</Link>
+            <Link href="/dashboard/upload?type=lesson">Create Lesson Collection</Link>
           </Button>
         </div>
       )}

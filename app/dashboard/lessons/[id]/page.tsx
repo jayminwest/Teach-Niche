@@ -76,11 +76,11 @@ export default function ManageLesson({ params }: { params: { id: string } }) {
 
         setLesson(lessonData)
 
-        // Fetch videos in this lesson
+        // Fetch child lessons (videos) in this lesson
         const { data: videosData, error: videosError } = await supabase
-          .from("videos")
+          .from("lessons")
           .select("*")
-          .eq("lesson_id", params.id)
+          .eq("parent_lesson_id", params.id)
           .order("created_at", { ascending: true })
 
         if (videosError) {
@@ -104,8 +104,8 @@ export default function ManageLesson({ params }: { params: { id: string } }) {
 
   const handleRemoveVideo = async (videoId: string) => {
     try {
-      // Update the video to remove it from the lesson
-      const { error } = await supabase.from("videos").update({ lesson_id: null }).eq("id", videoId)
+      // Update the child lesson to remove its parent (making it standalone)
+      const { error } = await supabase.from("lessons").update({ parent_lesson_id: null }).eq("id", videoId)
 
       if (error) throw error
 
@@ -132,11 +132,11 @@ export default function ManageLesson({ params }: { params: { id: string } }) {
     try {
       setDeletingLesson(true)
 
-      // First, remove all videos from this lesson
+      // First, remove parent_lesson_id from all child lessons
       const { error: videosError } = await supabase
-        .from("videos")
-        .update({ lesson_id: null })
-        .eq("lesson_id", params.id)
+        .from("lessons")
+        .update({ parent_lesson_id: null })
+        .eq("parent_lesson_id", params.id)
 
       if (videosError) throw videosError
 

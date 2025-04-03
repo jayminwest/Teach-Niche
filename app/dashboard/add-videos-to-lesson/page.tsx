@@ -39,11 +39,13 @@ export default function AddVideosToLesson() {
           return
         }
 
-        // Fetch user's lessons
+        // Fetch user's parent lessons
         const { data: userLessons, error: lessonsError } = await supabase
           .from("lessons")
           .select("*")
           .eq("instructor_id", user.id)
+          .is("parent_lesson_id", null)
+          .is("video_url", null)  // Only get parent lessons without videos
           .order("title", { ascending: true })
 
         if (lessonsError) throw lessonsError
@@ -58,12 +60,13 @@ export default function AddVideosToLesson() {
           }
         }
 
-        // Fetch user's videos that are not in any lesson
+        // Fetch user's standalone lessons with videos
         const { data: userVideos, error: videosError } = await supabase
-          .from("videos")
+          .from("lessons")
           .select("*")
           .eq("instructor_id", user.id)
-          .is("lesson_id", null)
+          .is("parent_lesson_id", null)
+          .not("video_url", "is", null)  // Only get lessons with videos
           .order("created_at", { ascending: false })
 
         if (videosError) throw videosError
@@ -101,8 +104,20 @@ export default function AddVideosToLesson() {
     try {
       setUpdating(true)
 
-      // Update the video to add it to the lesson
-      const { error } = await supabase.from("videos").update({ lesson_id: selectedLessonId }).eq("id", videoId)
+      // Get the video details
+      const videoToAdd = videos.find(v => v.id === videoId)
+      if (!videoToAdd) throw new Error("Video not found")
+
+      // Create a new child lesson with the video content
+      const { error } = await supabase.from("lessons").insert({
+        title: videoToAdd.title,
+        description: videoToAdd.description,
+        price: videoToAdd.price,
+        instructor_id: videoToAdd.instructor_id,
+        video_url: videoToAdd.video_url,
+        thumbnail_url: videoToAdd.thumbnail_url,
+        parent_lesson_id: selectedLessonId
+      })
 
       if (error) throw error
 

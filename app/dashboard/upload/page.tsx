@@ -311,7 +311,7 @@ export default function UploadContent() {
 
       // 3. Create content in database
       if (isLesson) {
-        // Create a lesson
+        // Create a parent lesson
         const { data: lesson, error: lessonError } = await supabase
           .from("lessons")
           .insert({
@@ -325,15 +325,15 @@ export default function UploadContent() {
 
         if (lessonError) throw lessonError
 
-        // Create a video and associate it with the lesson
-        const { error: videoDbError } = await supabase.from("videos").insert({
+        // Create a child lesson (video) associated with the parent lesson
+        const { error: videoDbError } = await supabase.from("lessons").insert({
           title,
           description,
           price: Number.parseFloat(price),
           instructor_id: user.id,
           video_url: publicVideoUrl.publicUrl,
           thumbnail_url: thumbnailUrl,
-          lesson_id: lesson[0].id,
+          parent_lesson_id: lesson[0].id,
         })
 
         if (videoDbError) throw videoDbError
@@ -343,15 +343,15 @@ export default function UploadContent() {
           description: "Your lesson has been created successfully with its first video.",
         })
       } else if (lessonIdFromUrl) {
-        // Add video to existing lesson
-        const { error: videoDbError } = await supabase.from("videos").insert({
+        // Add video as a child lesson to existing parent lesson
+        const { error: videoDbError } = await supabase.from("lessons").insert({
           title,
           description,
           price: Number.parseFloat(price),
           instructor_id: user.id,
           video_url: publicVideoUrl.publicUrl,
           thumbnail_url: thumbnailUrl,
-          lesson_id: lessonIdFromUrl,
+          parent_lesson_id: lessonIdFromUrl,
         })
 
         if (videoDbError) throw videoDbError
@@ -361,8 +361,8 @@ export default function UploadContent() {
           description: "Your video has been added to the lesson successfully.",
         })
       } else {
-        // Create a standalone video
-        const { error: dbError } = await supabase.from("videos").insert({
+        // Create a standalone lesson with video
+        const { error: dbError } = await supabase.from("lessons").insert({
           title,
           description,
           price: Number.parseFloat(price),
