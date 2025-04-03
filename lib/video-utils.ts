@@ -53,13 +53,13 @@ export async function refreshVideoUrl(videoUrl: string): Promise<string> {
   // If it's not a signed URL but a direct path (not starting with http)
   else if (!videoUrl.startsWith('http')) {
     try {
-      // Check if we've already processed this path recently (within the last minute)
+      // Check if we've already processed this path recently (within the last 25 minutes)
       // This helps prevent infinite loops of URL refreshing
       const cacheKey = `video_url_${videoUrl}`;
       const cachedUrl = sessionStorage?.getItem(cacheKey);
       const cacheTimestamp = sessionStorage?.getItem(`${cacheKey}_timestamp`);
       
-      // If we have a cached URL that's less than a minute old, use it
+      // If we have a cached URL that's less than 25 minutes old, use it
       if (cachedUrl && cacheTimestamp) {
         const timestamp = parseInt(cacheTimestamp, 10);
         const now = Date.now();
