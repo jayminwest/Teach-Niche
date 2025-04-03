@@ -53,6 +53,22 @@ export async function refreshVideoUrl(videoUrl: string): Promise<string> {
   // If it's not a signed URL but a direct path (not starting with http)
   else if (!videoUrl.startsWith('http')) {
     try {
+      // Check if we've already processed this path recently (within the last minute)
+      // This helps prevent infinite loops of URL refreshing
+      const cacheKey = `video_url_${videoUrl}`;
+      const cachedUrl = sessionStorage?.getItem(cacheKey);
+      const cacheTimestamp = sessionStorage?.getItem(`${cacheKey}_timestamp`);
+      
+      // If we have a cached URL that's less than a minute old, use it
+      if (cachedUrl && cacheTimestamp) {
+        const timestamp = parseInt(cacheTimestamp, 10);
+        const now = Date.now();
+        if (now - timestamp < 60000) { // 1 minute cache
+          console.log('Using cached signed URL for path');
+          return cachedUrl;
+        }
+      }
+      
       console.log('Creating signed URL for path:', videoUrl);
       
       // Create a new signed URL with error handling
@@ -70,7 +86,15 @@ export async function refreshVideoUrl(videoUrl: string): Promise<string> {
         return videoUrl;
       }
       
-      console.log('Created signed URL:', data.signedUrl);
+      // Cache the URL for 1 minute to prevent infinite loops
+      try {
+        sessionStorage?.setItem(cacheKey, data.signedUrl);
+        sessionStorage?.setItem(`${cacheKey}_timestamp`, Date.now().toString());
+      } catch (e) {
+        // Ignore storage errors
+      }
+      
+      console.log('Created signed URL');
       return data.signedUrl;
     } catch (error) {
       console.error('Error creating signed URL for path:', error);

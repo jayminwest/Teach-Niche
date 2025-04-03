@@ -16,10 +16,26 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
   const [error, setError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   
+  // Track if we've already refreshed the URL to prevent infinite loops
+  const [hasRefreshed, setHasRefreshed] = useState(false);
+  const refreshAttempts = useRef(0);
+  
   // Refresh the URL when the component mounts
   useEffect(() => {
+    // Reset refresh state when URL changes
+    setHasRefreshed(false);
+    refreshAttempts.current = 0;
+    
     const refreshUrl = async () => {
       try {
+        // Prevent infinite loops by limiting refresh attempts
+        if (hasRefreshed || refreshAttempts.current > 2) {
+          console.log("Skipping refresh - already refreshed or too many attempts");
+          setIsLoading(false);
+          return;
+        }
+        
+        refreshAttempts.current += 1;
         setIsLoading(true);
         
         // Check if we have a valid URL to refresh
@@ -29,16 +45,33 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
           return;
         }
         
+        // If it's already a signed URL, use it directly
+        if (initialVideoUrl.startsWith('http') && initialVideoUrl.includes('supabase')) {
+          console.log("Using existing signed URL");
+          setVideoUrl(initialVideoUrl);
+          setHasRefreshed(true);
+          setIsLoading(false);
+          return;
+        }
+        
         console.log("Refreshing video URL:", initialVideoUrl);
         const freshUrl = await refreshVideoUrl(initialVideoUrl);
-        console.log("Refreshed URL:", freshUrl);
         
-        if (freshUrl) {
+        if (freshUrl && freshUrl !== initialVideoUrl) {
+          console.log("Using refreshed URL");
           setVideoUrl(freshUrl);
-        } else {
+          setHasRefreshed(true);
+        } else if (!freshUrl) {
           // If refreshVideoUrl returns falsy, try to get a fresh URL from the API
+          console.log("No URL returned from refresh, trying API");
           await handleVideoError({} as any);
+        } else {
+          // If the URL didn't change, just use it
+          console.log("URL unchanged after refresh");
+          setVideoUrl(freshUrl);
+          setHasRefreshed(true);
         }
+        
         setError(null);
       } catch (err) {
         console.error("Error refreshing video URL:", err);
@@ -53,14 +86,31 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
     refreshUrl();
     
     // Set up a timer to refresh the URL every 25 days (before the 30-day expiration)
-    const refreshInterval = setInterval(refreshUrl, 25 * 24 * 60 * 60 * 1000);
+    const refreshInterval = setInterval(() => {
+      setHasRefreshed(false); // Reset the refresh state
+      refreshAttempts.current = 0;
+      refreshUrl();
+    }, 25 * 24 * 60 * 60 * 1000);
     
     return () => clearInterval(refreshInterval);
   }, [initialVideoUrl]);
   
+  // Track API refresh attempts to prevent infinite loops
+  const apiRefreshAttempts = useRef(0);
+  
   // Handle video errors (which might occur if the URL expires)
   const handleVideoError = async (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    // Prevent infinite loops by limiting API refresh attempts
+    if (apiRefreshAttempts.current > 2) {
+      console.log("Too many API refresh attempts, stopping");
+      setError("Failed to load video after multiple attempts. Please try again later.");
+      setIsLoading(false);
+      return;
+    }
+    
+    apiRefreshAttempts.current += 1;
     console.log("Video error occurred, attempting to refresh URL", e);
+    
     try {
       setIsLoading(true);
       setError("Video playback error. Attempting to refresh...");
