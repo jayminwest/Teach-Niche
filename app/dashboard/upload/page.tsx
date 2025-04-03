@@ -260,25 +260,42 @@ export default function UploadContent() {
       const videoFileName = `${Date.now()}-${videoFile.name}`
       const videoPath = `${user.id}/${videoFileName}`
       
+      // Show toast for large uploads
+      if (videoFile.size > 100 * 1024 * 1024) {
+        toast({
+          title: "Large File Upload",
+          description: "Your video is large and may take several minutes to upload. Please be patient.",
+        })
+      }
+      
+      // Set initial progress
+      setUploadProgress(5)
+      
+      // For large files, simulate progress since we can't track it directly
+      let progressInterval: NodeJS.Timeout | null = null
+      if (videoFile.size > 50 * 1024 * 1024) {
+        progressInterval = setInterval(() => {
+          setUploadProgress(prev => {
+            // Don't go above 90% until we confirm upload is complete
+            return prev < 90 ? prev + 1 : prev
+          })
+        }, 1000)
+      }
+      
       const { data: videoData, error: videoError } = await supabase.storage
         .from("videos")
         .upload(videoPath, videoFile, {
           cacheControl: "3600",
-          upsert: false,
-          onUploadProgress: (progress) => {
-            // Calculate percentage
-            const percentage = (progress.loaded / progress.total) * 100
-            setUploadProgress(Math.round(percentage))
-            
-            // Show toast for large uploads (only once at 10%)
-            if (Math.round(percentage) === 10 && videoFile.size > 100 * 1024 * 1024) {
-              toast({
-                title: "Large File Upload",
-                description: "Your video is large and may take several minutes to upload. Please be patient.",
-              })
-            }
-          }
+          upsert: false
         })
+        
+      // Clear the interval if it exists
+      if (progressInterval) {
+        clearInterval(progressInterval)
+      }
+      
+      // Set to 100% when upload completes
+      setUploadProgress(100)
 
       if (videoError) {
         throw videoError
