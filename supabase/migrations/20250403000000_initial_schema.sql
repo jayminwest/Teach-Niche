@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS public.instructor_profiles (
     stripe_account_id TEXT,
     stripe_account_enabled BOOLEAN DEFAULT FALSE,
     stripe_onboarding_complete BOOLEAN DEFAULT FALSE,
+    total_earnings NUMERIC DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -76,7 +77,8 @@ $$;
 CREATE TABLE IF NOT EXISTS public.purchases (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL,
-    lesson_id UUID NOT NULL,
+    lesson_id UUID,
+    video_id UUID,
     stripe_payment_id VARCHAR NOT NULL,
     stripe_product_id VARCHAR,
     stripe_price_id VARCHAR,

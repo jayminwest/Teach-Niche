@@ -37,6 +37,21 @@ export function calculateFees(amount: number) {
   }
 }
 
+// Constants for the platform fee percentage
+export const PLATFORM_FEE_PERCENTAGE = 15
+export const INSTRUCTOR_PERCENTAGE = 100 - PLATFORM_FEE_PERCENTAGE
+
+// Helper function to calculate fee amounts
+export function calculateFees(amount: number) {
+  const platformFee = Math.round((amount * PLATFORM_FEE_PERCENTAGE) / 100)
+  const instructorAmount = amount - platformFee
+
+  return {
+    platformFee,
+    instructorAmount,
+  }
+}
+
 // Safe function to check if Stripe is initialized
 export function isStripeInitialized(): boolean {
   return stripe !== null

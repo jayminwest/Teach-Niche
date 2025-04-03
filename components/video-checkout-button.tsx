@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
+import { Loader2, Lock } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/use-toast"
 
@@ -62,7 +62,10 @@ export default function VideoCheckoutButton({ videoId, price, title }: VideoChec
           Processing...
         </>
       ) : (
-        "Purchase Video"
+        <>
+          <Lock className="mr-2 h-4 w-4" />
+          Purchase Video
+        </>
       )}
     </Button>
   )
