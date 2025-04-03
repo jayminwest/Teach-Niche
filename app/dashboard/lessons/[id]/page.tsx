@@ -25,8 +25,8 @@ interface ManageLessonProps {
   params: { id: string };
 }
 
-// Define as a React Functional Component
-const ManageLesson: React.FC<ManageLessonProps> = (props) => {
+// Define the component function directly using the interface
+function ManageLesson(props: ManageLessonProps) {
   const { params } = props; // Destructure params here
   const [lesson, setLesson] = useState<any>(null)
   const [videos, setVideos] = useState<any[]>([])
@@ -410,5 +410,5 @@ const ManageLesson: React.FC<ManageLessonProps> = (props) => {
   )
 }
 
-export default ManageLesson; // Export the component
+export default ManageLesson; // Keep the separate export
 
