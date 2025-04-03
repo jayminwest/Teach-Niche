@@ -1,7 +1,7 @@
 "use client"
 
-import React, { useEffect, useState } from "react" // Import React
-import { useRouter } from "next/navigation"
+import React, { useEffect, useState } from "react"
+import { useRouter, useParams } from "next/navigation" // Import useParams
 import Link from "next/link"
 import Image from "next/image"
 import { createClient } from "@/lib/supabase/client"
@@ -20,14 +20,9 @@ import {
 } from "@/components/ui/dialog"
 import { format } from "date-fns"
 
-// Define props type for Client Component page
-interface ManageLessonProps {
-  params: { id: string };
-}
-
-// Define the component function directly using the interface
-function ManageLesson(props: ManageLessonProps) {
-  const { params } = props; // Destructure params here
+// Remove props interface and props from function signature
+function ManageLesson() {
+  const params = useParams<{ id: string }>() // Use the hook to get params
   const [lesson, setLesson] = useState<any>(null)
   const [videos, setVideos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
