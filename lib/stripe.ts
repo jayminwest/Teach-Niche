@@ -1,13 +1,24 @@
 import Stripe from "stripe"
 
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: "2023-10-16", // Use the latest API version
-  appInfo: {
-    name: "Teach Niche",
-    version: "0.1.0",
-  },
-})
+let stripe: Stripe;
+
+// Only initialize if we have a key
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2023-10-16", // Use the latest API version
+    appInfo: {
+      name: "Teach Niche",
+      version: "0.1.0",
+    },
+  });
+} else {
+  console.error("STRIPE_SECRET_KEY is missing. Stripe functionality will be limited.");
+  // Create a placeholder to avoid null errors
+  stripe = new Stripe('sk_test_placeholder', {
+    apiVersion: "2023-10-16",
+  });
+}
 
 export { stripe }
 

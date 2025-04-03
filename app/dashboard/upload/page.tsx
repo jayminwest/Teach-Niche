@@ -322,7 +322,7 @@ export default function UploadContent() {
       // 4. Create content in database
       if (isLesson) {
         // Create a parent lesson
-        const { data: lesson, error: lessonError } = await supabase
+        const { error: lessonError } = await supabase
           .from("lessons")
           .insert({
             title,
@@ -334,7 +334,6 @@ export default function UploadContent() {
             stripe_product_id: productId,
             stripe_price_id: priceId,
           })
-          .select()
 
         if (lessonError) throw lessonError
 
@@ -344,7 +343,7 @@ export default function UploadContent() {
         })
       } else if (lessonIdFromUrl) {
         // Add video as a child lesson to existing parent lesson
-        const { error: videoDbError } = await supabase.from("lessons").insert({
+        const { error: videoDbError } = await supabase.from("lessons").insert([{
           title,
           description,
           price: Number.parseFloat(price),
@@ -354,7 +353,7 @@ export default function UploadContent() {
           parent_lesson_id: lessonIdFromUrl,
           stripe_product_id: productId,
           stripe_price_id: priceId,
-        })
+        }])
 
         if (videoDbError) throw videoDbError
 
@@ -364,7 +363,7 @@ export default function UploadContent() {
         })
       } else {
         // Create a new lesson with video
-        const { error: dbError } = await supabase.from("lessons").insert({
+        const { error: dbError } = await supabase.from("lessons").insert([{
           title,
           description,
           price: Number.parseFloat(price),
@@ -373,7 +372,7 @@ export default function UploadContent() {
           thumbnail_url: thumbnailUrl,
           stripe_product_id: productId,
           stripe_price_id: priceId,
-        })
+        }])
 
         if (dbError) throw dbError
 
