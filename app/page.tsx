@@ -14,9 +14,22 @@ export default async function Home() {
   // Fetch a few recent lessons for the homepage
   const { data: lessons } = await supabase
     .from("lessons")
-    .select("*, videos(count)")
+    .select("*")
     .order("created_at", { ascending: false })
     .limit(3)
+    
+  // Get video counts for each lesson
+  const lessonsWithCounts = await Promise.all((lessons || []).map(async (lesson) => {
+    const { count } = await supabase
+      .from("videos")
+      .select("*", { count: "exact", head: true })
+      .eq("lesson_id", lesson.id)
+    
+    return {
+      ...lesson,
+      videoCount: count || 0
+    }
+  }))
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)]">
@@ -54,7 +67,7 @@ export default async function Home() {
         </div>
       </section>
 
-      {lessons && lessons.length > 0 && (
+      {lessonsWithCounts && lessonsWithCounts.length > 0 && (
         <section className="w-full py-12 md:py-24 lg:py-32">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
@@ -66,14 +79,14 @@ export default async function Home() {
               </div>
             </div>
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mt-8">
-              {lessons.map((lesson) => (
+              {lessonsWithCounts.map((lesson) => (
                 <LessonCard
                   key={lesson.id}
                   id={lesson.id}
                   title={lesson.title}
                   thumbnailUrl={lesson.thumbnail_url || "/placeholder.svg?height=200&width=300"}
                   price={lesson.price}
-                  videoCount={(lesson.videos as any)?.count || 0}
+                  videoCount={lesson.videoCount}
                 />
               ))}
             </div>
