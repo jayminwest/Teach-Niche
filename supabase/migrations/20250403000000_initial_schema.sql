@@ -53,11 +53,11 @@ WHERE
     p.lesson_id IS NOT NULL;
 
 -- Create storage buckets
-INSERT INTO storage.buckets (name, public, created_at, updated_at)
+INSERT INTO storage.buckets (id, name, public, created_at, updated_at)
 VALUES 
-    ('thumbnails', true, now(), now()),
-    ('videos', false, now(), now())
-ON CONFLICT (name) DO NOTHING;
+    ('thumbnails', 'thumbnails', true, now(), now()),
+    ('videos', 'videos', false, now(), now())
+ON CONFLICT (id) DO NOTHING;
 
 -- Create policies for storage buckets (example policies)
 CREATE POLICY "Public Access to Thumbnails"
