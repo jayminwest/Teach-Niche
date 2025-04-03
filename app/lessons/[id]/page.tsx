@@ -13,6 +13,7 @@ export default async function LessonDetail({
   params 
 }: { 
   params: { id: string } 
+  searchParams?: { [key: string]: string | string[] | undefined }
 }) {
   const supabase = createServerClient()
   
