@@ -24,12 +24,16 @@ export default async function Dashboard() {
   const user = session.user
 
   // Fetch lessons created by this instructor
-  const { data: lessons } = await supabase
+  const { data: lessons, error: lessonsError } = await supabase
     .from("lessons")
     .select("*")
     .eq("instructor_id", user.id)
     .is("parent_lesson_id", null)
     .order("created_at", { ascending: false })
+  
+  if (lessonsError) {
+    console.error("Error fetching lessons:", lessonsError);
+  }
 
   // Fetch child lessons (videos) for counting
   const { data: childLessons } = await supabase
@@ -46,19 +50,31 @@ export default async function Dashboard() {
   }, {}) || {}
 
   // Fetch standalone lessons (those with video_url but no parent)
-  const { data: standaloneVideos } = await supabase
+  const { data: standaloneVideos, error: standaloneError } = await supabase
     .from("lessons")
     .select("*")
     .eq("instructor_id", user.id)
     .is("parent_lesson_id", null)
     .not("video_url", "is", null)
     .order("created_at", { ascending: false })
+  
+  if (standaloneError) {
+    console.error("Error fetching standalone videos:", standaloneError);
+  }
+  
+  console.log("Standalone videos found:", standaloneVideos?.length || 0);
 
+  console.log("Lessons found:", lessons?.length || 0);
+  
   // Calculate total earnings
-  const { data: purchases } = await supabase
+  const { data: purchases, error: purchasesError } = await supabase
     .from("purchases")
     .select("amount, instructor_payout_amount")
     .in("lesson_id", [...(lessons?.map(lesson => lesson.id) || []), ...(standaloneVideos?.map(video => video.id) || [])])
+  
+  if (purchasesError) {
+    console.error("Error fetching purchases:", purchasesError);
+  }
 
   const totalEarnings = purchases?.reduce((sum, purchase) => sum + (purchase.instructor_payout_amount || 0), 0) || 0
 
@@ -95,6 +111,48 @@ export default async function Dashboard() {
             </Link>
           </AlertDescription>
         </Alert>
+      )}
+      
+      {standaloneVideos && standaloneVideos.length > 0 && (
+        <>
+          <h2 className="text-2xl font-bold tracking-tight mt-12 mb-6">Your Standalone Videos</h2>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {standaloneVideos.map((video) => (
+              <Card key={video.id} className="overflow-hidden">
+                <div className="aspect-video relative">
+                  <Image
+                    src={video.thumbnail_url || "/placeholder.svg?height=200&width=300"}
+                    alt={video.title}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                </div>
+                <CardHeader>
+                  <CardTitle className="line-clamp-1">{video.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Price:</span>
+                    <span className="font-medium">{formatPrice(video.price)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Type:</span>
+                    <span>Standalone Video</span>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex gap-2">
+                  <Button variant="outline" asChild className="flex-1">
+                    <Link href={`/lessons/${video.id}`}>View</Link>
+                  </Button>
+                  <Button variant="outline" asChild className="flex-1">
+                    <Link href={`/dashboard/lessons/${video.id}`}>Manage</Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </>
       )}
 
       {hasStripeAccount && !stripeAccountEnabled && (
