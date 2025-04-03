@@ -2,8 +2,12 @@ import { cookies } from "next/headers"
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
 import { stripe, calculateFees } from "@/lib/stripe"
 import { type NextRequest, NextResponse } from "next/server"
+import { ExtendedError } from "@/types/errors"
+import { LessonCheckoutRequest, CheckoutSuccessResponse } from "@/types/api"
 
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<CheckoutSuccessResponse | { message: string }>> {
   try {
     const cookieStore = cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
@@ -19,7 +23,7 @@ export async function POST(request: NextRequest) {
     const user = userSession.user
 
     // Get the lesson ID from the request
-    const { lessonId } = await request.json()
+    const { lessonId } = (await request.json()) as LessonCheckoutRequest
     if (!lessonId) {
       return NextResponse.json({ message: "Lesson ID is required" }, { status: 400 })
     }
@@ -102,10 +106,13 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    return NextResponse.json({ url: session.url })
-  } catch (error: any) {
+    return NextResponse.json({ url: session.url } as CheckoutSuccessResponse)
+  } catch (error) {
     console.error("Checkout error:", error)
-    return NextResponse.json({ message: error.message || "Internal server error" }, { status: 500 })
+    const typedError = error as ExtendedError
+    return NextResponse.json(
+      { message: typedError.message || "Internal server error" }, 
+      { status: 500 }
+    )
   }
 }
-
