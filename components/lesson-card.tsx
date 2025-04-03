@@ -41,7 +41,8 @@ export function LessonCard({ id, title, thumbnailUrl, price, isPurchased = false
       </CardHeader>
       <CardContent className="p-4 pt-0 flex justify-between items-center">
         <p className="font-medium text-lg">
-          {parseFloat(price) === 0 ? "Free" : formatPrice(price)}
+          {/* Pass price number directly, matching formatPrice definition */}
+          {price === 0 ? "Free" : formatPrice(price)} 
         </p>
         <p className="text-sm text-muted-foreground">{instructorName}</p>
       </CardContent>
@@ -50,7 +51,7 @@ export function LessonCard({ id, title, thumbnailUrl, price, isPurchased = false
           <Link href={`/lessons/${id}`}>
             {isPurchased ? (
               "View Lesson"
-            ) : parseFloat(price) === 0 ? (
+            ) : price === 0 ? ( // Check price directly
               <span className="flex items-center gap-2">
                 <Download className="h-4 w-4" />
                 Get Free Access
