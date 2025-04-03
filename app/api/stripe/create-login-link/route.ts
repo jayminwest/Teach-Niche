@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
-import { stripe } from "@/lib/stripe"
+import { stripe, syncStripeAccountStatus } from "@/lib/stripe"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
@@ -40,7 +40,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: "No Stripe account found" }, { status: 404 })
     }
 
-    if (!profile.stripe_account_enabled) {
+    // Sync the account status with Stripe
+    const accountStatus = await syncStripeAccountStatus(supabase, user.id, profile.stripe_account_id);
+
+    if (!accountStatus.accountEnabled) {
       return NextResponse.json({ message: "Stripe account not fully enabled" }, { status: 400 })
     }
 

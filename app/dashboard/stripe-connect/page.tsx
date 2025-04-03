@@ -23,7 +23,13 @@ export default function StripeConnectPage() {
     const checkAccountStatus = async () => {
       try {
         setLoading(true)
-        const response = await fetch("/api/stripe/account-status")
+        // Use cache busting to ensure we get fresh data
+        const response = await fetch("/api/stripe/account-status", {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        })
 
         if (!response.ok) {
           throw new Error("Failed to fetch account status")

@@ -16,8 +16,13 @@ export default function StripeConnectSuccess() {
     const checkAccountStatus = async () => {
       try {
         setLoading(true)
-        // Fetch the latest account status
-        const response = await fetch("/api/stripe/account-status")
+        // Fetch the latest account status with cache busting to ensure fresh data
+        const response = await fetch("/api/stripe/account-status", {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache'
+          }
+        })
 
         if (!response.ok) {
           throw new Error("Failed to fetch account status")
@@ -32,7 +37,15 @@ export default function StripeConnectSuccess() {
       }
     }
 
+    // Check immediately and then set up an interval to check periodically
     checkAccountStatus()
+    
+    // Check again after 2 seconds to allow time for Stripe to process
+    const timer = setTimeout(() => {
+      checkAccountStatus()
+    }, 2000)
+    
+    return () => clearTimeout(timer)
   }, [])
 
   if (loading) {

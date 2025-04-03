@@ -1,6 +1,6 @@
 import { cookies } from "next/headers"
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
-import { stripe } from "@/lib/stripe"
+import { stripe, syncStripeAccountStatus } from "@/lib/stripe"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
@@ -43,12 +43,23 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // If they already have a Stripe account that's enabled, return it
-    if (existingProfile?.stripe_account_id && existingProfile?.stripe_account_enabled) {
-      return NextResponse.json({
-        accountId: existingProfile.stripe_account_id,
-        onboardingComplete: existingProfile.stripe_onboarding_complete,
-      })
+    // If they already have a Stripe account, sync its status and return it
+    if (existingProfile?.stripe_account_id) {
+      try {
+        // Sync the account status with Stripe
+        const accountStatus = await syncStripeAccountStatus(supabase, user.id, existingProfile.stripe_account_id);
+        
+        // If the account is enabled, return it
+        if (accountStatus.accountEnabled) {
+          return NextResponse.json({
+            accountId: existingProfile.stripe_account_id,
+            onboardingComplete: accountStatus.onboardingComplete,
+          });
+        }
+      } catch (error) {
+        console.error("Error syncing Stripe account status:", error);
+        // Continue with creating a new onboarding link if there was an error
+      }
     }
 
     // If they have an account ID but it's not enabled, we'll create a new onboarding link
