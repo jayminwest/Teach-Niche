@@ -1,9 +1,8 @@
+import { createServerClient } from "@/lib/supabase/server"
+import { LessonCard } from "@/components/lesson-card"
+import { Hero } from "@/components/hero"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { createServerClient } from "@/lib/supabase/server"
-import { VideoCard } from "@/components/video-card"
-import { LessonCard } from "@/components/lesson-card"
-import { formatPrice } from "@/lib/utils"
 
 export default async function Home() {
   const supabase = await createServerClient()
@@ -59,38 +58,7 @@ export default async function Home() {
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)]">
-      <section className="w-full py-12 md:py-24 lg:py-32 bg-muted">
-        <div className="container px-4 md:px-6">
-          <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
-            <div className="flex flex-col justify-center space-y-4">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
-                  Learn Kendama from Expert Instructors
-                </h1>
-                <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                  Discover high-quality tutorial videos from kendama professionals. Master new tricks and techniques at
-                  your own pace.
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                <Button size="lg" asChild>
-                  <Link href="/lessons">Browse Lessons</Link>
-                </Button>
-                <Button variant="outline" size="lg" asChild>
-                  <Link href="/auth/sign-up">Create Account</Link>
-                </Button>
-              </div>
-            </div>
-            <div className="mx-auto lg:mx-0 relative h-[350px] w-full max-w-[500px] rounded-lg overflow-hidden shadow-lg">
-              <img 
-                src="/303_group.png" 
-                alt="Kendama players group" 
-                className="w-full h-full object-cover"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
+      <Hero />
 
       {lessonsWithCounts && lessonsWithCounts.length > 0 && (
         <section className="w-full py-12 md:py-24 lg:py-32">
