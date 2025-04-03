@@ -12,7 +12,14 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { AlertTriangle, Loader2, Upload } from "lucide-react"
-import { getVideoExtension, isValidVideoFormat, isValidVideoSize } from "@/lib/utils"
+import { getVideoExtension, isValidVideoFormat } from "@/lib/utils"
+
+// Define the function locally to ensure it works correctly
+export function isValidVideoSize(fileSize: number): boolean {
+  console.log("Checking file size:", fileSize, "bytes");
+  const MAX_SIZE_IN_BYTES = 2 * 1024 * 1024 * 1024; // 2GB
+  return fileSize <= MAX_SIZE_IN_BYTES;
+}
 import Link from "next/link"
 import { Switch } from "@/components/ui/switch"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -137,9 +144,18 @@ export default function UploadContent() {
 
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) return
+    if (!file) {
+      toast({
+        title: "No file selected",
+        description: "Please select a video file to upload.",
+      })
+      return
+    }
 
+    console.log("Video file selected:", file.name, file.type, file.size)
+    
     const extension = getVideoExtension(file.name)
+    console.log("File extension:", extension)
 
     if (!isValidVideoFormat(extension)) {
       toast({
@@ -163,13 +179,22 @@ export default function UploadContent() {
     }
 
     setVideoFile(file)
+    toast({
+      title: "Video selected",
+      description: `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`,
+    })
 
     // Create a preview URL
     const objectUrl = URL.createObjectURL(file)
     setPreviewUrl(objectUrl)
+    console.log("Preview URL created:", objectUrl)
 
-    // Clean up the URL when component unmounts
-    return () => URL.revokeObjectURL(objectUrl)
+    // Force a re-render to ensure the video preview shows up
+    setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.load()
+      }
+    }, 100)
   }
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -602,7 +627,14 @@ export default function UploadContent() {
                 {previewUrl && videoFile ? ( 
                   <div className="space-y-4">
                     <div className="aspect-video bg-muted rounded-md overflow-hidden">
-                      <video ref={videoRef} src={previewUrl} className="w-full h-full object-contain" controls />
+                      <video 
+                        ref={videoRef} 
+                        src={previewUrl} 
+                        className="w-full h-full object-contain" 
+                        controls 
+                        onLoadedData={() => console.log("Video loaded successfully")}
+                        onError={(e) => console.error("Video load error:", e)}
+                      />
                     </div>
                     <p className="text-sm">
                       {/* Remove optional chaining as videoFile is guaranteed here */}
@@ -635,7 +667,7 @@ export default function UploadContent() {
                         <input
                           id="video"
                           type="file"
-                          accept="video/*"
+                          accept="video/mp4,video/mov,video/avi,video/webm"
                           className="sr-only"
                           onChange={handleVideoChange}
                         />
