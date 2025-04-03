@@ -21,7 +21,7 @@ type PageParams = {
 }
 
 // Define props inline for generateMetadata with proper typing
-export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const lessonId = params.id;
   const supabase = await createServerClient();
   
