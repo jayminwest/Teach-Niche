@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { stripe, calculateFees } from "@/lib/stripe"
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "@/types/supabase"
+import Stripe from "stripe"
 
 // Check for required environment variables
 if (!process.env.SUPABASE_URL) {
@@ -38,7 +39,7 @@ export async function POST(request: NextRequest) {
     // Use type assertion to handle all Stripe event types
     switch (event.type as string) {
       case "checkout.session.completed": {
-        const session = event.data.object
+        const session = event.data.object as Stripe.Checkout.Session
         
         // Check if this is a video or lesson purchase
         const lessonId = session.metadata?.lessonId
