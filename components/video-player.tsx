@@ -39,7 +39,32 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
         if (!initialVideoUrl) {
           setError("No video URL provided");
           setIsLoading(false);
+          isRefreshing.current = false;
           return;
+        }
+        
+        // Check if we have a cached URL in sessionStorage
+        try {
+          if (typeof window !== 'undefined' && window.sessionStorage) {
+            const cachedUrl = sessionStorage.getItem(`video_url_${lessonId}`);
+            const cacheTimestamp = sessionStorage.getItem(`video_url_${lessonId}_timestamp`);
+            
+            if (cachedUrl && cacheTimestamp) {
+              const timestamp = parseInt(cacheTimestamp, 10);
+              const now = Date.now();
+              // Use cached URL if it's less than 30 minutes old
+              if (now - timestamp < 30 * 60 * 1000) {
+                console.log("Using cached video URL");
+                setVideoUrl(cachedUrl);
+                setError(null);
+                setIsLoading(false);
+                isRefreshing.current = false;
+                return;
+              }
+            }
+          }
+        } catch (e) {
+          // Ignore storage errors
         }
         
         // If it's already a signed URL, use it directly
@@ -47,36 +72,48 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
           console.log("Using existing signed URL");
           setVideoUrl(initialVideoUrl);
           setIsLoading(false);
+          isRefreshing.current = false;
           return;
         }
         
-        // For non-HTTP URLs (file paths), use the API directly
-        if (!initialVideoUrl.startsWith('http')) {
-          try {
-            const response = await fetch("/api/get-video-url", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                videoPath: initialVideoUrl,
-                lessonId,
-              }),
-            });
-            
-            if (response.ok) {
-              const data = await response.json();
-              if (data.url) {
-                console.log("Got URL from API");
-                setVideoUrl(data.url);
-                setError(null);
-                setIsLoading(false);
-                return;
+        // For all URLs, use the API to get a fresh signed URL
+        try {
+          const response = await fetch("/api/get-video-url", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              lessonId,
+            }),
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.url) {
+              console.log("Got URL from API");
+              
+              // Cache the URL in sessionStorage
+              try {
+                if (typeof window !== 'undefined' && window.sessionStorage) {
+                  sessionStorage.setItem(`video_url_${lessonId}`, data.url);
+                  sessionStorage.setItem(`video_url_${lessonId}_timestamp`, Date.now().toString());
+                }
+              } catch (e) {
+                // Ignore storage errors
               }
+              
+              setVideoUrl(data.url);
+              setError(null);
+              setIsLoading(false);
+              isRefreshing.current = false;
+              return;
             }
-          } catch (error) {
-            console.error("Error getting URL from API:", error);
+          } else {
+            console.error("API error:", response.status);
           }
+        } catch (error) {
+          console.error("Error getting URL from API:", error);
         }
         
         // Fallback to client-side refresh
@@ -117,16 +154,26 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
     };
   }, [initialVideoUrl, lessonId]);
   
-  // Use a ref to track if we're currently handling an error
+  // Use refs to track error handling state
   const isHandlingError = useRef(false);
+  const errorRetryCount = useRef(0);
+  const MAX_RETRIES = 2;
   
   // Handle video errors (which might occur if the URL expires)
   const handleVideoError = async (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
-    // Prevent concurrent error handling
+    // Prevent concurrent error handling and limit retries
     if (isHandlingError.current) return;
-    isHandlingError.current = true;
     
-    console.log("Video error occurred, attempting to refresh URL");
+    // Check if we've exceeded retry limit
+    if (errorRetryCount.current >= MAX_RETRIES) {
+      setError("Unable to play video after multiple attempts. Please try again later.");
+      return;
+    }
+    
+    isHandlingError.current = true;
+    errorRetryCount.current += 1;
+    
+    console.log(`Video error occurred, attempt ${errorRetryCount.current}/${MAX_RETRIES}`);
     
     try {
       setIsLoading(true);
@@ -150,6 +197,16 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
       if (response.ok) {
         const data = await response.json();
         if (data.url) {
+          // Store the URL in sessionStorage to prevent repeated API calls
+          try {
+            if (typeof window !== 'undefined' && window.sessionStorage) {
+              sessionStorage.setItem(`video_url_${lessonId}`, data.url);
+              sessionStorage.setItem(`video_url_${lessonId}_timestamp`, Date.now().toString());
+            }
+          } catch (e) {
+            // Ignore storage errors
+          }
+          
           setVideoUrl(data.url);
           setError(null);
           
@@ -161,18 +218,23 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
             }
           }
         } else {
-          setError("Failed to get video URL");
+          setError("Failed to get video URL. Please try refreshing the page.");
         }
       } else {
-        const errorData = await response.json();
-        setError(`Failed to refresh video: ${errorData.error || 'Unknown error'}`);
+        // For non-200 responses, show a more user-friendly error
+        setError("Unable to play video. Please try refreshing the page.");
       }
     } catch (error) {
       console.error("Error refreshing video URL:", error);
-      setError("Failed to refresh video. Please try again.");
+      setError("Network error. Please check your connection and try again.");
     } finally {
       setIsLoading(false);
       isHandlingError.current = false;
+      
+      // Set a timeout before allowing another retry
+      setTimeout(() => {
+        isHandlingError.current = false;
+      }, 3000);
     }
   };
   

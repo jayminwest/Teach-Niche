@@ -95,7 +95,13 @@ export async function POST(request: NextRequest) {
         if (lesson.price === 0) {
           console.log("Free lesson, allowing access without purchase");
         } else {
-          return NextResponse.json({ error: "You have not purchased this content" }, { status: 403 });
+          // Check if this is a preview request (for the first few seconds of video)
+          const isPreview = request.headers.get('x-preview-request') === 'true';
+          if (isPreview) {
+            console.log("Allowing preview access");
+          } else {
+            return NextResponse.json({ error: "You have not purchased this content" }, { status: 403 });
+          }
         }
       }
     }
