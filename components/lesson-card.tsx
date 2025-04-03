@@ -3,7 +3,7 @@ import Link from "next/link"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Lock } from "lucide-react"
+import { CheckCircle, Lock, Download } from "lucide-react"
 import { formatPrice } from "@/lib/utils"
 
 interface LessonCardProps {
@@ -40,7 +40,9 @@ export function LessonCard({ id, title, thumbnailUrl, price, isPurchased = false
         <CardTitle className="line-clamp-1 text-lg">{title}</CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0 flex justify-between items-center">
-        <p className="font-medium text-lg">{formatPrice(price)}</p>
+        <p className="font-medium text-lg">
+          {parseFloat(price) === 0 ? "Free" : formatPrice(price)}
+        </p>
         <p className="text-sm text-muted-foreground">{instructorName}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0">
@@ -48,6 +50,11 @@ export function LessonCard({ id, title, thumbnailUrl, price, isPurchased = false
           <Link href={`/lessons/${id}`}>
             {isPurchased ? (
               "View Lesson"
+            ) : parseFloat(price) === 0 ? (
+              <span className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                Get Free Access
+              </span>
             ) : (
               <span className="flex items-center gap-2">
                 <Lock className="h-4 w-4" />
