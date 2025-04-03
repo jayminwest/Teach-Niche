@@ -39,6 +39,15 @@ CREATE TABLE IF NOT EXISTS public.lessons (
     FOREIGN KEY (parent_lesson_id) REFERENCES public.lessons(id)
 );
 
+-- Add video_url column if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'lessons' AND column_name = 'video_url') THEN
+        ALTER TABLE public.lessons ADD COLUMN video_url TEXT;
+    END IF;
+END
+$$;
+
 -- Add columns to purchases table if they don't exist
 DO $$
 BEGIN

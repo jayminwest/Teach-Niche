@@ -328,18 +328,26 @@ export default function UploadContent() {
       // 4. Create content in database
       if (isLesson) {
         // Create a parent lesson
+        const lessonData = {
+          title,
+          description,
+          price: Number.parseFloat(price),
+          instructor_id: user.id,
+          thumbnail_url: thumbnailUrl,
+          stripe_product_id: productId,
+          stripe_price_id: priceId,
+        };
+        
+        // Add video URL if available
+        if (publicVideoUrl?.publicUrl) {
+          lessonData['video_url'] = publicVideoUrl.publicUrl;
+        }
+        
+        console.log("Creating lesson with data:", lessonData);
+        
         const { error: lessonError } = await supabase
           .from("lessons")
-          .insert([{
-            title,
-            description,
-            price: Number.parseFloat(price),
-            instructor_id: user.id,
-            thumbnail_url: thumbnailUrl,
-            video_url: publicVideoUrl.publicUrl,
-            stripe_product_id: productId,
-            stripe_price_id: priceId,
-          }])
+          .insert([lessonData]);
 
         if (lessonError) {
           console.error("Lesson insert error:", lessonError);
@@ -352,17 +360,27 @@ export default function UploadContent() {
         })
       } else if (lessonIdFromUrl) {
         // Add video as a child lesson to existing parent lesson
-        const { error: videoDbError } = await supabase.from("lessons").insert([{
+        const videoData = {
           title,
           description,
           price: Number.parseFloat(price),
           instructor_id: user.id,
-          video_url: publicVideoUrl.publicUrl,
           thumbnail_url: thumbnailUrl,
           parent_lesson_id: lessonIdFromUrl,
           stripe_product_id: productId,
           stripe_price_id: priceId,
-        }])
+        };
+        
+        // Add video URL if available
+        if (publicVideoUrl?.publicUrl) {
+          videoData['video_url'] = publicVideoUrl.publicUrl;
+        }
+        
+        console.log("Creating child lesson with data:", videoData);
+        
+        const { error: videoDbError } = await supabase
+          .from("lessons")
+          .insert([videoData]);
 
         if (videoDbError) {
           console.error("Video insert error:", videoDbError);
@@ -375,16 +393,26 @@ export default function UploadContent() {
         })
       } else {
         // Create a new lesson with video
-        const { error: dbError } = await supabase.from("lessons").insert([{
+        const lessonData = {
           title,
           description,
           price: Number.parseFloat(price),
           instructor_id: user.id,
-          video_url: publicVideoUrl.publicUrl,
           thumbnail_url: thumbnailUrl,
           stripe_product_id: productId,
           stripe_price_id: priceId,
-        }])
+        };
+        
+        // Add video URL if available
+        if (publicVideoUrl?.publicUrl) {
+          lessonData['video_url'] = publicVideoUrl.publicUrl;
+        }
+        
+        console.log("Creating standalone lesson with data:", lessonData);
+        
+        const { error: dbError } = await supabase
+          .from("lessons")
+          .insert([lessonData]);
 
         if (dbError) {
           console.error("Lesson insert error:", dbError);
