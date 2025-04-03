@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/use-toast"
 
 export default function CheckoutSuccess() {
   const [verifying, setVerifying] = useState(true)
-  const [videoId, setVideoId] = useState<string | null>(null)
+  const [lessonId, setLessonId] = useState<string | null>(null)
   const searchParams = useSearchParams()
   const { toast } = useToast()
   const sessionId = searchParams.get("session_id")
@@ -27,7 +27,7 @@ export default function CheckoutSuccess() {
       }
 
       try {
-        const response = await fetch(`/api/verify-purchase?session_id=${sessionId}`)
+        const response = await fetch(`/api/verify-lesson-purchase?session_id=${sessionId}`)
         
         if (!response.ok) {
           const errorText = await response.text()
@@ -35,7 +35,7 @@ export default function CheckoutSuccess() {
         }
         
         const data = await response.json()
-        setVideoId(data.videoId)
+        setLessonId(data.lessonId)
         
         toast({
           title: "Purchase Successful",
@@ -67,18 +67,18 @@ export default function CheckoutSuccess() {
             <h1 className="text-2xl font-bold">Verifying your purchase...</h1>
             <p className="text-muted-foreground">Please wait while we confirm your payment.</p>
           </>
-        ) : videoId ? (
+        ) : lessonId ? (
           <>
             <div className="flex justify-center mb-4">
               <CheckCircle className="h-12 w-12 text-green-500" />
             </div>
             <h1 className="text-2xl font-bold">Thank you for your purchase!</h1>
             <p className="text-muted-foreground mb-8">
-              Your payment has been successfully processed and you now have access to this video.
+              Your payment has been successfully processed and you now have access to this lesson.
             </p>
             <div className="flex flex-col gap-4">
               <Button asChild size="lg">
-                <Link href={`/videos/${videoId}`}>Watch Video</Link>
+                <Link href={`/lessons/${lessonId}`}>View Lesson</Link>
               </Button>
               <Button asChild variant="outline">
                 <Link href="/dashboard">Go to Dashboard</Link>
