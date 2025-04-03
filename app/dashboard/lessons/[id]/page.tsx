@@ -1,6 +1,5 @@
 "use client"
 
-import type { PageProps } from "next"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -21,7 +20,8 @@ import {
 } from "@/components/ui/dialog"
 import { format } from "date-fns"
 
-export default function ManageLesson({ params }: PageProps) {
+// Define params type inline for Client Component page
+export default function ManageLesson({ params }: { params: { id: string } }) {
   const [lesson, setLesson] = useState<any>(null)
   const [videos, setVideos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
