@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
       
       // Handle transfer events
       case "transfer.created" as string: {
-        const transfer = event.data.object
+        const transfer = event.data.object as Stripe.Transfer
         
         // Get the payment intent ID from the transfer
         const paymentIntentId = transfer.source_transaction
@@ -219,7 +219,7 @@ export async function POST(request: NextRequest) {
       
       // Handle transfer failures
       case "transfer.failed" as string: {
-        const transfer = event.data.object
+        const transfer = event.data.object as Stripe.Transfer
         
         // Get the payment intent ID from the transfer
         const paymentIntentId = transfer.source_transaction
