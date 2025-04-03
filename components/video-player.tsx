@@ -113,13 +113,35 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
   // Helper function to extract video path from URL
   const extractVideoPathFromUrl = (url: string): string => {
     try {
-      if (!url || !url.includes('/videos/')) return "";
+      if (!url) return "";
       
-      const urlParts = url.split('/videos/');
-      if (urlParts.length < 2) return "";
+      // Handle Supabase storage URLs
+      if (url.includes('/videos/')) {
+        const urlParts = url.split('/videos/');
+        if (urlParts.length < 2) return "";
+        
+        const pathParts = urlParts[1].split('?');
+        return pathParts[0];
+      }
       
-      const pathParts = urlParts[1].split('?');
-      return pathParts[0];
+      // Handle direct file paths that might be in the format /lessons/{id}/{filename}
+      if (url.includes('/lessons/')) {
+        const pathParts = url.split('/lessons/');
+        if (pathParts.length < 2) return "";
+        
+        // Extract the filename after the lesson ID
+        const lessonParts = pathParts[1].split('/');
+        if (lessonParts.length >= 2) {
+          return lessonParts[1];
+        }
+      }
+      
+      // If it's just a filename, return it directly
+      if (!url.includes('/')) {
+        return url;
+      }
+      
+      return "";
     } catch (error) {
       console.error("Error extracting video path:", error);
       return "";
@@ -129,11 +151,21 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
   // Function to fetch video path from lesson video_url if needed
   const fetchVideoPathFromLesson = async (): Promise<string | null> => {
     try {
-      const response = await fetch(`/api/lessons/${lessonId}/video-url`);
+      // Use the get-video-url API directly since we already have the lessonId
+      const response = await fetch(`/api/get-video-url`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lessonId,
+        }),
+      });
+      
       if (!response.ok) return null;
       
       const data = await response.json();
-      return data.videoPath || null;
+      return data.url || null;
     } catch (error) {
       console.error("Error fetching video path from lesson:", error);
       return null;

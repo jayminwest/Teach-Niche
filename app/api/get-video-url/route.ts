@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       
       finalVideoPath = lesson.video_url;
       
-      // If the video_url is already a signed URL, extract the path
+      // If the video_url is already a signed URL or contains a direct file path, extract the path
       if (finalVideoPath.includes('/storage/v1/object/sign/videos/')) {
         try {
           const urlParts = finalVideoPath.split('/videos/');
@@ -55,6 +55,20 @@ export async function POST(request: NextRequest) {
           }
         } catch (error) {
           console.error("Error extracting video path:", error);
+        }
+      } else if (finalVideoPath.includes('/lessons/')) {
+        // Handle direct file paths that might be in the format /lessons/{id}/{filename}
+        try {
+          const pathParts = finalVideoPath.split('/lessons/');
+          if (pathParts.length >= 2) {
+            // Extract the filename after the lesson ID
+            const lessonParts = pathParts[1].split('/');
+            if (lessonParts.length >= 2) {
+              finalVideoPath = lessonParts[1];
+            }
+          }
+        } catch (error) {
+          console.error("Error extracting video path from direct URL:", error);
         }
       }
     }
