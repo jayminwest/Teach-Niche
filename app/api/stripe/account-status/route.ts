@@ -25,6 +25,21 @@ export async function GET(request: NextRequest) {
       .eq("user_id", user.id)
       .single()
 
+    // If no profile exists, create one
+    if (!profile) {
+      await supabase.from("instructor_profiles").insert({
+        user_id: user.id,
+        stripe_account_enabled: false,
+        stripe_onboarding_complete: false,
+      })
+      
+      return NextResponse.json({
+        hasAccount: false,
+        accountEnabled: false,
+        onboardingComplete: false,
+      })
+    }
+
     if (!profile?.stripe_account_id) {
       return NextResponse.json({
         hasAccount: false,

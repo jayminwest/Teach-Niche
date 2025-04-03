@@ -68,6 +68,15 @@ export default async function Dashboard() {
     .eq("user_id", user.id)
     .single()
 
+  // If no profile exists, create one
+  if (!instructorProfile) {
+    await supabase.from("instructor_profiles").insert({
+      user_id: user.id,
+      stripe_account_enabled: false,
+      stripe_onboarding_complete: false,
+    })
+  }
+
   const hasStripeAccount = !!instructorProfile?.stripe_account_id
   const stripeAccountEnabled = !!instructorProfile?.stripe_account_enabled
   const stripeOnboardingComplete = !!instructorProfile?.stripe_onboarding_complete

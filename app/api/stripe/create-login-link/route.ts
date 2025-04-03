@@ -25,6 +25,17 @@ export async function GET(request: NextRequest) {
       .eq("user_id", user.id)
       .single()
 
+    // If no profile exists, create one and return an error
+    if (!profile) {
+      await supabase.from("instructor_profiles").insert({
+        user_id: user.id,
+        stripe_account_enabled: false,
+        stripe_onboarding_complete: false,
+      })
+      
+      return NextResponse.json({ message: "No Stripe account found" }, { status: 404 })
+    }
+
     if (!profile?.stripe_account_id) {
       return NextResponse.json({ message: "No Stripe account found" }, { status: 404 })
     }

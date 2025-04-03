@@ -1,4 +1,14 @@
 -- Create tables
+CREATE TABLE IF NOT EXISTS public.instructor_profiles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id),
+    stripe_account_id TEXT,
+    stripe_account_enabled BOOLEAN DEFAULT FALSE,
+    stripe_onboarding_complete BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
 CREATE TABLE IF NOT EXISTS public.lessons (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,

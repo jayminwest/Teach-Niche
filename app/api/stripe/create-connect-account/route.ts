@@ -25,6 +25,24 @@ export async function POST(request: NextRequest) {
       .eq("user_id", user.id)
       .single()
 
+    // If no profile exists, create one
+    if (!existingProfile) {
+      const { data: newProfile } = await supabase
+        .from("instructor_profiles")
+        .insert({
+          user_id: user.id,
+          stripe_account_enabled: false,
+          stripe_onboarding_complete: false,
+        })
+        .select()
+        .single()
+      
+      // Set the existingProfile to the newly created profile
+      if (newProfile) {
+        existingProfile = newProfile
+      }
+    }
+
     // If they already have a Stripe account that's enabled, return it
     if (existingProfile?.stripe_account_id && existingProfile?.stripe_account_enabled) {
       return NextResponse.json({
