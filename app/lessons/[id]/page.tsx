@@ -214,23 +214,6 @@ export default async function LessonDetail({
                 <LessonCheckoutButton lessonId={lesson.id} price={lesson.price} title={lesson.title} />
               )}
 
-              <div className="mt-6 space-y-4">
-                <h3 className="font-semibold">This lesson includes:</h3>
-                <ul className="space-y-2">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                    <span>{videos?.length || 0} HD video tutorials</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                    <span>Lifetime access</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
-                    <span>Watch on any device</span>
-                  </li>
-                </ul>
-              </div>
             </div>
           </div>
         </div>
