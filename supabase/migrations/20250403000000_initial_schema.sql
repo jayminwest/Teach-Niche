@@ -6,33 +6,20 @@ CREATE TABLE IF NOT EXISTS public.lessons (
     instructor_id UUID NOT NULL,
     price NUMERIC NOT NULL,
     thumbnail_url TEXT,
-    created_at TIMESTAMPTZ DEFAULT now(),
-    updated_at TIMESTAMPTZ DEFAULT now()
-);
-
-CREATE TABLE IF NOT EXISTS public.videos (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    title VARCHAR NOT NULL,
-    description TEXT,
-    instructor_id UUID NOT NULL,
-    thumbnail_url TEXT,
-    video_url TEXT NOT NULL,
-    price NUMERIC NOT NULL,
-    lesson_id UUID,
+    video_url TEXT,
+    parent_lesson_id UUID,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now(),
-    FOREIGN KEY (lesson_id) REFERENCES public.lessons(id)
+    FOREIGN KEY (parent_lesson_id) REFERENCES public.lessons(id)
 );
 
 CREATE TABLE IF NOT EXISTS public.purchases (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL,
-    video_id UUID NOT NULL,
+    lesson_id UUID NOT NULL,
     stripe_payment_id VARCHAR NOT NULL,
     amount NUMERIC NOT NULL,
-    lesson_id UUID,
     created_at TIMESTAMPTZ DEFAULT now(),
-    FOREIGN KEY (video_id) REFERENCES public.videos(id),
     FOREIGN KEY (lesson_id) REFERENCES public.lessons(id)
 );
 
@@ -48,9 +35,7 @@ SELECT
 FROM 
     purchases p
 JOIN 
-    lessons l ON p.lesson_id = l.id
-WHERE 
-    p.lesson_id IS NOT NULL;
+    lessons l ON p.lesson_id = l.id;
 
 -- Create storage buckets
 INSERT INTO storage.buckets (id, name, public, created_at, updated_at)
