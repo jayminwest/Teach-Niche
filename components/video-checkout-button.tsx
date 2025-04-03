@@ -33,15 +33,28 @@ export default function VideoCheckoutButton({ videoId, price, title }: VideoChec
         }),
       })
 
+      let errorMessage = "Failed to create checkout session";
+      
       if (!response.ok) {
-        const error = await response.text()
-        throw new Error(error || "Failed to create checkout session")
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (parseError) {
+          // If JSON parsing fails, try to get text
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
-      const { url } = await response.json()
+      const data = await response.json();
       
       // Redirect to Stripe Checkout
-      window.location.href = url
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error("No checkout URL returned from server");
+      }
     } catch (error: any) {
       console.error("Checkout error:", error)
       toast({

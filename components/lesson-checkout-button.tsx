@@ -34,27 +34,37 @@ export default function LessonCheckoutButton({ lessonId, price, title }: LessonC
         }),
       })
 
+      let errorMessage = "Failed to create checkout session";
+      
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Failed to create checkout session")
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (parseError) {
+          // If JSON parsing fails, try to get text
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json()
+      const data = await response.json();
 
       // Redirect to Stripe Checkout
       if (data.url) {
-        window.location.href = data.url
+        window.location.href = data.url;
       } else {
-        throw new Error("No checkout URL returned from server")
+        throw new Error("No checkout URL returned from server");
       }
     } catch (error: any) {
-      console.error("Checkout error:", error)
+      console.error("Checkout error:", error);
       toast({
         variant: "destructive",
         title: "Error",
         description: error.message || "Something went wrong. Please try again.",
-      })
-      setLoading(false)
+      });
+    } finally {
+      setLoading(false);
     }
   }
 

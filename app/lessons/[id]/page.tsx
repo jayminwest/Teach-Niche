@@ -21,14 +21,20 @@ export default async function LessonDetail({ params }: { params: { id: string } 
   // Fetch the lesson without trying to join with instructor_id
   const { data: lesson, error } = await supabase.from("lessons").select("*").eq("id", params.id).single()
   
-  // If the lesson has a video URL, refresh it to ensure it's not expired
-  if (lesson?.video_url) {
-    lesson.video_url = await refreshVideoUrl(lesson.video_url);
-  }
-
   if (error || !lesson) {
     console.error("Error fetching lesson:", error)
     notFound()
+  }
+  
+  // If the lesson has a video URL, refresh it to ensure it's not expired
+  try {
+    if (lesson?.video_url) {
+      const refreshedUrl = await refreshVideoUrl(lesson.video_url);
+      lesson.video_url = refreshedUrl;
+    }
+  } catch (refreshError) {
+    console.error("Error refreshing lesson video URL:", refreshError);
+    // Keep the original URL if refresh fails
   }
 
   // Fetch instructor information separately if needed

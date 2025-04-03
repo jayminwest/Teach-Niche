@@ -209,11 +209,8 @@ export default async function VideoDetail({ params }: { params: { id: string } }
   // Fetch the video
   const { data: video, error } = await supabase.from("lessons").select("*").eq("id", params.id).single()
   
-  // If the video has a video URL, refresh it to ensure it's not expired
-  if (video?.video_url) {
-    video.video_url = await refreshVideoUrl(video.video_url);
-  }
-
+  let videoUrl = null;
+  
   if (error || !video) {
     // Try legacy videos table if not found in lessons
     const { data: legacyVideo, error: legacyError } = await supabase
@@ -227,13 +224,19 @@ export default async function VideoDetail({ params }: { params: { id: string } }
       notFound()
     }
     
-    // Use legacy video data
-    if (legacyVideo.video_url) {
-      legacyVideo.video_url = await refreshVideoUrl(legacyVideo.video_url);
-    }
-    
     // Continue with legacyVideo as video
     video = legacyVideo;
+  }
+  
+  // If the video has a video URL, refresh it to ensure it's not expired
+  try {
+    if (video?.video_url) {
+      videoUrl = await refreshVideoUrl(video.video_url);
+      video.video_url = videoUrl;
+    }
+  } catch (refreshError) {
+    console.error("Error refreshing video URL:", refreshError);
+    // Keep the original URL if refresh fails
   }
 
   // Fetch instructor information

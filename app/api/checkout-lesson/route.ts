@@ -29,17 +29,62 @@ export async function POST(request: Request) {
     }
     
     // Fetch the lesson to get Stripe product and price IDs
-    const { data: lesson } = await supabase
+    const { data: lesson, error: lessonError } = await supabase
       .from("lessons")
       .select("stripe_product_id, stripe_price_id, instructor_id")
       .eq("id", lessonId)
       .single()
     
-    if (!lesson) {
+    if (lessonError || !lesson) {
+      console.error("Error fetching lesson:", lessonError)
       return NextResponse.json(
         { error: "Lesson not found" },
         { status: 404 }
       )
+    }
+    
+    // Validate that the lesson has the required Stripe IDs
+    if (!lesson.stripe_product_id || !lesson.stripe_price_id) {
+      console.error("Lesson missing Stripe product or price ID:", lesson)
+      
+      // Create a new Stripe product and price if missing
+      const priceInCents = Math.round(Number(price) * 100)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/stripe/create-product`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: title,
+          description: `Lesson: ${title}`,
+          price: priceInCents,
+        }),
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Failed to create Stripe product: ${errorText}`)
+      }
+      
+      const { productId, priceId } = await response.json()
+      
+      // Update the lesson with the new Stripe IDs
+      const { error: updateError } = await supabase
+        .from("lessons")
+        .update({
+          stripe_product_id: productId,
+          stripe_price_id: priceId,
+        })
+        .eq("id", lessonId)
+      
+      if (updateError) {
+        console.error("Error updating lesson with Stripe IDs:", updateError)
+        throw new Error("Failed to update lesson with Stripe product information")
+      }
+      
+      // Use the new IDs
+      lesson.stripe_product_id = productId
+      lesson.stripe_price_id = priceId
     }
     
     // Create a Stripe Checkout Session

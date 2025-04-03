@@ -22,17 +22,27 @@ export async function refreshVideoUrl(videoUrl: string): Promise<string> {
     const pathParts = urlParts[1].split('?');
     const videoPath = pathParts[0];
     
-    // Create a new signed URL
-    const { data, error } = await supabase.storage
-      .from('videos')
-      .createSignedUrl(videoPath, 604800); // 7 days
-    
-    if (error || !data.signedUrl) {
-      console.error('Error refreshing video URL:', error);
+    // Create a new signed URL with error handling
+    try {
+      const { data, error } = await supabase.storage
+        .from('videos')
+        .createSignedUrl(videoPath, 604800); // 7 days
+      
+      if (error) {
+        console.error('Error refreshing video URL:', error);
+        return videoUrl;
+      }
+      
+      if (!data || !data.signedUrl) {
+        console.error('No signed URL returned');
+        return videoUrl;
+      }
+      
+      return data.signedUrl;
+    } catch (signError) {
+      console.error('Error creating signed URL:', signError);
       return videoUrl;
     }
-    
-    return data.signedUrl;
   } catch (error) {
     console.error('Error parsing video URL:', error);
     return videoUrl;
