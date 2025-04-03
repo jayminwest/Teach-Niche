@@ -26,7 +26,7 @@ export async function refreshVideoUrl(videoUrl: string): Promise<string> {
     try {
       const { data, error } = await supabase.storage
         .from('videos')
-        .createSignedUrl(videoPath, 604800); // 7 days
+        .createSignedUrl(videoPath, 2592000); // 30 days
       
       if (error) {
         console.error('Error refreshing video URL:', error);

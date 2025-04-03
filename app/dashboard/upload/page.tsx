@@ -395,26 +395,27 @@ export default function UploadContent() {
         const lessonData: LessonInsertData = { // Explicitly type lessonData
           title,
           description,
-          price: Number.parseFloat(price),
+          price: Number.parseFloat(price) || 0, // Handle empty price
           instructor_id: user.id,
           thumbnail_url: thumbnailUrl,
           stripe_product_id: productId,
           stripe_price_id: priceId,
+          video_path: videoPath, // Store the video path directly
         };
-        
-        // Store the video path instead of URL
-        lessonData['video_path'] = videoPath;
         
         console.log("Creating lesson with data:", lessonData);
         
-        const { error: lessonError } = await supabase
+        const { data: insertedLesson, error: lessonError } = await supabase
           .from("lessons")
-          .insert([lessonData]);
+          .insert([lessonData])
+          .select(); // Add .select() to return the inserted data
 
         if (lessonError) {
           console.error("Lesson insert error:", lessonError);
           throw new Error(`Failed to create lesson: ${lessonError.message}`);
         }
+
+        console.log("Lesson created successfully:", insertedLesson);
 
         toast({
           title: "Success",
@@ -422,32 +423,31 @@ export default function UploadContent() {
         })
       } else if (lessonIdFromUrl) {
         // Add video as a child lesson to existing parent lesson
-        // NOTE: This logic seems related to the parent/child structure we removed.
-        // Consider if this 'else if' block is still needed or should be removed/refactored.
         const videoData: LessonInsertData = { // Explicitly type videoData
           title,
           description,
-          price: Number.parseFloat(price),
+          price: Number.parseFloat(price) || 0,
           instructor_id: user.id,
           thumbnail_url: thumbnailUrl,
           parent_lesson_id: lessonIdFromUrl,
           stripe_product_id: productId,
           stripe_price_id: priceId,
+          video_path: videoPath, // Store the video path directly
         };
-        
-        // Store the video path instead of URL
-        videoData['video_path'] = videoPath;
         
         console.log("Creating child lesson with data:", videoData);
         
-        const { error: videoDbError } = await supabase
+        const { data: insertedVideo, error: videoDbError } = await supabase
           .from("lessons")
-          .insert([videoData]);
+          .insert([videoData])
+          .select(); // Add .select() to return the inserted data
 
         if (videoDbError) {
           console.error("Video insert error:", videoDbError);
           throw new Error(`Failed to add video to lesson: ${videoDbError.message}`);
         }
+
+        console.log("Video added to lesson successfully:", insertedVideo);
 
         toast({
           title: "Success",
@@ -458,26 +458,27 @@ export default function UploadContent() {
         const lessonData: LessonInsertData = { // Explicitly type lessonData
           title,
           description,
-          price: Number.parseFloat(price),
+          price: Number.parseFloat(price) || 0,
           instructor_id: user.id,
           thumbnail_url: thumbnailUrl,
           stripe_product_id: productId,
           stripe_price_id: priceId,
+          video_path: videoPath, // Store the video path directly
         };
-        
-        // Store the video path instead of URL
-        lessonData['video_path'] = videoPath;
         
         console.log("Creating standalone lesson with data:", lessonData);
         
-        const { error: dbError } = await supabase
+        const { data: insertedLesson, error: dbError } = await supabase
           .from("lessons")
-          .insert([lessonData]);
+          .insert([lessonData])
+          .select(); // Add .select() to return the inserted data
 
         if (dbError) {
           console.error("Lesson insert error:", dbError);
           throw new Error(`Failed to create lesson: ${dbError.message}`);
         }
+
+        console.log("Lesson created successfully:", insertedLesson);
 
         toast({
           title: "Success",

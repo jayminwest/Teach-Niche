@@ -41,10 +41,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "You have not purchased this content" }, { status: 403 });
     }
     
-    // Generate a signed URL valid for 1 hour
+    // Generate a signed URL valid for 30 days
     const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from("videos")
-      .createSignedUrl(videoPath, 3600); // 1 hour in seconds
+      .createSignedUrl(videoPath, 2592000); // 30 days in seconds
     
     if (signedUrlError) {
       console.error("Error generating signed URL:", signedUrlError);
