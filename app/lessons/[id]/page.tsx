@@ -109,8 +109,41 @@ export default async function LessonDetail({
 
   return (
     <div className="container py-8">
-      <div className="grid gap-8 md:grid-cols-5">
-        <div className="col-span-3">
+      <div className="mb-6 p-4 border rounded-lg flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">{lesson.title}</h1>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+            <span>Instructor: {instructorEmail}</span>
+            <span>•</span>
+            <span>Created on {createdDate}</span>
+            <span>•</span>
+            <span>{videos?.length || 0} videos</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <p className="text-2xl font-bold">{formatPrice(lesson.price)}</p>
+          
+          {!user ? (
+            <Button asChild>
+              <Link href={`/auth/sign-in?redirectedFrom=/lessons/${lesson.id}`}>Sign in to purchase</Link>
+            </Button>
+          ) : isInstructor ? (
+            <div className="px-3 py-2 bg-muted rounded-md text-sm">
+              <p>This is your lesson</p>
+            </div>
+          ) : hasPurchased ? (
+            <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-md">
+              <CheckCircle className="h-4 w-4 text-green-500" />
+              <p className="text-sm">You own this lesson</p>
+            </div>
+          ) : (
+            <LessonCheckoutButton lessonId={lesson.id} price={lesson.price} title={lesson.title} />
+          )}
+        </div>
+      </div>
+
+      <div className="grid gap-8 md:grid-cols-1">
+        <div>
           <div className="aspect-video mb-4 relative rounded-lg overflow-hidden border">
             {(hasPurchased || isInstructor) && lesson.video_url ? (
               <video 
@@ -139,16 +172,6 @@ export default async function LessonDetail({
                 )}
               </>
             )}
-          </div>
-
-          <h1 className="text-3xl font-bold mb-4">{lesson.title}</h1>
-
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-            <span>Instructor: {instructorEmail}</span>
-            <span>•</span>
-            <span>Created on {createdDate}</span>
-            <span>•</span>
-            <span>{videos?.length || 0} videos</span>
           </div>
 
           <div className="prose max-w-none mb-8">
@@ -187,35 +210,6 @@ export default async function LessonDetail({
               </div>
             </div>
           )}
-        </div>
-
-        <div className="col-span-2">
-          <div className="sticky top-6">
-            <div className="border rounded-lg p-6">
-              <p className="text-3xl font-bold mb-6">{formatPrice(lesson.price)}</p>
-
-              {!user ? (
-                <div className="space-y-4">
-                  <p className="text-muted-foreground">Sign in to purchase this lesson</p>
-                  <Button className="w-full" asChild>
-                    <Link href={`/auth/sign-in?redirectedFrom=/lessons/${lesson.id}`}>Sign in</Link>
-                  </Button>
-                </div>
-              ) : isInstructor ? (
-                <div className="p-4 bg-muted rounded-md text-center">
-                  <p>This is your lesson</p>
-                </div>
-              ) : hasPurchased ? (
-                <div className="flex items-center gap-2 p-4 bg-muted rounded-md">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <p>You own this lesson</p>
-                </div>
-              ) : (
-                <LessonCheckoutButton lessonId={lesson.id} price={lesson.price} title={lesson.title} />
-              )}
-
-            </div>
-          </div>
         </div>
       </div>
     </div>
