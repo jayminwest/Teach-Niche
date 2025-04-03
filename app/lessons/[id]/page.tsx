@@ -11,33 +11,55 @@ import { format } from "date-fns"
 
 import { Metadata } from 'next' 
 
-// Define props inline for generateMetadata - using any for diagnosis
-export async function generateMetadata({ params }: any): Promise<Metadata> {
-  // TODO: Fetch lesson title using params.id and add it to the metadata title
-  // Example: const lessonTitle = await fetchLessonTitle(params.id);
+// Define proper types for the params
+type PageParams = {
+  params: {
+    id: string;
+  };
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+// Define props inline for generateMetadata with proper typing
+export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
+  const lessonId = params.id;
+  const supabase = await createServerClient();
+  
+  // Fetch lesson title for metadata
+  const { data: lesson } = await supabase
+    .from("lessons")
+    .select("title")
+    .eq("id", lessonId)
+    .single();
+    
   return {
-    title: `Lesson Details`, // Example: `Lesson: ${lessonTitle || 'Details'}`
+    title: lesson?.title ? `Lesson: ${lesson.title}` : 'Lesson Details',
   }
 }
 
-// Define props inline for the Page component - using any for diagnosis
+// Define props inline for the Page component with proper typing
 export default async function LessonDetail({ 
   params, 
   searchParams 
-}: any) {
-  const supabase = createServerClient()
+}: PageParams) {
+  const supabase = await createServerClient()
   
-  // Store the ID in a variable to avoid direct property access on params
-  const lessonId = String(params?.id || '')
+  // Get the lesson ID from params
+  const lessonId = params.id
 
-  // Get the current session
+  // Get the current session - properly awaited
   const {
     data: { session },
   } = await supabase.auth.getSession()
-  const user = session?.user || null
+  
+  // Use getUser for more secure authentication
+  const { data: { user } } = await supabase.auth.getUser()
 
-  // Fetch the lesson without trying to join with instructor_id
-  const { data: lesson, error } = await supabase.from("lessons").select("*").eq("id", lessonId).single()
+  // Fetch the lesson with proper error handling
+  const { data: lesson, error } = await supabase
+    .from("lessons")
+    .select("*")
+    .eq("id", lessonId)
+    .single()
   
   if (error || !lesson) {
     console.error("Error fetching lesson:", error)
