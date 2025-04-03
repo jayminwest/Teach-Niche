@@ -21,6 +21,14 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
+  webpack: (config, { isServer }) => {
+    // Only apply this to the client-side build
+    if (!isServer) {
+      const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+      config.plugins.push(new MiniCssExtractPlugin());
+    }
+    return config;
+  },
 }
 
 if (userConfig) {
