@@ -360,7 +360,9 @@ export default function UploadContent() {
       // Video path is already defined above
 
       // 3. Create Stripe product and price for the lesson
-      const priceInCents = Math.round(Number.parseFloat(price || "0") * 100);
+      // Ensure price is a valid number (default to 0 for free content)
+      const priceValue = price.trim() === "" ? "0" : price;
+      const priceInCents = Math.round(Number.parseFloat(priceValue) * 100);
       
       // Ensure we have all required fields for Stripe
       if (!title) {
@@ -376,8 +378,10 @@ export default function UploadContent() {
         description: (description || title).trim(), // Fallback to title if description is empty
         price: priceInCents,
         images: thumbnailUrl ? [thumbnailUrl] : undefined,
-        // Add any other required fields here
       };
+      
+      // Log the exact data being sent to the API
+      console.log("Creating Stripe product with exact data:", JSON.stringify(productData));
       
       console.log("Creating Stripe product with data:", productData);
       

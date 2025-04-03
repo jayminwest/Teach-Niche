@@ -21,6 +21,14 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
     const refreshUrl = async () => {
       try {
         setIsLoading(true);
+        
+        // Check if we have a valid URL to refresh
+        if (!initialVideoUrl) {
+          setError("No video URL provided");
+          setIsLoading(false);
+          return;
+        }
+        
         const freshUrl = await refreshVideoUrl(initialVideoUrl);
         if (freshUrl !== initialVideoUrl) {
           setVideoUrl(freshUrl);

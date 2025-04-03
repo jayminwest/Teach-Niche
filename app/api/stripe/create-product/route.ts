@@ -33,14 +33,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, description, price, images } = body
 
-    if (!name || !price) {
-      return NextResponse.json({ message: "Missing required fields" }, { status: 400 })
+    if (!name) {
+      return NextResponse.json({ message: "Missing required field: name" }, { status: 400 })
+    }
+    
+    // Allow price to be 0 for free content
+    if (price === undefined || price === null) {
+      return NextResponse.json({ message: "Missing required field: price" }, { status: 400 })
     }
 
     // Create a product in Stripe
     const product = await stripe.products.create({
       name,
-      description,
+      description: description || name, // Use name as fallback if description is empty
       images: images || [],
       metadata: {
         userId: user.id,
