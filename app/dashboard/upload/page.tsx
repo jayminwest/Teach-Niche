@@ -170,6 +170,15 @@ export default function UploadContent() {
       e.target.value = '';
       return;
     }
+    
+    // Check if filename contains spaces
+    if (file.name.includes(' ')) {
+      toast({
+        variant: "warning",
+        title: "Filename contains spaces",
+        description: "Spaces in filenames will be replaced with underscores to prevent playback issues.",
+      })
+    }
 
     setVideoFile(file)
     toast({
@@ -257,7 +266,9 @@ export default function UploadContent() {
       if (!user) throw new Error("User not authenticated")
 
       // 1. Upload the video file
-      const videoFileName = `${Date.now()}-${videoFile.name}`
+      // Clean the filename by replacing spaces with underscores
+      const cleanedFileName = videoFile.name.replace(/\s+/g, '_')
+      const videoFileName = `${Date.now()}-${cleanedFileName}`
       const videoPath = `${user.id}/${videoFileName}`
       
       // Show toast for large uploads
@@ -306,7 +317,9 @@ export default function UploadContent() {
 
       // If a thumbnail file was uploaded, use that
       if (thumbnailFile) {
-        const thumbnailFileName = `${Date.now()}-${thumbnailFile.name}`
+        // Clean the thumbnail filename by replacing spaces with underscores
+        const cleanedThumbnailName = thumbnailFile.name.replace(/\s+/g, '_')
+        const thumbnailFileName = `${Date.now()}-${cleanedThumbnailName}`
         const { data: thumbnailData, error: thumbnailError } = await supabase.storage
           .from("thumbnails")
           .upload(`${user.id}/${thumbnailFileName}`, thumbnailFile, {
@@ -720,6 +733,9 @@ export default function UploadContent() {
                     </p>
                     <p className="text-xs text-muted-foreground mb-4">
                       Supported formats: MP4, MOV, AVI, WEBM (max 2GB)
+                    </p>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Note: Spaces in filenames will be replaced with underscores
                     </p>
                     <Button type="button" variant="outline" asChild>
                       <label>
