@@ -14,11 +14,14 @@ import { useToast } from "@/components/ui/use-toast"
 import { ArrowLeft, Loader2, Upload } from "lucide-react"
 import Link from "next/link"
 
-export default function EditLesson({ 
-  params 
-}: { 
-  params: { id: string } 
-}) {
+type Props = {
+  params: {
+    id: string
+  }
+}
+
+export default function EditLesson(props: Props) {
+  const { params } = props
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [price, setPrice] = useState("")
