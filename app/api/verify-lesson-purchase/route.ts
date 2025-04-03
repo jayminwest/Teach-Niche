@@ -179,7 +179,7 @@ export async function GET(request: NextRequest) {
     
     // Only add video_id if the column exists
     if (columnInfo) {
-      purchaseData['video_id'] = null
+      (purchaseData as any)['video_id'] = null
     }
     
     const { error: purchaseError } = await supabase
