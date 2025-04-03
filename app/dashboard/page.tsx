@@ -24,42 +24,67 @@ export default async function Dashboard() {
   const user = session.user
 
   // Fetch lessons created by this instructor
-  const { data: lessons, error: lessonsError } = await supabase
-    .from("lessons")
-    .select("*")
-    .eq("instructor_id", user.id)
-    .is("parent_lesson_id", null)
-    .order("created_at", { ascending: false })
-  
-  if (lessonsError) {
-    console.error("Error fetching lessons:", lessonsError);
+  let lessons = [];
+  try {
+    const { data, error } = await supabase
+      .from("lessons")
+      .select("*")
+      .eq("instructor_id", user.id)
+      .is("parent_lesson_id", null)
+      .order("created_at", { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching lessons:", error);
+    } else {
+      lessons = data || [];
+    }
+  } catch (error) {
+    console.error("Error fetching lessons:", error);
   }
 
   // Fetch child lessons (videos) for counting
-  const { data: childLessons } = await supabase
-    .from("lessons")
-    .select("parent_lesson_id")
-    .not("parent_lesson_id", "is", null)
-    .eq("instructor_id", user.id)
+  let childLessons = [];
+  try {
+    const { data, error } = await supabase
+      .from("lessons")
+      .select("parent_lesson_id")
+      .not("parent_lesson_id", "is", null)
+      .eq("instructor_id", user.id);
+    
+    if (error) {
+      console.error("Error fetching child lessons:", error);
+    } else {
+      childLessons = data || [];
+    }
+  } catch (error) {
+    console.error("Error fetching child lessons:", error);
+  }
 
   // Count videos per lesson
-  const lessonVideoCounts = childLessons?.reduce((counts: Record<string, number>, child) => {
+  const lessonVideoCounts = childLessons.reduce((counts: Record<string, number>, child) => {
     const parentId = child.parent_lesson_id as string
     counts[parentId] = (counts[parentId] || 0) + 1
     return counts
   }, {}) || {}
 
   // Fetch standalone lessons (those with video_url but no parent)
-  const { data: standaloneVideos, error: standaloneError } = await supabase
-    .from("lessons")
-    .select("*")
-    .eq("instructor_id", user.id)
-    .is("parent_lesson_id", null)
-    .not("video_url", "is", null)
-    .order("created_at", { ascending: false })
-  
-  if (standaloneError) {
-    console.error("Error fetching standalone videos:", standaloneError);
+  let standaloneVideos = [];
+  try {
+    const { data, error } = await supabase
+      .from("lessons")
+      .select("*")
+      .eq("instructor_id", user.id)
+      .is("parent_lesson_id", null)
+      .not("video_url", "is", null)
+      .order("created_at", { ascending: false });
+    
+    if (error) {
+      console.error("Error fetching standalone videos:", error);
+    } else {
+      standaloneVideos = data || [];
+    }
+  } catch (error) {
+    console.error("Error fetching standalone videos:", error);
   }
   
   console.log("Standalone videos found:", standaloneVideos?.length || 0);
@@ -67,16 +92,30 @@ export default async function Dashboard() {
   console.log("Lessons found:", lessons?.length || 0);
   
   // Calculate total earnings
-  const { data: purchases, error: purchasesError } = await supabase
-    .from("purchases")
-    .select("amount, instructor_payout_amount")
-    .in("lesson_id", [...(lessons?.map(lesson => lesson.id) || []), ...(standaloneVideos?.map(video => video.id) || [])])
-  
-  if (purchasesError) {
-    console.error("Error fetching purchases:", purchasesError);
+  let purchases = [];
+  try {
+    const lessonIds = [
+      ...lessons.map(lesson => lesson.id),
+      ...standaloneVideos.map(video => video.id)
+    ].filter(Boolean);
+    
+    if (lessonIds.length > 0) {
+      const { data, error } = await supabase
+        .from("purchases")
+        .select("amount, instructor_payout_amount")
+        .in("lesson_id", lessonIds);
+      
+      if (error) {
+        console.error("Error fetching purchases:", error);
+      } else {
+        purchases = data || [];
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching purchases:", error);
   }
 
-  const totalEarnings = purchases?.reduce((sum, purchase) => sum + (purchase.instructor_payout_amount || 0), 0) || 0
+  const totalEarnings = purchases.reduce((sum, purchase) => sum + (purchase.instructor_payout_amount || 0), 0) || 0
 
   // Get the instructor's Stripe Connect status
   const { data: instructorProfile } = await supabase

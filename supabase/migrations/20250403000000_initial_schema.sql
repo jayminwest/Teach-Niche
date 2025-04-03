@@ -97,7 +97,7 @@ JOIN
 INSERT INTO storage.buckets (id, name, public, created_at, updated_at)
 VALUES 
     ('thumbnails', 'thumbnails', true, now(), now()),
-    ('videos', 'videos', false, now(), now())
+    ('videos', 'videos', true, now(), now())
 ON CONFLICT (id) DO NOTHING;
 
 -- Create policies for storage buckets to match existing policies (only if they don't exist)
@@ -124,11 +124,11 @@ BEGIN
     
     IF NOT EXISTS (
         SELECT 1 FROM pg_policies 
-        WHERE schemaname = 'storage' AND tablename = 'objects' AND policyname = 'Allow Owner Access'
+        WHERE schemaname = 'storage' AND tablename = 'objects' AND policyname = 'Allow Public Access Videos'
     ) THEN
-        CREATE POLICY "Allow Owner Access"
+        CREATE POLICY "Allow Public Access Videos"
         ON storage.objects FOR SELECT
-        USING (bucket_id = 'videos' AND auth.uid()::text = (storage.foldername(name))[1]);
+        USING (bucket_id = 'videos');
     END IF;
     
     IF NOT EXISTS (
