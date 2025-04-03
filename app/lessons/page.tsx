@@ -4,11 +4,8 @@ import { LessonCard } from "@/components/lesson-card"
 export default async function LessonsPage() {
   const supabase = await createServerClient()
 
-  // Get the current session
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  const user = session?.user || null
+  // Get the authenticated user (more secure than session)
+  const { data: { user } } = await supabase.auth.getUser()
 
   // Fetch all lessons
   const { data: rawLessons } = await supabase

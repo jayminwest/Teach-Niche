@@ -6,7 +6,7 @@ import { createServerClient } from "./server";
  * @returns A fresh signed URL or the original URL if it's still valid
  */
 export async function refreshVideoUrlServer(videoUrl: string): Promise<string> {
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
   
   // Check if this is a signed URL from our videos bucket
   if (!videoUrl || !videoUrl.includes('/storage/v1/object/sign/videos/')) {

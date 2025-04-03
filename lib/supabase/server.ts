@@ -4,7 +4,7 @@ import { cache } from "react"
 import type { Database } from "@/types/supabase"
 
 export const createServerClient = cache(async () => {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   return createServerComponentClient<Database>({ cookies: () => cookieStore })
 })
 
