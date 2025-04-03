@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { ExtendedError } from "@/types/errors"
 
 interface CheckoutButtonProps {
   videoId: string
@@ -43,7 +44,7 @@ export default function CheckoutButton({ videoId, price, title }: CheckoutButton
 
       // Redirect to Stripe Checkout
       router.push(data.url)
-    } catch (error: any) {
+    } catch (error: ExtendedError) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -66,4 +67,3 @@ export default function CheckoutButton({ videoId, price, title }: CheckoutButton
     </Button>
   )
 }
-

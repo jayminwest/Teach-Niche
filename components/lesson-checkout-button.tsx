@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2, Lock } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { ExtendedError } from "@/types/errors"
 
 interface LessonCheckoutButtonProps {
   lessonId: string
@@ -56,7 +57,7 @@ export default function LessonCheckoutButton({ lessonId, price, title }: LessonC
       } else {
         throw new Error("No checkout URL returned from server");
       }
-    } catch (error: any) {
+    } catch (error: ExtendedError) {
       console.error("Checkout error:", error);
       toast({
         variant: "destructive",
@@ -84,4 +85,3 @@ export default function LessonCheckoutButton({ lessonId, price, title }: LessonC
     </Button>
   )
 }
-
