@@ -29,14 +29,11 @@ export async function generateMetadata({ params }): Promise<Metadata> {
   }
 }
 
-// Add explicit types for the Page component props
+// Use the imported PageProps for the Page component props
 export default async function LessonDetail({
   params,
   searchParams,
-}: {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+}: PageProps) {
   const supabase = await createServerClient()
   
   // Get the lesson ID from params
