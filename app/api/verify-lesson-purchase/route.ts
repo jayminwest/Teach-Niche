@@ -18,10 +18,79 @@ export async function GET(request: NextRequest) {
       )
     }
     
-    // Get the session ID from the query parameters
+    // Get the parameters from the query
     const { searchParams } = new URL(request.url)
     const sessionId = searchParams.get("session_id")
+    const lessonId = searchParams.get("lessonId")
+    const isFree = searchParams.get("free") === "true"
     
+    // If this is a free lesson verification
+    if (isFree && lessonId) {
+      // Check if the lesson exists and is free
+      const { data: lesson } = await supabase
+        .from("lessons")
+        .select("price")
+        .eq("id", lessonId)
+        .single()
+      
+      if (!lesson) {
+        return NextResponse.json(
+          { error: "Lesson not found" },
+          { status: 404 }
+        )
+      }
+      
+      // Verify the lesson is actually free
+      if (parseFloat(lesson.price) > 0) {
+        return NextResponse.json(
+          { error: "This is not a free lesson" },
+          { status: 400 }
+        )
+      }
+      
+      // Check if the user already has access
+      const { data: existingPurchase } = await supabase
+        .from("purchases")
+        .select("id")
+        .eq("user_id", session.user.id)
+        .eq("lesson_id", lessonId)
+        .maybeSingle()
+      
+      if (!existingPurchase) {
+        // Record the free access if not already recorded
+        const purchaseData = {
+          user_id: session.user.id,
+          lesson_id: lessonId,
+          stripe_payment_id: `free_${session.user.id}_${lessonId}_${Date.now()}`,
+          amount: 0,
+          stripe_product_id: null,
+          stripe_price_id: null,
+          instructor_payout_amount: 0,
+          platform_fee_amount: 0,
+          payout_status: 'free_lesson',
+          is_free: true
+        }
+        
+        const { error: purchaseError } = await supabase
+          .from("purchases")
+          .insert(purchaseData)
+        
+        if (purchaseError) {
+          console.error("Error recording free lesson access:", purchaseError)
+          return NextResponse.json(
+            { error: `Failed to record free lesson access: ${purchaseError.message}` },
+            { status: 500 }
+          )
+        }
+      }
+      
+      return NextResponse.json({ 
+        success: true,
+        lessonId
+      })
+    }
+    
+    // For paid lessons, continue with the existing flow
     if (!sessionId) {
       return NextResponse.json(
         { error: "Missing session ID" },
@@ -48,9 +117,9 @@ export async function GET(request: NextRequest) {
     }
     
     // Get the lesson ID from the metadata
-    const lessonId = checkoutSession.metadata?.lessonId
+    const lessonIdFromSession = checkoutSession.metadata?.lessonId
     
-    if (!lessonId) {
+    if (!lessonIdFromSession) {
       return NextResponse.json(
         { error: "Lesson ID not found in session metadata" },
         { status: 400 }
@@ -62,7 +131,7 @@ export async function GET(request: NextRequest) {
       .from("purchases")
       .select("id")
       .eq("user_id", session.user.id)
-      .eq("lesson_id", lessonId)
+      .eq("lesson_id", lessonIdFromSession)
       .eq("stripe_payment_id", checkoutSession.id)
       .maybeSingle()
     
@@ -70,7 +139,7 @@ export async function GET(request: NextRequest) {
       // Purchase already recorded, return success
       return NextResponse.json({ 
         success: true,
-        lessonId
+        lessonId: lessonIdFromSession
       })
     }
     
@@ -97,14 +166,15 @@ export async function GET(request: NextRequest) {
     
     const purchaseData = {
       user_id: session.user.id,
-      lesson_id: lessonId,
+      lesson_id: lessonIdFromSession,
       stripe_payment_id: checkoutSession.id,
       amount: checkoutSession.amount_total ? checkoutSession.amount_total / 100 : 0,
       stripe_product_id: checkoutSession.metadata?.productId,
       stripe_price_id: checkoutSession.metadata?.priceId,
       instructor_payout_amount: instructorPayoutAmount,
       platform_fee_amount: platformFee / 100, // Convert to dollars
-      payout_status: 'pending_transfer' // Set initial status
+      payout_status: 'pending_transfer', // Set initial status
+      is_free: false
     }
     
     // Only add video_id if the column exists

@@ -52,6 +52,62 @@ async function createStripeProduct({ name, description, price, images }: {
   }
 }
 
+// Helper function to record a free lesson access
+async function recordFreeLessonAccess(supabase, userId, lessonId, instructorId) {
+  try {
+    // Check if this access has already been recorded
+    const { data: existingPurchase } = await supabase
+      .from("purchases")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("lesson_id", lessonId)
+      .maybeSingle();
+    
+    if (existingPurchase) {
+      // Access already recorded, return success
+      return { success: true, lessonId };
+    }
+    
+    // Record the access in the database
+    const { data: columnInfo } = await supabase.rpc('column_exists', {
+      table_name: 'purchases',
+      column_name: 'video_id'
+    });
+    
+    const purchaseData = {
+      user_id: userId,
+      lesson_id: lessonId,
+      stripe_payment_id: `free_${userId}_${lessonId}_${Date.now()}`, // Generate a unique ID for free lessons
+      amount: 0,
+      stripe_product_id: null,
+      stripe_price_id: null,
+      instructor_payout_amount: 0,
+      platform_fee_amount: 0,
+      payout_status: 'free_lesson', // Mark as free lesson
+      is_free: true // Add a flag to indicate this is a free lesson
+    };
+    
+    // Only add video_id if the column exists
+    if (columnInfo) {
+      purchaseData['video_id'] = null;
+    }
+    
+    const { error: purchaseError } = await supabase
+      .from("purchases")
+      .insert(purchaseData);
+    
+    if (purchaseError) {
+      console.error("Error recording free lesson access:", purchaseError);
+      throw new Error(`Failed to record free lesson access: ${purchaseError.message}`);
+    }
+    
+    return { success: true, lessonId };
+  } catch (error) {
+    console.error("Error recording free lesson access:", error);
+    throw error;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = createServerClient()
@@ -69,19 +125,19 @@ export async function POST(request: Request) {
     }
     
     // Get request body
-    const { lessonId, price, title } = await request.json()
+    const { lessonId, price, title, isFree } = await request.json()
     
-    if (!lessonId || !price) {
+    if (!lessonId) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       )
     }
     
-    // Fetch the lesson to get Stripe product and price IDs
+    // Fetch the lesson to get instructor ID and verify price
     const { data: lesson, error: lessonError } = await supabase
       .from("lessons")
-      .select("stripe_product_id, stripe_price_id, instructor_id")
+      .select("stripe_product_id, stripe_price_id, instructor_id, price")
       .eq("id", lessonId)
       .single()
     
@@ -93,6 +149,44 @@ export async function POST(request: Request) {
       )
     }
     
+    // Verify the price matches what's in the database (security check)
+    const lessonPrice = parseFloat(lesson.price) || 0;
+    const requestPrice = parseFloat(price) || 0;
+    
+    // Allow a small difference for floating point comparison
+    if (Math.abs(lessonPrice - requestPrice) > 0.01) {
+      return NextResponse.json(
+        { error: "Price mismatch. Please refresh and try again." },
+        { status: 400 }
+      )
+    }
+    
+    // Handle free lessons (price is 0)
+    if (lessonPrice === 0 || isFree) {
+      // For free lessons, we still need the instructor to have a Stripe account
+      // but we don't need to create a checkout session
+      const { accountId: instructorStripeAccountId } = 
+        await getInstructorStripeAccountId(supabase, lesson.instructor_id);
+      
+      if (!instructorStripeAccountId) {
+        return NextResponse.json(
+          { error: "Instructor payment account not set up" },
+          { status: 400 }
+        )
+      }
+      
+      // Record the free lesson access
+      const result = await recordFreeLessonAccess(
+        supabase, 
+        session.user.id, 
+        lessonId, 
+        lesson.instructor_id
+      );
+      
+      return NextResponse.json(result);
+    }
+    
+    // For paid lessons, continue with the existing flow
     // Get the instructor's Stripe account ID
     const { accountId: instructorStripeAccountId, isEnabled: isAccountEnabled } = 
       await getInstructorStripeAccountId(supabase, lesson.instructor_id);

@@ -13,9 +13,43 @@ export default function LessonCheckoutSuccess() {
   const searchParams = useSearchParams()
   const { toast } = useToast()
   const sessionId = searchParams.get("session_id")
+  const directLessonId = searchParams.get("lessonId")
+  const isFree = searchParams.get("free") === "true"
 
   useEffect(() => {
     const verifyPurchase = async () => {
+      // Handle free lessons with direct lessonId
+      if (isFree && directLessonId) {
+        try {
+          // Verify the free lesson access
+          const response = await fetch(`/api/verify-lesson-purchase?free=true&lessonId=${directLessonId}`)
+          
+          if (!response.ok) {
+            const errorText = await response.text()
+            throw new Error(errorText || "Failed to verify free lesson access")
+          }
+          
+          const data = await response.json()
+          setLessonId(data.lessonId)
+          
+          toast({
+            title: "Access Granted",
+            description: "You now have access to this free lesson!",
+          })
+        } catch (error: any) {
+          console.error("Verification error:", error)
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: error.message || "Failed to verify free lesson access",
+          })
+        } finally {
+          setVerifying(false)
+        }
+        return
+      }
+
+      // Handle paid lessons with session_id
       if (!sessionId) {
         toast({
           variant: "destructive",
@@ -54,7 +88,7 @@ export default function LessonCheckoutSuccess() {
     }
 
     verifyPurchase()
-  }, [sessionId, toast])
+  }, [sessionId, directLessonId, isFree, toast])
 
   return (
     <div className="container max-w-lg py-16">
@@ -64,17 +98,21 @@ export default function LessonCheckoutSuccess() {
             <div className="flex justify-center mb-4">
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
             </div>
-            <h1 className="text-2xl font-bold">Verifying your purchase...</h1>
-            <p className="text-muted-foreground">Please wait while we confirm your payment.</p>
+            <h1 className="text-2xl font-bold">Verifying your {isFree ? "access" : "purchase"}...</h1>
+            <p className="text-muted-foreground">Please wait while we confirm your {isFree ? "access" : "payment"}.</p>
           </>
         ) : lessonId ? (
           <>
             <div className="flex justify-center mb-4">
               <CheckCircle className="h-12 w-12 text-green-500" />
             </div>
-            <h1 className="text-2xl font-bold">Thank you for your purchase!</h1>
+            <h1 className="text-2xl font-bold">
+              {isFree ? "Access Granted!" : "Thank you for your purchase!"}
+            </h1>
             <p className="text-muted-foreground mb-8">
-              Your payment has been successfully processed and you now have access to this lesson.
+              {isFree 
+                ? "You now have access to this free lesson. Enjoy learning!"
+                : "Your payment has been successfully processed and you now have access to this lesson."}
             </p>
             <div className="flex flex-col gap-4">
               <Button asChild size="lg">
@@ -90,10 +128,13 @@ export default function LessonCheckoutSuccess() {
             <div className="flex justify-center mb-4 text-amber-500">
               <CheckCircle className="h-12 w-12" />
             </div>
-            <h1 className="text-2xl font-bold">Payment Received</h1>
+            <h1 className="text-2xl font-bold">
+              {isFree ? "Access Issue" : "Payment Received"}
+            </h1>
             <p className="text-muted-foreground mb-8">
-              Your payment was successful, but we couldn't verify your purchase details. 
-              Don't worry, our team has been notified and will resolve this shortly.
+              {isFree
+                ? "We couldn't verify your access details. Don't worry, our team has been notified and will resolve this shortly."
+                : "Your payment was successful, but we couldn't verify your purchase details. Don't worry, our team has been notified and will resolve this shortly."}
             </p>
             <div className="flex flex-col gap-4">
               <Button asChild variant="outline">

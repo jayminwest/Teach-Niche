@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
-import { Loader2, Lock } from "lucide-react"
+import { Loader2, Lock, Download } from "lucide-react" // Added Download icon
 import { useRouter } from "next/navigation"
 
 interface LessonCheckoutButtonProps {
@@ -21,7 +21,39 @@ export default function LessonCheckoutButton({ lessonId, price, title }: LessonC
     try {
       setLoading(true)
 
-      // Call our API to create a checkout session
+      // For free lessons, bypass Stripe checkout
+      if (price === 0) {
+        // Call our API to record free lesson access
+        const response = await fetch(`/api/checkout-lesson`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            lessonId,
+            price: 0,
+            title,
+            isFree: true,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to access free lesson");
+        }
+
+        const data = await response.json();
+        
+        // Redirect to the lesson success page
+        if (data.lessonId) {
+          router.push(`/checkout/lesson-success?free=true&lessonId=${data.lessonId}`);
+        } else {
+          throw new Error("No lesson ID returned from server");
+        }
+        return;
+      }
+
+      // For paid lessons, continue with existing Stripe checkout flow
       const response = await fetch("/api/checkout-lesson", {
         method: "POST",
         headers: {
@@ -74,6 +106,11 @@ export default function LessonCheckoutButton({ lessonId, price, title }: LessonC
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Processing...
+        </>
+      ) : price === 0 ? (
+        <>
+          <Download className="mr-2 h-4 w-4" />
+          Get Free Access
         </>
       ) : (
         <>

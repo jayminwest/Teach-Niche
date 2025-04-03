@@ -510,12 +510,12 @@ export default function UploadContent() {
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 placeholder={isLesson ? "19.99" : "9.99"}
-                min="0.99"
+                min="0"
                 step="0.01"
                 required
               />
               <p className="text-xs text-muted-foreground">
-                Set a fair price for your {isLesson ? "lesson" : "tutorial"} (minimum $0.99)
+                Set a fair price for your {isLesson ? "lesson" : "tutorial"} (set to 0 for free lessons)
               </p>
             </div>
 
