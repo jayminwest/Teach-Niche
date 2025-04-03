@@ -9,10 +9,13 @@ import Image from "next/image"
 import { notFound } from "next/navigation"
 import VideoCheckoutButton from "@/components/video-checkout-button"
 import { format } from "date-fns"
-import { PageProps } from 'next' // Import PageProps
 
-// Use PageProps for the component props
-export default async function VideoDetail({ params }: PageProps<{ id: string }>) {
+interface VideoDetailProps {
+  params: { id: string };
+}
+
+// Use the defined interface for props
+export default async function VideoDetail({ params }: VideoDetailProps) {
   const supabase = createServerClient()
 
   // Get the current session

@@ -10,9 +10,13 @@ import LessonCheckoutButton from "@/components/lesson-checkout-button"
 import { format } from "date-fns"
 
 import { Metadata } from 'next' 
-import type PageProps from 'next' // Try default import again as error suggests
 
-export async function generateMetadata({ params }: PageProps<{ id: string }>): Promise<Metadata> {
+interface LessonDetailProps {
+  params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   // TODO: Fetch lesson title using params.id and add it to the metadata title
   // Example: const lessonTitle = await fetchLessonTitle(params.id);
   return {
@@ -20,8 +24,7 @@ export async function generateMetadata({ params }: PageProps<{ id: string }>): P
   }
 }
 
-// Use PageProps with the specific params type
-export default async function LessonDetail({ params, searchParams }: PageProps<{ id: string }>) {
+export default async function LessonDetail({ params, searchParams }: LessonDetailProps) {
   const supabase = createServerClient()
   
   // Store the ID in a variable to avoid direct property access on params
