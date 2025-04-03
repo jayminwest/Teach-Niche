@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
-import { Loader2, Upload } from "lucide-react"
+import { Loader2, Upload, Video as VideoIcon } from "lucide-react"
 import Link from "next/link"
 
 export default function CreateLesson() {
@@ -20,6 +20,8 @@ export default function CreateLesson() {
   const [price, setPrice] = useState("")
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
+  const [videoFile, setVideoFile] = useState<File | null>(null)
+  const [videoPreview, setVideoPreview] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
@@ -59,8 +61,51 @@ export default function CreateLesson() {
     return () => URL.revokeObjectURL(objectUrl)
   }
 
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Check if it's a video
+    if (!file.type.startsWith("video/")) {
+      toast({
+        variant: "destructive",
+        title: "Invalid file format",
+        description: "Please upload a video file.",
+      })
+      return
+    }
+
+    // Check file size (max 500MB)
+    if (file.size > 500 * 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "File too large",
+        description: "The maximum file size is 500MB.",
+      })
+      return
+    }
+
+    setVideoFile(file)
+
+    // Create a preview URL
+    const objectUrl = URL.createObjectURL(file)
+    setVideoPreview(objectUrl)
+
+    // Clean up the URL when component unmounts
+    return () => URL.revokeObjectURL(objectUrl)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!videoFile) {
+      toast({
+        variant: "destructive",
+        title: "Video required",
+        description: "Please upload a video for your lesson.",
+      })
+      return
+    }
 
     try {
       setLoading(true)
@@ -95,6 +140,26 @@ export default function CreateLesson() {
         }
       }
 
+      // Upload video file (required)
+      const videoFileName = `${Date.now()}-${videoFile.name}`
+      const { data: videoData, error: videoError } = await supabase.storage
+        .from("videos")
+        .upload(`${user.id}/${videoFileName}`, videoFile, {
+          cacheControl: "3600",
+          upsert: false,
+        })
+
+      if (videoError) {
+        throw new Error(`Error uploading video: ${videoError.message}`)
+      }
+
+      // Get public URL for the video
+      const { data: publicVideoUrl } = await supabase.storage
+        .from("videos")
+        .getPublicUrl(`${user.id}/${videoFileName}`)
+
+      const videoUrl = publicVideoUrl.publicUrl
+
       // Create lesson entry in database
       const { data: lesson, error: dbError } = await supabase
         .from("lessons")
@@ -104,6 +169,7 @@ export default function CreateLesson() {
           price: Number.parseFloat(price),
           instructor_id: user.id,
           thumbnail_url: thumbnailUrl,
+          video_url: videoUrl, // Required field in new data model
         })
         .select()
 
@@ -180,6 +246,61 @@ export default function CreateLesson() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="video" className="flex items-center">
+                Video <span className="text-red-500 ml-1">*</span>
+              </Label>
+              <div className="border rounded-md p-4">
+                {videoPreview ? (
+                  <div className="space-y-4">
+                    <div className="aspect-video bg-muted rounded-md overflow-hidden">
+                      <video
+                        src={videoPreview}
+                        controls
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setVideoFile(null)
+                        setVideoPreview(null)
+                      }}
+                    >
+                      Change Video
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-4">
+                    <div className="mb-4">
+                      <VideoIcon className="h-10 w-10 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">
+                      Drag and drop your video here, or click to browse
+                    </p>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Accepted formats: MP4, MOV, WebM (max 500MB)
+                    </p>
+                    <Button type="button" variant="outline" asChild>
+                      <label>
+                        <input
+                          id="video"
+                          type="file"
+                          accept="video/*"
+                          className="sr-only"
+                          onChange={handleVideoChange}
+                          required
+                        />
+                        Select Video
+                      </label>
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">A video is required for each lesson</p>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="thumbnail">Thumbnail Image (Optional)</Label>
               <div className="border rounded-md p-4">
                 {thumbnailPreview ? (
@@ -250,4 +371,3 @@ export default function CreateLesson() {
     </div>
   )
 }
-
