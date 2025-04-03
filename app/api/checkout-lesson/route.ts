@@ -93,13 +93,6 @@ export async function POST(request: Request) {
         throw new Error("Failed to create Stripe product and price")
       }
       
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Failed to create Stripe product: ${errorText}`)
-      }
-      
-      const { productId, priceId } = await response.json()
-      
       // Update the lesson with the new Stripe IDs
       const { error: updateError } = await supabase
         .from("lessons")

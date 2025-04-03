@@ -300,7 +300,10 @@ export default function UploadContent() {
 
       // 3. Create Stripe product and price for the lesson
       const priceInCents = Math.round(Number.parseFloat(price) * 100);
-      const response = await fetch("/api/stripe/create-product", {
+      
+      // Use absolute URL for API call to ensure it works in all environments
+      const apiUrl = window.location.origin + "/api/stripe/create-product";
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
