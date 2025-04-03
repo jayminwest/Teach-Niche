@@ -16,8 +16,8 @@ export default async function LessonDetail({
 }) {
   const supabase = createServerClient()
   
-  // Extract the ID directly from params object without accessing it as a property
-  const { id: lessonId } = params
+  // Store the ID in a variable to avoid direct property access on params
+  const lessonId = String(params?.id || '')
 
   // Get the current session
   const {
