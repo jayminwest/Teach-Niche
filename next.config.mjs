@@ -1,8 +1,15 @@
-let userConfig = undefined
-try {
-  userConfig = await import('./v0-user-next.config')
-} catch (e) {
-  // ignore error
+// Use synchronous imports for Next.js configuration
+import { existsSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+let userConfig = {};
+
+// Check if user config exists and import it
+if (existsSync(resolve(__dirname, './v0-user-next.config.js'))) {
+  const { default: importedConfig } = await import('./v0-user-next.config.js');
+  userConfig = importedConfig || {};
 }
 
 /** @type {import('next').NextConfig} */
@@ -21,33 +28,37 @@ const nextConfig = {
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
   },
-  webpack: async (config, { isServer }) => {
-    // Only apply this to the client-side build
+  webpack: (config, { isServer }) => {
+    // Add necessary dependencies to the webpack config
     if (!isServer) {
-      const { default: MiniCssExtractPlugin } = await import('mini-css-extract-plugin');
+      // Add MiniCssExtractPlugin
+      const MiniCssExtractPlugin = require('mini-css-extract-plugin');
       config.plugins.push(new MiniCssExtractPlugin());
+      
+      // Ensure react-server-dom-webpack is resolved
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        'react-server-dom-webpack/client': require.resolve('react-server-dom-webpack/client')
+      };
     }
     return config;
   },
 }
 
-if (userConfig) {
-  // ESM imports will have a "default" property
-  const config = userConfig.default || userConfig
-
-  for (const key in config) {
-    if (
-      typeof nextConfig[key] === 'object' &&
-      !Array.isArray(nextConfig[key])
-    ) {
-      nextConfig[key] = {
-        ...nextConfig[key],
-        ...config[key],
-      }
-    } else {
-      nextConfig[key] = config[key]
+// Merge user config with default config
+for (const key in userConfig) {
+  if (
+    typeof nextConfig[key] === 'object' &&
+    !Array.isArray(nextConfig[key])
+  ) {
+    nextConfig[key] = {
+      ...nextConfig[key],
+      ...userConfig[key],
     }
+  } else {
+    nextConfig[key] = userConfig[key]
   }
 }
 
-export default nextConfig
+// Use CommonJS export to avoid promise in config
+module.exports = nextConfig;
