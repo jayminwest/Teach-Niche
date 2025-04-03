@@ -16,16 +16,44 @@ export default async function Home() {
     .order("created_at", { ascending: false })
     .limit(3)
     
-  // Get video counts for each lesson
+  // Get video counts and instructor info for each lesson
   const lessonsWithCounts = await Promise.all((lessons || []).map(async (lesson) => {
+    // Get video count
     const { count } = await supabase
       .from("videos")
       .select("*", { count: "exact", head: true })
       .eq("lesson_id", lesson.id)
     
+    // Get instructor name
+    let instructorName = "Instructor";
+    if (lesson?.instructor_id) {
+      // Try to get instructor profile first
+      const { data: instructorProfile } = await supabase
+        .from("instructor_profiles")
+        .select("name")
+        .eq("user_id", lesson.instructor_id)
+        .single();
+      
+      if (instructorProfile?.name) {
+        instructorName = instructorProfile.name;
+      } else {
+        // Then try to get user data
+        const { data: userData } = await supabase
+          .from("users")
+          .select("name")
+          .eq("id", lesson.instructor_id)
+          .single();
+          
+        if (userData?.name) {
+          instructorName = userData.name;
+        }
+      }
+    }
+    
     return {
       ...lesson,
-      videoCount: count || 0
+      videoCount: count || 0,
+      instructorName
     }
   }))
 
@@ -85,6 +113,7 @@ export default async function Home() {
                   thumbnailUrl={lesson.thumbnail_url || "/placeholder.svg?height=200&width=300"}
                   price={lesson.price}
                   videoCount={lesson.videoCount}
+                  instructorName={lesson.instructorName}
                 />
               ))}
             </div>
