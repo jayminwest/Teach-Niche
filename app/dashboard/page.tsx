@@ -26,12 +26,24 @@ export default async function Dashboard() {
   // Fetch lessons created by this instructor
   let lessons = [];
   try {
-    const { data, error } = await supabase
+    // Check if parent_lesson_id column exists
+    const { error: columnCheckError } = await supabase.rpc('column_exists', { 
+      table_name: 'lessons', 
+      column_name: 'parent_lesson_id' 
+    });
+    
+    let query = supabase
       .from("lessons")
       .select("*")
       .eq("instructor_id", user.id)
-      .is("parent_lesson_id", null)
       .order("created_at", { ascending: false });
+    
+    // Only filter by parent_lesson_id if the column exists
+    if (!columnCheckError) {
+      query = query.is("parent_lesson_id", null);
+    }
+    
+    const { data, error } = await query;
     
     if (error) {
       console.error("Error fetching lessons:", error.message);
@@ -45,16 +57,25 @@ export default async function Dashboard() {
   // Fetch child lessons (videos) for counting
   let childLessons = [];
   try {
-    const { data, error } = await supabase
-      .from("lessons")
-      .select("parent_lesson_id")
-      .not("parent_lesson_id", "is", null)
-      .eq("instructor_id", user.id);
+    // First check if parent_lesson_id column exists
+    const { error: columnCheckError } = await supabase.rpc('column_exists', { 
+      table_name: 'lessons', 
+      column_name: 'parent_lesson_id' 
+    });
     
-    if (error) {
-      console.error("Error fetching child lessons:", error.message);
-    } else {
-      childLessons = data || [];
+    // If the RPC doesn't exist or fails, we'll try the query anyway
+    if (!columnCheckError) {
+      const { data, error } = await supabase
+        .from("lessons")
+        .select("parent_lesson_id")
+        .not("parent_lesson_id", "is", null)
+        .eq("instructor_id", user.id);
+      
+      if (error) {
+        console.error("Error fetching child lessons:", error.message);
+      } else {
+        childLessons = data || [];
+      }
     }
   } catch (error) {
     console.error("Error fetching child lessons:", error instanceof Error ? error.message : String(error));
@@ -70,13 +91,25 @@ export default async function Dashboard() {
   // Fetch standalone lessons (those with video_url but no parent)
   let standaloneVideos = [];
   try {
-    const { data, error } = await supabase
+    // Check if parent_lesson_id column exists
+    const { error: columnCheckError } = await supabase.rpc('column_exists', { 
+      table_name: 'lessons', 
+      column_name: 'parent_lesson_id' 
+    });
+    
+    let query = supabase
       .from("lessons")
       .select("*")
       .eq("instructor_id", user.id)
-      .is("parent_lesson_id", null)
       .not("video_url", "is", null)
       .order("created_at", { ascending: false });
+    
+    // Only filter by parent_lesson_id if the column exists
+    if (!columnCheckError) {
+      query = query.is("parent_lesson_id", null);
+    }
+    
+    const { data, error } = await query;
     
     if (error) {
       console.error("Error fetching standalone videos:", error.message);

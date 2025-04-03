@@ -31,13 +31,20 @@ CREATE TABLE IF NOT EXISTS public.lessons (
     price NUMERIC NOT NULL,
     thumbnail_url TEXT,
     video_url TEXT,
-    parent_lesson_id UUID,
     stripe_product_id TEXT,
     stripe_price_id TEXT,
     created_at TIMESTAMPTZ DEFAULT now(),
-    updated_at TIMESTAMPTZ DEFAULT now(),
-    FOREIGN KEY (parent_lesson_id) REFERENCES public.lessons(id)
+    updated_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Add parent_lesson_id column if it doesn't exist
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'lessons' AND column_name = 'parent_lesson_id') THEN
+        ALTER TABLE public.lessons ADD COLUMN parent_lesson_id UUID REFERENCES public.lessons(id);
+    END IF;
+END
+$$;
 
 -- Add video_url column if it doesn't exist
 DO $$
