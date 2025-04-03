@@ -12,11 +12,11 @@ import { VideoPlayer } from "@/components/video-player"
 
 import { Metadata } from 'next'
 
-// Add explicit types for generateMetadata props
-export async function generateMetadata({ 
-  params 
-}: { 
-  params: { id: string } 
+// Add explicit types for generateMetadata props (only params needed)
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
 }): Promise<Metadata> {
   const lessonId = params.id;
   const supabase = await createServerClient();
