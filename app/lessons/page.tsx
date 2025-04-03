@@ -10,7 +10,7 @@ export default async function LessonsPage() {
   // Fetch all lessons
   const { data: rawLessons, error: lessonsError } = await supabase
     .from("lessons")
-    .select("*, videos(count), instructor_id")
+    .select("*")
     .order("created_at", { ascending: false })
   
   console.log("Lessons query result:", { rawLessons, lessonsError })
