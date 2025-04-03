@@ -25,7 +25,7 @@ export default function UploadContent() {
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null)
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
+  // const [uploadProgress, setUploadProgress] = useState(0) // Removed upload progress state
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [showSetupLink, setShowSetupLink] = useState(false)
   const [isLesson, setIsLesson] = useState(false)
@@ -229,10 +229,7 @@ export default function UploadContent() {
         .upload(`${user.id}/${videoFileName}`, videoFile, {
           cacheControl: "3600",
           upsert: false,
-          onUploadProgress: (progress) => {
-            const percentage = (progress.loaded / progress.total) * 100
-            setUploadProgress(percentage)
-          },
+          // Removed onUploadProgress callback
         })
 
       if (videoError) {
@@ -635,7 +632,7 @@ export default function UploadContent() {
               {uploading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading ({uploadProgress.toFixed(0)}%)
+                  Uploading... 
                 </>
               ) : (
                 `Upload ${isLesson ? "Lesson" : "Video"}`
