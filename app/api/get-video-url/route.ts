@@ -151,99 +151,16 @@ export async function POST(request: NextRequest) {
     console.log("Final path with lesson ID prefix and encoding:", finalVideoPath);
     
     try {
-      console.log("Attempting to create signed URL for:", finalVideoPath);
+      console.log("Using direct public URL approach for video:", finalVideoPath);
       
-      // First try with the path as is
-      let { data: signedUrlData, error: signedUrlError } = await supabase.storage
-        .from("videos")
-        .createSignedUrl(finalVideoPath, 3600); // 1 hour in seconds
+      // Always use a direct public URL approach, but verify permissions first
+      // We've already checked above that the user has permission to access this video
+      // (either they're the instructor, they've purchased it, or it's free)
       
-      // If there's an error, try different path variations
-      if (signedUrlError) {
-        console.error("Error generating signed URL:", signedUrlError);
-        
-        // Try without lesson ID prefix
-        if (finalVideoPath.includes('/')) {
-          const pathParts = finalVideoPath.split('/');
-          const fileName = pathParts[pathParts.length - 1];
-          console.log("Trying without lesson ID prefix:", fileName);
-          
-          // Try to decode the filename if it contains encoded characters
-          let decodedFileName = fileName;
-          try {
-            if (fileName.includes('%')) {
-              decodedFileName = decodeURIComponent(fileName);
-              console.log("Decoded filename:", decodedFileName);
-            }
-          } catch (e) {
-            console.error("Error decoding filename:", e);
-            // Continue with original filename if decoding fails
-          }
-          
-          const { data: noIdData, error: noIdError } = await supabase.storage
-            .from("videos")
-            .createSignedUrl(decodedFileName, 3600);
-            
-          if (!noIdError && noIdData?.signedUrl) {
-            return NextResponse.json({ url: noIdData.signedUrl });
-          }
-        }
-        
-        // Try with just the filename part after removing timestamp prefix
-        if (finalVideoPath.includes('-')) {
-          const parts = finalVideoPath.split('/');
-          const fileName = parts[parts.length - 1];
-          
-          // Extract just the descriptive part after the timestamp
-          const matches = fileName.match(/\d+-(.+)/);
-          if (matches && matches[1]) {
-            const descriptivePart = matches[1];
-            console.log("Trying with just descriptive part:", descriptivePart);
-            
-            const { data: descriptiveData, error: descriptiveError } = await supabase.storage
-              .from("videos")
-              .createSignedUrl(descriptivePart, 3600);
-              
-            if (!descriptiveError && descriptiveData?.signedUrl) {
-              return NextResponse.json({ url: descriptiveData.signedUrl });
-            }
-          }
-        }
-        
-        // Try with the original video_url as a last fallback
-        if (lesson?.video_url && lesson.video_url !== finalVideoPath) {
-          console.log("Trying original video_url as fallback:", lesson.video_url);
-          const { data: fallbackData, error: fallbackError } = await supabase.storage
-            .from("videos")
-            .createSignedUrl(lesson.video_url, 3600);
-            
-          if (!fallbackError && fallbackData?.signedUrl) {
-            return NextResponse.json({ url: fallbackData.signedUrl });
-          }
-        }
-        
-        // If all attempts fail, check if this is a public video
-        try {
-          const publicUrl = supabase.storage
-            .from("videos")
-            .getPublicUrl(finalVideoPath).data.publicUrl;
-            
-          if (publicUrl) {
-            console.log("Using public URL as fallback");
-            return NextResponse.json({ url: publicUrl });
-          }
-        } catch (e) {
-          console.error("Error getting public URL:", e);
-        }
-        
-        return NextResponse.json({ error: "Video file not found after multiple attempts" }, { status: 404 });
-      }
+      const publicUrl = `https://fduuujxzwwrbshamtriy.supabase.co/storage/v1/object/public/videos/${finalVideoPath}`;
+      console.log("Using direct URL:", publicUrl);
       
-      if (!signedUrlData?.signedUrl) {
-        return NextResponse.json({ error: "Failed to generate signed URL" }, { status: 500 });
-      }
-      
-      return NextResponse.json({ url: signedUrlData.signedUrl });
+      return NextResponse.json({ url: publicUrl });
     } catch (error) {
       console.error("Error creating signed URL:", error);
       return NextResponse.json({ error: "Failed to generate video URL" }, { status: 500 });
