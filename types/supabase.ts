@@ -74,7 +74,7 @@ export interface Database {
           stripe_payment_id: string
           amount: number
           created_at: string
-          lesson_id: string | null
+          lesson_id: string
           instructor_payout_amount: number | null
           platform_fee_amount: number | null
           payout_status: string | null
@@ -89,7 +89,7 @@ export interface Database {
           stripe_payment_id: string
           amount: number
           created_at?: string
-          lesson_id?: string | null
+          lesson_id: string
           instructor_payout_amount?: number | null
           platform_fee_amount?: number | null
           payout_status?: string | null
@@ -104,7 +104,7 @@ export interface Database {
           stripe_payment_id?: string
           amount?: number
           created_at?: string
-          lesson_id?: string | null
+          lesson_id?: string
           instructor_payout_amount?: number | null
           platform_fee_amount?: number | null
           payout_status?: string | null
@@ -122,6 +122,7 @@ export interface Database {
           instructor_id: string
           price: number
           thumbnail_url: string | null
+          video_url: string
           created_at: string
           updated_at: string
         }
@@ -132,6 +133,7 @@ export interface Database {
           instructor_id: string
           price: number
           thumbnail_url?: string | null
+          video_url: string
           created_at?: string
           updated_at?: string
         }
@@ -142,6 +144,7 @@ export interface Database {
           instructor_id?: string
           price?: number
           thumbnail_url?: string | null
+          video_url?: string
           created_at?: string
           updated_at?: string
         }
@@ -197,4 +200,3 @@ export type Lesson = Database["public"]["Tables"]["lessons"]["Row"]
 export type UserPurchasedLesson = Database["public"]["Views"]["user_purchased_lessons"]["Row"]
 export type InstructorProfile = Database["public"]["Tables"]["instructor_profiles"]["Row"]
 export type User = Database["public"]["Tables"]["users"]["Row"]
-
