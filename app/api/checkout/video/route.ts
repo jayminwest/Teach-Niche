@@ -1,5 +1,5 @@
 import { createServerClient } from "@/lib/supabase/server"
-import { stripe, calculateFees } from "@/lib/stripe"
+import { stripe, calculateFees } from "@/utilities/api/stripe"
 import { NextResponse } from "next/server"
 
 import { SupabaseClient } from '@supabase/supabase-js';
