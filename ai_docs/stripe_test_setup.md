@@ -132,9 +132,9 @@ For all test cards:
 Add these to your `.env.local` file:
 
 ```
-STRIPE_SECRET_KEY=sk_test_...  # From your Stripe dashboard
+STRIPE_SECRET_KEY=sk_test_51QahEYKFIWjD6A06QD7tepynFvEhPA6AWDSb46vmTlnLL6JuEOO2n84GSvUwAbuKcEA0PowqV2OglOfMtF8umIS2004O49ixYj  # From your Stripe dashboard
 STRIPE_WEBHOOK_SECRET=whsec_... # From the stripe listen command
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_... # From your Stripe dashboard
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51QahEYKFIWjD6A06nwkNIDLVwFp5aPA2Wctv1mAW9xZmMbRpLlwmddF8RyhjNvhp7Wr743sQ0h9ZGpBjpOjrerV500TTya0zoP # From your Stripe dashboard
 ```
 
 ## Testing Checkout Flow
