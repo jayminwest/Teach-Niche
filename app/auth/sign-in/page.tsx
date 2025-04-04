@@ -112,6 +112,9 @@ export default function SignIn() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
+                <Link href="/auth/forgot-password" className="text-sm text-muted-foreground hover:text-primary underline underline-offset-4">
+                  Forgot Password?
+                </Link>
               </div>
               <Input
                 id="password"
