@@ -174,6 +174,21 @@ For testing instructor payouts:
 
 Replace `acct_XXX` with the connected account ID and `lesson_YYY` with your lesson ID.
 
+## Multi-Currency Testing
+
+For testing Stripe Connect with multiple currencies, we've created a comprehensive guide and automated test script:
+
+1. See the [Multi-Currency Testing Guide](/docs/stripe-connect-multi-currency-testing.md) for detailed instructions.
+
+2. Use the provided test script to automate the process:
+   ```bash
+   bash scripts/test-stripe-connect-multi-currency.sh
+   ```
+
+3. Document your results using the [test results template](/docs/templates/stripe-connect-test-results-template.md).
+
+This expanded testing ensures our platform works correctly with instructors and students from different regions using different currencies.
+
 ## Troubleshooting
 
 ### Common Issues
