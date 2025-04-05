@@ -7,6 +7,8 @@
 
 export * from './http-status';
 export * from './endpoints';
+// Re-export payment methods from app constants for API usage
+export { PAYMENT_METHODS } from '../app/payment';
 
 /**
  * Common API response messages
