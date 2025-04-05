@@ -134,8 +134,8 @@ export interface IconProps extends Omit<LucideProps, 'ref'> {
  */
 export const Icon = forwardRef<HTMLSpanElement, IconProps>(
   ({ icon, size = "md", customIcon = false, className, label, ...props }, ref) => {
-    // Determine the icon size
-    const iconSize = typeof size === "number" ? size : sizeMap[size];
+    // Determine the icon size - ensure it's a number
+    const iconSize: number = typeof size === "number" ? size : sizeMap[size as IconSize];
     
     // Determine the icon component to render
     let IconComponent = iconMap[icon as keyof typeof iconMap];
