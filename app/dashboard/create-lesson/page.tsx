@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2, Upload } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 
 export default function CreateLesson() {
   const [title, setTitle] = useState("")
@@ -185,11 +186,15 @@ export default function CreateLesson() {
                 {thumbnailPreview ? (
                   <div className="space-y-4">
                     <div className="aspect-video bg-muted rounded-md overflow-hidden">
-                      <img
-                        src={thumbnailPreview || "/placeholder.svg"}
-                        alt="Thumbnail preview"
-                        className="w-full h-full object-cover"
-                      />
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={thumbnailPreview || "/placeholder.svg"}
+                          alt="Thumbnail preview"
+                          className="object-cover"
+                          fill
+                          sizes="(max-width: 768px) 100vw, 500px"
+                        />
+                      </div>
                     </div>
                     <Button
                       type="button"

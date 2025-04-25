@@ -29,44 +29,6 @@ export interface Database {
           updated_at?: string
         }
       }
-      videos: {
-        Row: {
-          id: string
-          title: string
-          description: string | null
-          instructor_id: string
-          thumbnail_url: string | null
-          video_url: string
-          price: number
-          created_at: string
-          updated_at: string
-          lesson_id: string | null
-        }
-        Insert: {
-          id?: string
-          title: string
-          description?: string | null
-          instructor_id: string
-          thumbnail_url?: string | null
-          video_url: string
-          price: number
-          created_at?: string
-          updated_at?: string
-          lesson_id?: string | null
-        }
-        Update: {
-          id?: string
-          title?: string
-          description?: string | null
-          instructor_id?: string
-          thumbnail_url?: string | null
-          video_url?: string
-          price?: number
-          created_at?: string
-          updated_at?: string
-          lesson_id?: string | null
-        }
-      }
       purchases: {
         Row: {
           id: string
@@ -124,6 +86,9 @@ export interface Database {
           thumbnail_url: string | null
           created_at: string
           updated_at: string
+          video_url: string | null
+          stripe_product_id: string | null
+          stripe_price_id: string | null
         }
         Insert: {
           id?: string
@@ -134,6 +99,9 @@ export interface Database {
           thumbnail_url?: string | null
           created_at?: string
           updated_at?: string
+          video_url?: string | null
+          stripe_product_id?: string | null
+          stripe_price_id?: string | null
         }
         Update: {
           id?: string
@@ -144,6 +112,9 @@ export interface Database {
           thumbnail_url?: string | null
           created_at?: string
           updated_at?: string
+          video_url?: string | null
+          stripe_product_id?: string | null
+          stripe_price_id?: string | null
         }
       }
       instructor_profiles: {
@@ -155,6 +126,9 @@ export interface Database {
           stripe_onboarding_complete: boolean
           created_at: string
           updated_at: string
+          name: string | null
+          bio: string | null
+          total_earnings: number | null
         }
         Insert: {
           id?: string
@@ -164,6 +138,9 @@ export interface Database {
           stripe_onboarding_complete?: boolean
           created_at?: string
           updated_at?: string
+          name?: string | null
+          bio?: string | null
+          total_earnings?: number | null
         }
         Update: {
           id?: string
@@ -173,6 +150,9 @@ export interface Database {
           stripe_onboarding_complete?: boolean
           created_at?: string
           updated_at?: string
+          name?: string | null
+          bio?: string | null
+          total_earnings?: number | null
         }
       }
     }
@@ -188,13 +168,20 @@ export interface Database {
         }
       }
     }
+    Functions: {
+      check_lesson_access: {
+        Args: {
+          lesson_id: string
+          user_id: string
+        }
+        Returns: boolean
+      }
+    }
   }
 }
 
-export type Video = Database["public"]["Tables"]["videos"]["Row"]
 export type Purchase = Database["public"]["Tables"]["purchases"]["Row"]
 export type Lesson = Database["public"]["Tables"]["lessons"]["Row"]
 export type UserPurchasedLesson = Database["public"]["Views"]["user_purchased_lessons"]["Row"]
 export type InstructorProfile = Database["public"]["Tables"]["instructor_profiles"]["Row"]
 export type User = Database["public"]["Tables"]["users"]["Row"]
-

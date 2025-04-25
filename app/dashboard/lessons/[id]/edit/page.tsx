@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/use-toast"
 import { ArrowLeft, Loader2, Upload } from "lucide-react"
 import Link from "next/link"
+import Image from "next/image"
 
 export default function EditLesson() {
   const params = useParams()
@@ -84,7 +85,7 @@ export default function EditLesson() {
     }
 
     fetchLesson()
-  }, [supabase, params.id, router, toast])
+  }, [supabase, params.id, router, toast, lessonId])
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -264,11 +265,15 @@ export default function EditLesson() {
                 {thumbnailPreview || currentThumbnail ? (
                   <div className="space-y-4">
                     <div className="aspect-video bg-muted rounded-md overflow-hidden">
-                      <img
-                        src={thumbnailPreview || currentThumbnail || "/placeholder.svg"}
-                        alt="Thumbnail preview"
-                        className="w-full h-full object-cover"
-                      />
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={thumbnailPreview || currentThumbnail || "/placeholder.svg"}
+                          alt="Thumbnail preview"
+                          className="object-cover"
+                          fill
+                          sizes="(max-width: 768px) 100vw, 500px"
+                        />
+                      </div>
                     </div>
                     <Button
                       type="button"

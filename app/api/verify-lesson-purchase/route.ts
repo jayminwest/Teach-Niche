@@ -166,13 +166,28 @@ export async function GET(request: NextRequest) {
     const amountInCents = checkoutSession.amount_total || 0
     const { platformFee } = calculateFees(amountInCents)
     
-    const purchaseData = {
+    // Define the purchase data with proper typing
+    interface PurchaseData {
+      user_id: string;
+      lesson_id: string;
+      stripe_payment_id: string;
+      amount: number;
+      stripe_product_id: string | null;
+      stripe_price_id: string | null;
+      instructor_payout_amount: number | null;
+      platform_fee_amount: number;
+      payout_status: string;
+      is_free: boolean;
+      [key: string]: any; // Allow for dynamic properties
+    }
+    
+    const purchaseData: PurchaseData = {
       user_id: session.user.id,
       lesson_id: lessonIdFromSession,
       stripe_payment_id: checkoutSession.id,
       amount: checkoutSession.amount_total ? checkoutSession.amount_total / 100 : 0,
-      stripe_product_id: checkoutSession.metadata?.productId,
-      stripe_price_id: checkoutSession.metadata?.priceId,
+      stripe_product_id: checkoutSession.metadata?.productId || null,
+      stripe_price_id: checkoutSession.metadata?.priceId || null,
       instructor_payout_amount: instructorPayoutAmount,
       platform_fee_amount: platformFee / 100, // Convert to dollars
       payout_status: 'pending_transfer', // Set initial status
@@ -181,8 +196,11 @@ export async function GET(request: NextRequest) {
     
     // Only add video_id if the column exists
     if (columnInfo) {
-      (purchaseData as any)['video_id'] = null
+      purchaseData.video_id = null
     }
+    
+    // Log the purchase data for debugging
+    console.log("Recording purchase with data:", purchaseData)
     
     const { error: purchaseError } = await supabase
       .from("purchases")
@@ -198,7 +216,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({ 
       success: true,
-      lessonId
+      lessonId: lessonIdFromSession
     })
   } catch (error: any) {
     console.error("Error verifying purchase:", error)

@@ -5,7 +5,7 @@ import { stripe, calculateFees } from "@/lib/stripe"
 import { NextResponse } from "next/server"
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '@/types/supabase';
+import { Database, Lesson, InstructorProfile } from '@/types/supabase';
 
 // Helper function to get the instructor's Stripe account ID
 async function getInstructorStripeAccountId(
@@ -167,7 +167,7 @@ export async function POST(request: Request) {
       .from("lessons")
       .select("stripe_product_id, stripe_price_id, instructor_id, price")
       .eq("id", lessonId)
-      .single()
+      .single() as { data: Partial<Lesson> | null, error: any }
     
     if (lessonError || !lesson) {
       console.error("Error fetching lesson:", lessonError)
@@ -178,8 +178,8 @@ export async function POST(request: Request) {
     }
     
     // Verify the price matches what's in the database (security check)
-    const lessonPrice = parseFloat(lesson.price) || 0;
-    const requestPrice = parseFloat(price) || 0;
+    const lessonPrice = parseFloat(String(lesson.price)) || 0;
+    const requestPrice = parseFloat(String(price)) || 0;
     
     // Allow a small difference for floating point comparison
     if (Math.abs(lessonPrice - requestPrice) > 0.01) {
@@ -194,7 +194,7 @@ export async function POST(request: Request) {
       // For free lessons, we still need the instructor to have a Stripe account
       // but we don't need to create a checkout session
       const { accountId: instructorStripeAccountId } = 
-        await getInstructorStripeAccountId(supabase, lesson.instructor_id);
+        await getInstructorStripeAccountId(supabase, lesson.instructor_id || '');
       
       if (!instructorStripeAccountId) {
         return NextResponse.json(
@@ -208,8 +208,7 @@ export async function POST(request: Request) {
         supabase, 
         session.user.id, 
         lessonId, 
-        lesson.instructor_id
-      );
+        lesson.instructor_id || '');
       
       return NextResponse.json(result);
     }
@@ -217,7 +216,7 @@ export async function POST(request: Request) {
     // For paid lessons, continue with the existing flow
     // Get the instructor's Stripe account ID
     const { accountId: instructorStripeAccountId, isEnabled: isAccountEnabled } = 
-      await getInstructorStripeAccountId(supabase, lesson.instructor_id);
+      await getInstructorStripeAccountId(supabase, lesson.instructor_id || '');
     
     if (!instructorStripeAccountId) {
       return NextResponse.json(
@@ -275,16 +274,21 @@ export async function POST(request: Request) {
     const { platformFee, instructorAmount } = calculateFees(priceInCents)
     const instructorPayoutAmount = instructorAmount / 100 // Convert back to dollars for database
     
-    // Get the base URL for redirects
+    // Get the base URL for redirects - prioritize the explicit APP_URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+                   (process.env.NODE_ENV === "production" ? "https://teach-niche.com" : 
+                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
     
-    // Create a Stripe Checkout Session with Connect
-    const checkoutSession = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
+    // Prepare all parameters to ensure they're defined and have the correct types
+    const stripePrice = lesson.stripe_price_id || '';
+    const stripeProductId = lesson.stripe_product_id || '';
+    const instructorId = lesson.instructor_id || '';
+    
+    // Create a Stripe Checkout Session with Connect using properly typed parameters
+    const params: any = {
       line_items: [
         {
-          price: lesson.stripe_price_id,
+          price: stripePrice,
           quantity: 1,
         },
       ],
@@ -294,10 +298,10 @@ export async function POST(request: Request) {
       metadata: {
         lessonId,
         userId: session.user.id,
-        instructorId: lesson.instructor_id,
-        productId: lesson.stripe_product_id,
-        priceId: lesson.stripe_price_id,
-        instructorPayoutAmount: instructorAmount
+        instructorId: instructorId,
+        productId: stripeProductId,
+        priceId: stripePrice,
+        instructorPayoutAmount: instructorAmount.toString()
       },
       payment_intent_data: {
         application_fee_amount: platformFee,
@@ -305,7 +309,9 @@ export async function POST(request: Request) {
           destination: instructorStripeAccountId,
         },
       },
-    })
+    };
+    
+    const checkoutSession = await stripe.checkout.sessions.create(params)
     
     return NextResponse.json({ url: checkoutSession.url })
   } catch (error: any) {

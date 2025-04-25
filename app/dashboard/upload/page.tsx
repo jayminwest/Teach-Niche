@@ -14,6 +14,7 @@ import { useToast } from "@/components/ui/use-toast"
 import { AlertTriangle, Loader2, Upload } from "lucide-react"
 import { getVideoExtension, isValidVideoFormat, isValidVideoSize } from "@/lib/utils"
 import Link from "next/link"
+import Image from "next/image"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function UploadContent() {
@@ -508,7 +509,7 @@ export default function UploadContent() {
         router.push("/dashboard")
       }
       router.refresh()
-    } catch (error) {
+    } catch (error: any) {
       console.error("Upload error:", error);
       toast({
         variant: "destructive",
@@ -598,11 +599,15 @@ export default function UploadContent() {
                 {thumbnailPreview ? (
                   <div className="space-y-4">
                     <div className="aspect-video bg-muted rounded-md overflow-hidden">
-                      <img
-                        src={thumbnailPreview || "/placeholder.svg"}
-                        alt="Thumbnail preview"
-                        className="w-full h-full object-cover"
-                      />
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={thumbnailPreview || "/placeholder.svg"}
+                          alt="Thumbnail preview"
+                          className="object-cover"
+                          fill
+                          sizes="(max-width: 768px) 100vw, 500px"
+                        />
+                      </div>
                     </div>
                     <Button
                       type="button"
