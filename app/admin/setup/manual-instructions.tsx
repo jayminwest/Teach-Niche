@@ -45,7 +45,7 @@ export default function ManualInstructions() {
               <li>
                 Create a bucket named <code>videos</code>
                 <ul className="list-disc pl-5 mt-1">
-                  <li>Uncheck "Public bucket" to make it private</li>
+                  <li>Uncheck &quot;Public bucket&quot; to make it private</li>
                 </ul>
               </li>
               <li>
@@ -54,7 +54,7 @@ export default function ManualInstructions() {
               <li>
                 Create a bucket named <code>thumbnails</code>
                 <ul className="list-disc pl-5 mt-1">
-                  <li>Check "Public bucket" to make it public</li>
+                  <li>Check &quot;Public bucket&quot; to make it public</li>
                 </ul>
               </li>
             </ol>
@@ -82,7 +82,7 @@ export default function ManualInstructions() {
                     Name it <code>Allow authenticated uploads</code>
                   </li>
                   <li>
-                    Set the policy definition to: <code>(auth.role() = 'authenticated')</code>
+                    Set the policy definition to: <code>(auth.role() = &apos;authenticated&apos;)</code>
                   </li>
                   <li>
                     Click <strong>Save Policy</strong>
@@ -154,7 +154,7 @@ export default function ManualInstructions() {
                     Name it <code>Allow authenticated uploads</code>
                   </li>
                   <li>
-                    Set the policy definition to: <code>(auth.role() = 'authenticated')</code>
+                    Set the policy definition to: <code>(auth.role() = &apos;authenticated&apos;)</code>
                   </li>
                   <li>
                     Click <strong>Save Policy</strong>
@@ -167,10 +167,10 @@ export default function ManualInstructions() {
           <div className="bg-blue-50 p-4 rounded-md border border-blue-200">
             <h3 className="text-md font-semibold text-blue-800 mb-2">Alternative Policy for Videos</h3>
             <p className="text-sm text-blue-700 mb-2">
-              If the owner-based policy doesn't work, you can try a simpler policy that allows authenticated users to
+              If the owner-based policy doesn&apos;t work, you can try a simpler policy that allows authenticated users to
               access all videos:
             </p>
-            <pre className="bg-white p-2 rounded text-sm overflow-x-auto">(auth.role() = 'authenticated')</pre>
+            <pre className="bg-white p-2 rounded text-sm overflow-x-auto">(auth.role() = &apos;authenticated&apos;)</pre>
             <p className="text-sm text-blue-700 mt-2">
               This is less secure but can help troubleshoot permission issues.
             </p>

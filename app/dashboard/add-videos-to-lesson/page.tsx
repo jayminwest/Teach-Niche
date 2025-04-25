@@ -245,7 +245,7 @@ export default function AddVideosToLesson() {
         <div className="text-center py-12 border rounded-lg bg-muted/20">
           <h3 className="text-xl font-semibold mb-2">No available videos</h3>
           <p className="text-muted-foreground mb-6">
-            You don't have any standalone videos that can be added to a lesson.
+            You don&apos;t have any standalone videos that can be added to a lesson.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button asChild>

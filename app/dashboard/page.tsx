@@ -5,17 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatPrice } from "@/lib/utils"
 import { redirect } from "next/navigation"
-import { format } from "date-fns"
 import Image from "next/image"
 import { AlertTriangle, CheckCircle, ExternalLink, XCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Lesson } from "@/types/supabase" // Import the Lesson type
-
-// Define a type for the selected purchase data
-interface PurchaseSummary {
-  amount: number | null; // Adjust type based on your schema, assuming number
-  instructor_payout_amount: number | null; // Adjust type based on your schema, assuming number
-}
 
 export default async function Dashboard() {
   const supabase = createServerComponentClient({ cookies })
@@ -54,21 +47,43 @@ export default async function Dashboard() {
   console.log("Lessons found:", lessons?.length || 0);
   
   // Calculate total earnings
-  let purchases: PurchaseSummary[] = []; // Explicitly type as PurchaseSummary[]
+  // Get all purchases for the lessons created by this instructor
+  interface Purchase {
+    id: string;
+    lesson_id: string;
+    instructor_payout_amount: number;
+    [key: string]: any;
+  }
+  
+  let purchases: Purchase[] = [];
+  
   try {
-    // Get IDs only from the fetched lessons
-    const lessonIds = lessons.map(lesson => lesson.id).filter(Boolean);
+    // Get all lessons by this instructor
+    const { data: allLessonsData, error: allLessonsError } = await supabase
+      .from("lessons")
+      .select("id")
+      .eq("instructor_id", user.id);
     
-    if (lessonIds.length > 0) {
-      const { data, error } = await supabase
-        .from("purchases")
-        .select("amount, instructor_payout_amount")
-        .in("lesson_id", lessonIds);
+    if (allLessonsError) {
+      console.error("Error fetching lesson IDs:", allLessonsError.message);
+    } else {
+      const lessonIds = allLessonsData.map(lesson => lesson.id);
+      console.log("All instructor lessons:", lessonIds);
       
-      if (error) {
-        console.error("Error fetching purchases:", error.message);
-      } else {
-        purchases = data || [];
+      if (lessonIds.length > 0) {
+        // Get purchases for any of the instructor's lessons
+        const { data, error } = await supabase
+          .from("purchases")
+          .select("*")
+          .in("lesson_id", lessonIds);
+        
+        if (error) {
+          console.error("Error fetching purchases:", error.message);
+        } else {
+          purchases = data || [];
+          console.log("Purchases found:", purchases.length, 
+                      purchases.length > 0 ? `First purchase ID: ${purchases[0]?.id}` : "No purchases found");
+        }
       }
     }
   } catch (error) {
@@ -95,7 +110,6 @@ export default async function Dashboard() {
 
   const hasStripeAccount = !!instructorProfile?.stripe_account_id
   const stripeAccountEnabled = !!instructorProfile?.stripe_account_enabled
-  const stripeOnboardingComplete = !!instructorProfile?.stripe_onboarding_complete
 
   return (
     <div className="container py-8">
@@ -142,7 +156,7 @@ export default async function Dashboard() {
             </Link>
           </Button>
           <Button asChild>
-            <Link href="/dashboard/upload">Upload Content</Link>
+            <Link href="/dashboard/upload">Create Lesson</Link>
           </Button>
         </div>
       </div>
@@ -263,10 +277,22 @@ export default async function Dashboard() {
       ) : (
         <div className="text-center py-12 border rounded-lg bg-muted/20">
           <h3 className="text-xl font-semibold mb-2">No lessons yet</h3>
-          <p className="text-muted-foreground mb-6">Create your first lesson with video content</p>
-          <Button asChild disabled={!stripeAccountEnabled}>
-            <Link href="/dashboard/upload?type=lesson">Create Lesson</Link>
-          </Button>
+          <p className="text-muted-foreground mb-6">Create your first lesson to organize your video content</p>
+          <div className="space-y-4">
+            <Button asChild disabled={!stripeAccountEnabled}>
+              <Link href="/dashboard/upload?type=lesson">Create Lesson</Link>
+            </Button>
+            <p className="text-sm text-muted-foreground">
+              {!stripeAccountEnabled ? (
+                "Complete your Stripe Connect setup to create paid lessons"
+              ) : (
+                "Click below to create your first lesson"
+              )}
+            </p>
+            <Button variant="outline" asChild>
+              <Link href="/dashboard/upload">Create Lesson</Link>
+            </Button>
+          </div>
         </div>
       )}
     </div>

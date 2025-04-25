@@ -68,7 +68,7 @@ export default function ForgotPassword() {
         <CardHeader>
           <CardTitle>Reset Password</CardTitle>
           <CardDescription>
-            Enter your email address and we'll send you a link to reset your password
+            Enter your email address and we&apos;ll send you a link to reset your password
           </CardDescription>
         </CardHeader>
         {emailSent ? (
@@ -76,7 +76,7 @@ export default function ForgotPassword() {
             <Alert className="bg-green-50 text-green-900 border-green-200 dark:bg-green-900/20 dark:text-green-200 dark:border-green-900/30">
               <AlertDescription>
                 Password reset email sent! Please check your inbox and follow the instructions to reset your password.
-                If you don't see the email, please check your spam folder.
+                If you don&apos;t see the email, please check your spam folder.
               </AlertDescription>
             </Alert>
             <div className="text-center mt-4">

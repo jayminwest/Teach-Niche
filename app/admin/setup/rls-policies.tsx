@@ -63,7 +63,7 @@ export default function RLSPoliciesSetup() {
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground mb-4">
-          This will create the necessary RLS policies to allow video uploads and access. If you're getting RLS security
+          This will create the necessary RLS policies to allow video uploads and access. If you&apos;re getting RLS security
           errors, run this setup.
         </p>
 

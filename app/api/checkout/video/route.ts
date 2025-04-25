@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { createServerClient } from "@/lib/supabase/server"
 import { stripe, calculateFees } from "@/lib/stripe"
 import { NextResponse } from "next/server"
