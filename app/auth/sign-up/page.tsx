@@ -17,7 +17,6 @@ export default function SignUp() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
-  const [signupComplete, setSignupComplete] = useState(false) // New state variable
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClient()
@@ -41,18 +40,13 @@ export default function SignUp() {
 
       // Enhanced toast message
       toast({
-        title: "Verification Email Sent",
-        description: "Please check your email inbox and click the verification link to complete your registration.",
-        duration: 6000, // Show for longer
+        title: "Account Created",
+        description: "Your account has been created successfully!",
+        duration: 3000,
       })
       
-      // Set signup as complete to show success message
-      setSignupComplete(true)
-      
-      // Delay redirect to allow user to see the success message
-      setTimeout(() => {
-        router.push("/auth/sign-in")
-      }, 5000)
+      // Redirect to dashboard or home page directly since they'll be logged in
+      router.push("/")
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -64,41 +58,6 @@ export default function SignUp() {
     }
   }
 
-  // Success message component
-  if (signupComplete) {
-    return (
-      <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] py-8">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <div className="flex items-center justify-center mb-4">
-              <CheckCircle className="h-16 w-16 text-green-500" />
-            </div>
-            <CardTitle className="text-center">Registration Successful!</CardTitle>
-            <CardDescription className="text-center">
-              We&apos;ve sent a verification email to <span className="font-medium">{email}</span>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 text-center">
-            <p>Please check your email inbox and click the verification link to complete your registration.</p>
-            <p className="text-sm text-muted-foreground">
-              If you don&apos;t see the email, check your spam folder or try again.
-            </p>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Redirecting you to sign in page in a few seconds...
-            </p>
-            <Button 
-              className="w-full" 
-              onClick={() => router.push("/auth/sign-in")}
-            >
-              Go to Sign In
-            </Button>
-          </CardFooter>
-        </Card>
-      </div>
-    )
-  }
 
   return (
     <div className="container flex items-center justify-center min-h-[calc(100vh-4rem)] py-8">
