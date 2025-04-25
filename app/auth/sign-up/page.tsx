@@ -75,13 +75,13 @@ export default function SignUp() {
             </div>
             <CardTitle className="text-center">Registration Successful!</CardTitle>
             <CardDescription className="text-center">
-              We've sent a verification email to <span className="font-medium">{email}</span>
+              We&apos;ve sent a verification email to <span className="font-medium">{email}</span>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-center">
             <p>Please check your email inbox and click the verification link to complete your registration.</p>
             <p className="text-sm text-muted-foreground">
-              If you don't see the email, check your spam folder or try again.
+              If you don&apos;t see the email, check your spam folder or try again.
             </p>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">

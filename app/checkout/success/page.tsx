@@ -92,8 +92,8 @@ export default function CheckoutSuccess() {
             </div>
             <h1 className="text-2xl font-bold">Payment Received</h1>
             <p className="text-muted-foreground mb-8">
-              Your payment was successful, but we couldn't verify your purchase details. 
-              Don't worry, our team has been notified and will resolve this shortly.
+              Your payment was successful, but we couldn&apos;t verify your purchase details. 
+              Don&apos;t worry, our team has been notified and will resolve this shortly.
             </p>
             <div className="flex flex-col gap-4">
               <Button asChild variant="outline">

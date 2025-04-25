@@ -1,0 +1,245 @@
+
+./app/admin/setup/manual-instructions.tsx
+48:31  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+48:45  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+57:29  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+57:43  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+85:72  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+85:86  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+157:72  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+157:86  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+170:46  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+173:90  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+173:104  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/admin/setup/page.tsx
+13:40  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+38:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+65:115  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/admin/setup/rls-policies.tsx
+12:40  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+14:9  Error: 'supabase' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+46:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+66:96  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/api/checkout/route.ts
+19:11  Error: 'user' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+106:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/checkout/video/route.ts
+46:29  Error: 'title' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+138:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/checkout-lesson/route.ts
+66:3  Error: 'instructorId' is defined but never used.  @typescript-eslint/no-unused-vars
+100:22  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+274:11  Error: 'instructorPayoutAmount' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+309:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/setup-rls-policies/route.ts
+83:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/setup-storage/route.ts
+29:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/stripe/account-status/route.ts
+3:10  Error: 'stripe' is defined but never used.  @typescript-eslint/no-unused-vars
+6:27  Error: 'request' is defined but never used.  @typescript-eslint/no-unused-vars
+58:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/stripe/create-connect-account/route.ts
+116:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/stripe/create-login-link/route.ts
+6:27  Error: 'request' is defined but never used.  @typescript-eslint/no-unused-vars
+54:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/stripe/create-product/route.ts
+69:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/verify-lesson-purchase/route.ts
+182:24  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+201:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/verify-purchase/route.ts
+118:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/webhooks/stripe/route.ts
+32:17  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+263:19  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/auth/forgot-password/page.tsx
+21:9  Error: 'router' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+52:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+71:44  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+79:27  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/auth/reset-password/page.tsx
+131:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/auth/sign-in/page.tsx
+63:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/auth/sign-up/page.tsx
+56:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+78:17  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+84:25  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/checkout/lesson-success/page.tsx
+39:25  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+78:23  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/checkout/success/page.tsx
+44:23  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+95:57  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+96:18  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/dashboard/add-videos-to-lesson/page.tsx
+16:42  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+17:40  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+19:56  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+72:23  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+129:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+248:20  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/dashboard/create-lesson/page.tsx
+78:23  Error: 'thumbnailData' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+99:21  Error: 'lesson' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+120:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+188:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./app/dashboard/lessons/[id]/edit/page.tsx
+75:23  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+87:6  Warning: React Hook useEffect has a missing dependency: 'lessonId'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+139:23  Error: 'thumbnailData' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+181:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+267:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./app/dashboard/lessons/[id]/page.tsx
+9:29  Error: 'CardDescription' is defined but never used.  @typescript-eslint/no-unused-vars
+12:41  Error: 'Plus' is defined but never used.  @typescript-eslint/no-unused-vars
+26:40  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+83:23  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+117:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/dashboard/page.tsx
+8:10  Error: 'format' is defined but never used.  @typescript-eslint/no-unused-vars
+15:11  Error: 'PurchaseSummary' is defined but never used.  @typescript-eslint/no-unused-vars
+58:18  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+113:9  Error: 'stripeOnboardingComplete' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./app/dashboard/profile/page.tsx
+43:40  Error: 'userError' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+56:46  Error: 'instructorError' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./app/dashboard/stripe-connect/page.tsx
+15:54  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+19:9  Error: 'router' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+20:9  Error: 'supabase' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+40:23  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+76:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+103:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/dashboard/stripe-connect/success/page.tsx
+12:54  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+13:9  Error: 'router' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+84:94  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/dashboard/upload/page.tsx
+17:10  Error: 'Switch' is defined but never used.  @typescript-eslint/no-unused-vars
+30:10  Error: 'showSetupLink' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+30:25  Error: 'setShowSetupLink' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+31:66  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32:10  Error: 'checkingStripeStatus' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+53:9  Error: 'typeFromUrl' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+290:21  Error: 'videoData' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+317:23  Error: 'thumbnailData' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+342:25  Error: 'thumbnailData' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+418:18  Error: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+511:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+601:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+645:27  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+645:52  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/legal/privacy/page.tsx
+87:26  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+94:164  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+94:177  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+
+./app/legal/terms/page.tsx
+26:21  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+26:30  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+27:21  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+27:26  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+28:21  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+28:32  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+29:21  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+29:29  Error: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+
+./app/lessons/[id]/page.tsx
+5:29  Error: 'PlayCircle' is defined but never used.  @typescript-eslint/no-unused-vars
+40:3  Error: 'searchParams' is defined but never used.  @typescript-eslint/no-unused-vars
+55:13  Error: 'session' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./app/library/page.tsx
+33:63  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+118:63  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/page.tsx
+120:107  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+148:135  Error: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/videos/[id]/page.tsx
+16:4  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+26:22  Error: 'error' is never reassigned. Use 'const' instead.  prefer-const
+
+./components/checkout-button.tsx
+46:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/header.tsx
+12:36  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/lesson-card.tsx
+19:83  Error: 'videoCount' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./components/lesson-checkout-button.tsx
+75:18  Error: 'parseError' is defined but never used.  @typescript-eslint/no-unused-vars
+91:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/ui/calendar.tsx
+60:14  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/ui/chart.tsx
+72:7  Error: '_' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/ui/textarea.tsx
+5:18  Error: An interface declaring no members is equivalent to its supertype.  @typescript-eslint/no-empty-object-type
+
+./components/ui/use-toast.ts
+21:7  Error: 'actionTypes' is assigned a value but only used as a type.  @typescript-eslint/no-unused-vars
+
+./components/video-checkout-button.tsx
+17:9  Error: 'router' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+42:18  Error: 'parseError' is defined but never used.  @typescript-eslint/no-unused-vars
+58:21  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/video-player.tsx
+20:10  Error: 'hasRefreshed' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+20:24  Error: 'setHasRefreshed' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+21:9  Error: 'refreshAttempts' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+66:18  Error: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+102:24  Error: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+163:35  Error: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+206:20  Error: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+242:9  Error: 'extractVideoPathFromUrl' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+318:9  Error: 'fetchVideoPathFromLesson' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+354:53  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/stripe.ts
+52:57  Error: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/video-utils.ts
+95:16  Error: 'e' is defined but never used.  @typescript-eslint/no-unused-vars
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

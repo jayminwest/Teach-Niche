@@ -81,7 +81,7 @@ export default function StripeConnectSuccess() {
         <CardContent className="text-center py-6">
           {accountStatus?.onboardingComplete ? (
             <p className="mb-4 text-muted-foreground">
-              You can now receive payments for your lessons. The platform fee is 15%, and you'll receive 85% of each
+              You can now receive payments for your lessons. The platform fee is 15%, and you&apos;ll receive 85% of each
               purchase.
             </p>
           ) : (

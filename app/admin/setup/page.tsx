@@ -62,7 +62,7 @@ export default function SetupPage() {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground mb-4">
-            This will attempt to create the necessary storage buckets in Supabase. After creating the buckets, you'll
+            This will attempt to create the necessary storage buckets in Supabase. After creating the buckets, you&apos;ll
             need to manually set up the RLS policies following the instructions below.
           </p>
 

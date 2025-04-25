@@ -14,7 +14,6 @@ import { useToast } from "@/components/ui/use-toast"
 import { AlertTriangle, Loader2, Upload } from "lucide-react"
 import { getVideoExtension, isValidVideoFormat, isValidVideoSize } from "@/lib/utils"
 import Link from "next/link"
-import { Switch } from "@/components/ui/switch"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function UploadContent() {
@@ -27,9 +26,13 @@ export default function UploadContent() {
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [showSetupLink, setShowSetupLink] = useState(false)
-  const [isLesson, setIsLesson] = useState(false)
-  const [stripeConnectStatus, setStripeConnectStatus] = useState<any>(null)
+  interface StripeConnectStatus {
+    accountEnabled: boolean;
+    accountId: string | null;
+    onboardingComplete: boolean;
+  }
+  
+  const [stripeConnectStatus, setStripeConnectStatus] = useState<StripeConnectStatus | null>(null)
   const [checkingStripeStatus, setCheckingStripeStatus] = useState(true)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -46,26 +49,19 @@ export default function UploadContent() {
     thumbnail_url: string | null;
     stripe_product_id: string;
     stripe_price_id: string;
-    video_path?: string; // Changed from video_url to video_path
+    video_url?: string; // Using video_url to match database schema
     parent_lesson_id?: string; // Make parent_lesson_id optional
   }
 
   const searchParams = useSearchParams()
-  const typeFromUrl = searchParams.get("type")
   const lessonIdFromUrl = searchParams.get("lessonId")
 
-  // Set isLesson to true if type=lesson in the URL
-  useEffect(() => {
-    if (typeFromUrl === "lesson") {
-      setIsLesson(true)
-    }
-  }, [typeFromUrl])
+  // We no longer need to set isLesson based on URL parameter
 
   // Check Stripe Connect status
   useEffect(() => {
     const checkStripeStatus = async () => {
       try {
-        setCheckingStripeStatus(true)
         const response = await fetch("/api/stripe/account-status")
 
         if (!response.ok) {
@@ -76,8 +72,6 @@ export default function UploadContent() {
         setStripeConnectStatus(data)
       } catch (error) {
         console.error("Error checking Stripe status:", error)
-      } finally {
-        setCheckingStripeStatus(false)
       }
     }
 
@@ -246,7 +240,7 @@ export default function UploadContent() {
     }
 
     // Check if Stripe Connect is required and set up
-    if (isLesson && !stripeConnectStatus?.accountEnabled) {
+    if (!stripeConnectStatus?.accountEnabled) {
       toast({
         variant: "destructive",
         title: "Stripe Connect Required",
@@ -293,7 +287,7 @@ export default function UploadContent() {
         }, 1000)
       }
       
-      const { data: videoData, error: videoError } = await supabase.storage
+      const { error: videoError } = await supabase.storage
         .from("videos")
         .upload(videoPath, videoFile, {
           cacheControl: "3600",
@@ -320,7 +314,7 @@ export default function UploadContent() {
         // Clean the thumbnail filename by replacing spaces with underscores
         const cleanedThumbnailName = thumbnailFile.name.replace(/\s+/g, '_')
         const thumbnailFileName = `${Date.now()}-${cleanedThumbnailName}`
-        const { data: thumbnailData, error: thumbnailError } = await supabase.storage
+        const { error: thumbnailError } = await supabase.storage
           .from("thumbnails")
           .upload(`${user.id}/${thumbnailFileName}`, thumbnailFile, {
             cacheControl: "3600",
@@ -345,7 +339,7 @@ export default function UploadContent() {
           const thumbnailBlob = await generateThumbnail()
           const thumbnailFileName = `${Date.now()}-thumbnail.jpg`
 
-          const { data: thumbnailData, error: thumbnailError } = await supabase.storage
+          const { error: thumbnailError } = await supabase.storage
             .from("thumbnails")
             .upload(`${user.id}/${thumbnailFileName}`, thumbnailBlob, {
               cacheControl: "3600",
@@ -421,7 +415,7 @@ export default function UploadContent() {
           } else {
             errorMessage += ` ${errorDetails}`;
           }
-        } catch (e) {
+        } catch (error) {
           const errorText = await response.text();
           console.error("Stripe product creation error:", errorText);
           errorDetails = errorText;
@@ -442,38 +436,7 @@ export default function UploadContent() {
       }
 
       // 4. Create content in database
-      if (isLesson) {
-        // Create a parent lesson
-        const lessonData: LessonInsertData = { // Explicitly type lessonData
-          title,
-          description,
-          price: Number.parseFloat(price) || 0, // Handle empty price
-          instructor_id: user.id,
-          thumbnail_url: thumbnailUrl,
-          stripe_product_id: productId,
-          stripe_price_id: priceId,
-          video_path: videoPath, // Corrected property name
-        };
-        
-        console.log("Creating lesson with data:", lessonData);
-        
-        const { data: insertedLesson, error: lessonError } = await supabase
-          .from("lessons")
-          .insert([lessonData])
-          .select(); // Add .select() to return the inserted data
-
-        if (lessonError) {
-          console.error("Lesson insert error:", lessonError);
-          throw new Error(`Failed to create lesson: ${lessonError.message}`);
-        }
-
-        console.log("Lesson created successfully:", insertedLesson);
-
-        toast({
-          title: "Success",
-          description: "Your lesson has been created successfully.",
-        })
-      } else if (lessonIdFromUrl) {
+      if (lessonIdFromUrl) {
         // Add video as a child lesson to existing parent lesson
         const videoData: LessonInsertData = { // Explicitly type videoData
           title,
@@ -484,7 +447,7 @@ export default function UploadContent() {
           parent_lesson_id: lessonIdFromUrl,
           stripe_product_id: productId,
           stripe_price_id: priceId,
-          video_path: videoPath, // Corrected property name
+          video_url: videoPath, // Using video_url to match database schema
         };
         
         console.log("Creating child lesson with data:", videoData);
@@ -515,10 +478,10 @@ export default function UploadContent() {
           thumbnail_url: thumbnailUrl,
           stripe_product_id: productId,
           stripe_price_id: priceId,
-          video_path: videoPath, // Corrected property name
+          video_url: videoPath, // Using video_url to match database schema
         };
         
-        console.log("Creating standalone lesson with data:", lessonData);
+        console.log("Creating lesson with data:", lessonData);
         
         const { data: insertedLesson, error: dbError } = await supabase
           .from("lessons")
@@ -545,7 +508,7 @@ export default function UploadContent() {
         router.push("/dashboard")
       }
       router.refresh()
-    } catch (error: any) {
+    } catch (error) {
       console.error("Upload error:", error);
       toast({
         variant: "destructive",
@@ -560,31 +523,29 @@ export default function UploadContent() {
   return (
     <div className="container max-w-3xl py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Upload Content</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Create Lesson</h1>
         <p className="text-muted-foreground">Share your kendama expertise with students around the world</p>
       </div>
 
-
-      {isLesson && !checkingStripeStatus && !stripeConnectStatus?.accountEnabled && (
-        <Alert variant="warning" className="mb-6">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Stripe Connect Required</AlertTitle>
-          <AlertDescription>
-            Before creating paid lessons, you need to set up your Stripe Connect account to receive payments.{" "}
-            <Link href="/dashboard/stripe-connect" className="font-medium underline">
-              Set up Stripe Connect
-            </Link>
-          </AlertDescription>
-        </Alert>
-      )}
-
       <Card>
         <CardHeader>
-          <CardTitle>Content Details</CardTitle>
-          <CardDescription>Fill out the information below to upload your tutorial content</CardDescription>
+          <CardTitle>Lesson Details</CardTitle>
+          <CardDescription>Fill out the information below to create your lesson</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-6">
+            {!stripeConnectStatus?.accountEnabled && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Stripe Connect Required</AlertTitle>
+                <AlertDescription>
+                  You need to complete your Stripe Connect setup before creating paid lessons.{" "}
+                  <Button variant="link" className="p-0 h-auto" asChild>
+                    <Link href="/dashboard/settings">Set up Stripe Connect</Link>
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
@@ -592,11 +553,7 @@ export default function UploadContent() {
                 id="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={
-                  isLesson
-                    ? "e.g., Beginner Kendama Fundamentals"
-                    : "e.g., Beginner Kendama Tricks: Mastering the Basics"
-                }
+                placeholder="e.g., Beginner Kendama Fundamentals"
                 required
               />
             </div>
@@ -619,7 +576,7 @@ export default function UploadContent() {
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                placeholder={isLesson ? "19.99" : "9.99"}
+                placeholder="19.99"
                 min="0"
                 step="0.01"
                 required
@@ -631,7 +588,7 @@ export default function UploadContent() {
                 }}
               />
               <p className="text-xs text-muted-foreground">
-                Set a fair price for your {isLesson ? "lesson" : "tutorial"} (set to 0 for free lessons)
+                Set a fair price for your lesson (set to 0 for free lessons)
               </p>
             </div>
 
@@ -758,7 +715,7 @@ export default function UploadContent() {
             <Button
               type="submit"
               className="w-full"
-              disabled={uploading || !videoFile || (isLesson && !stripeConnectStatus?.accountEnabled)}
+              disabled={uploading || !videoFile || !stripeConnectStatus?.accountEnabled}
             >
               {uploading ? (
                 <>
@@ -766,7 +723,7 @@ export default function UploadContent() {
                   Uploading... {uploadProgress > 0 ? `${uploadProgress}%` : ''}
                 </>
               ) : (
-                `Upload ${isLesson ? "Lesson" : "Video"}`
+                "Upload Lesson"
               )}
             </Button>
           </CardFooter>
