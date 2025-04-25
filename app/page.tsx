@@ -7,6 +7,21 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 export default async function Home() {
   const supabase = await createServerClient()
+  
+  // Get the authenticated user
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  // Fetch user's purchased lessons if logged in
+  let purchasedLessonIds: string[] = []
+  if (user) {
+    const { data: purchasedLessons } = await supabase
+      .from("purchases")
+      .select("lesson_id")
+      .eq("user_id", user.id)
+      .not("lesson_id", "is", null)
+
+    purchasedLessonIds = purchasedLessons?.map((p) => p.lesson_id) || []
+  }
 
   // Fetch a few recent lessons for the homepage
   const { data: lessons } = await supabase
@@ -52,7 +67,8 @@ export default async function Home() {
     return {
       ...lesson,
       videoCount: count || 0,
-      instructorName
+      instructorName,
+      isPurchased: purchasedLessonIds.includes(lesson.id)
     }
   }))
 
@@ -79,6 +95,7 @@ export default async function Home() {
                   title={lesson.title}
                   thumbnailUrl={lesson.thumbnail_url || "/placeholder.svg?height=200&width=300"}
                   price={lesson.price}
+                  isPurchased={lesson.isPurchased}
                   videoCount={lesson.videoCount}
                   instructorName={lesson.instructorName}
                 />
