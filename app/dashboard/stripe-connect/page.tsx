@@ -9,10 +9,25 @@ import { useToast } from "@/components/ui/use-toast"
 import { ArrowLeft, CheckCircle, ExternalLink, Loader2, XCircle } from "lucide-react"
 import Link from "next/link"
 import { PLATFORM_FEE_PERCENTAGE, INSTRUCTOR_PERCENTAGE } from "@/lib/stripe"
+import { InstructorProfile } from "@/types/supabase"
+
+// Define a proper interface for the account status
+interface StripeAccountStatus {
+  hasAccount: boolean;
+  accountId: string | null;
+  accountEnabled: boolean;
+  onboardingComplete: boolean;
+  account?: {
+    email: string;
+    country?: string;
+    default_currency?: string;
+    [key: string]: any;
+  };
+}
 
 export default function StripeConnectPage() {
   const [loading, setLoading] = useState(true)
-  const [accountStatus, setAccountStatus] = useState<any>(null)
+  const [accountStatus, setAccountStatus] = useState<StripeAccountStatus | null>(null)
   const [creatingAccount, setCreatingAccount] = useState(false)
   const [creatingLoginLink, setCreatingLoginLink] = useState(false)
   const { toast } = useToast()

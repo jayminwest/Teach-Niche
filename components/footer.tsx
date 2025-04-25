@@ -22,11 +22,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/videos" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Videos
-                </Link>
-              </li>
-              <li>
                 <Link href="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
                   Dashboard
                 </Link>

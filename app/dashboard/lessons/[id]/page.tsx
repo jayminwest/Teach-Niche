@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/components/ui/use-toast"
 import { formatPrice } from "@/lib/utils"
-import { ArrowLeft, Edit, Eye, Loader2, Plus, Trash } from "lucide-react"
+import { ArrowLeft, Edit, Eye, Loader2, Trash } from "lucide-react"
+import { Lesson } from "@/types/supabase"
 import {
   Dialog,
   DialogContent,
@@ -23,7 +24,7 @@ import { format } from "date-fns"
 // Remove props interface and props from function signature
 function ManageLesson() {
   const params = useParams<{ id: string }>() // Use the hook to get params
-  const [lesson, setLesson] = useState<any>(null)
+  const [lesson, setLesson] = useState<Lesson | null>(null)
   // const [videos, setVideos] = useState<any[]>([]) // Removed videos state
   const [loading, setLoading] = useState(true)
   // const [deleteDialogOpen, setDeleteDialogOpen] = useState(false) // Removed video delete dialog state
@@ -176,29 +177,29 @@ function ManageLesson() {
             <CardContent className="space-y-4">
               <div className="aspect-video relative rounded-md overflow-hidden border">
                 <Image
-                  src={lesson.thumbnail_url || "/placeholder.svg?height=200&width=300"}
-                  alt={lesson.title}
+                  src={lesson?.thumbnail_url || "/placeholder.svg?height=200&width=300"}
+                  alt={lesson?.title || "Lesson thumbnail"}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 100vw, 33vw"
                 />
               </div>
               <div>
-                <h2 className="text-xl font-bold">{lesson.title}</h2>
-                <p className="text-muted-foreground mt-1 line-clamp-3">{lesson.description || "No description"}</p>
+                <h2 className="text-xl font-bold">{lesson?.title || "Untitled Lesson"}</h2>
+                <p className="text-muted-foreground mt-1 line-clamp-3">{lesson?.description || "No description"}</p>
               </div>
               <div className="pt-2 border-t">
                 <div className="flex justify-between py-1">
                   <span className="text-muted-foreground">Price:</span>
-                  <span className="font-medium">{formatPrice(lesson.price)}</span>
+                  <span className="font-medium">{lesson?.price !== undefined ? formatPrice(lesson.price) : '$0.00'}</span>
                 </div>
                 <div className="flex justify-between py-1">
                   <span className="text-muted-foreground">Created:</span>
-                  <span>{format(new Date(lesson.created_at), "MMM d, yyyy")}</span>
+                  <span>{lesson?.created_at ? format(new Date(lesson.created_at), "MMM d, yyyy") : "Unknown"}</span>
                 </div>
                 <div className="flex justify-between py-1">
-                  <span className="text-muted-foreground">Created:</span>
-                  <span>{format(new Date(lesson.created_at), "MMM d, yyyy")}</span>
+                  <span className="text-muted-foreground">Updated:</span>
+                  <span>{lesson?.updated_at ? format(new Date(lesson.updated_at), "MMM d, yyyy") : "Unknown"}</span>
                 </div>
                 {/* Removed Videos count */}
               </div>

@@ -104,9 +104,10 @@ export async function POST(request: Request) {
     const priceInCents = Math.round(price * 100)
     const { platformFee, instructorAmount } = calculateFees(priceInCents)
     
-    // Get the base URL for redirects
+    // Get the base URL for redirects - prioritize the explicit APP_URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+                   (process.env.NODE_ENV === "production" ? "https://teach-niche.com" : 
+                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
     
     // Create a Stripe Checkout Session with Connect
     const checkoutSession = await stripe.checkout.sessions.create({

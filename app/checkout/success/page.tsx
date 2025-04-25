@@ -27,15 +27,26 @@ export default function CheckoutSuccess() {
       }
 
       try {
+        console.log("Verifying purchase with session ID:", sessionId)
         const response = await fetch(`/api/verify-purchase?session_id=${sessionId}`)
         
         if (!response.ok) {
-          const errorText = await response.text()
-          throw new Error(errorText || "Failed to verify purchase")
+          let errorMessage = "Failed to verify purchase"
+          try {
+            const errorData = await response.json()
+            console.error("Verification error details:", errorData)
+            errorMessage = errorData.error || errorMessage
+          } catch (parseErr) {
+            console.error("Error parsing error response:", parseErr)
+            const errorText = await response.text()
+            console.error("Error response text:", errorText)
+          }
+          throw new Error(errorMessage)
         }
         
         const data = await response.json()
-        setVideoId(data.videoId)
+        console.log("Verification success data:", data)
+        setVideoId(data.videoId || data.lessonId)
         
         toast({
           title: "Purchase Successful",
@@ -74,11 +85,11 @@ export default function CheckoutSuccess() {
             </div>
             <h1 className="text-2xl font-bold">Thank you for your purchase!</h1>
             <p className="text-muted-foreground mb-8">
-              Your payment has been successfully processed and you now have access to this video.
+              Your payment has been successfully processed and you now have access to this content.
             </p>
             <div className="flex flex-col gap-4">
               <Button asChild size="lg">
-                <Link href={`/videos/${videoId}`}>Watch Video</Link>
+                <Link href={`/lessons/${videoId}`}>View Content</Link>
               </Button>
               <Button asChild variant="outline">
                 <Link href="/dashboard">Go to Dashboard</Link>

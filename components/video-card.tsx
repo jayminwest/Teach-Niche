@@ -30,7 +30,7 @@ export function VideoCard({ id, title, thumbnailUrl, price }: VideoCardProps) {
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <Button asChild className="w-full">
-          <Link href={`/videos/${id}`}>View Details</Link>
+          <Link href={`/lessons/${id}`}>View Details</Link>
         </Button>
       </CardFooter>
     </Card>

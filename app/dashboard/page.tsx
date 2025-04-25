@@ -8,7 +8,7 @@ import { redirect } from "next/navigation"
 import Image from "next/image"
 import { AlertTriangle, CheckCircle, ExternalLink, XCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Lesson } from "@/types/supabase" // Import the Lesson type
+import { Lesson, Purchase, InstructorProfile } from "@/types/supabase" // Import the types
 
 export default async function Dashboard() {
   const supabase = createServerComponentClient({ cookies })
@@ -48,13 +48,6 @@ export default async function Dashboard() {
   
   // Calculate total earnings
   // Get all purchases for the lessons created by this instructor
-  interface Purchase {
-    id: string;
-    lesson_id: string;
-    instructor_payout_amount: number;
-    [key: string]: any;
-  }
-  
   let purchases: Purchase[] = [];
   
   try {

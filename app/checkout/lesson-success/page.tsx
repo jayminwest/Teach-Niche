@@ -61,15 +61,27 @@ export default function LessonCheckoutSuccess() {
       }
 
       try {
+        console.log("Verifying purchase with session ID:", sessionId)
         const response = await fetch(`/api/verify-lesson-purchase?session_id=${sessionId}`)
         
         if (!response.ok) {
-          const errorText = await response.text()
-          throw new Error(errorText || "Failed to verify purchase")
+          let errorMessage = "Failed to verify purchase"
+          try {
+            const errorData = await response.json()
+            console.error("Verification error details:", errorData)
+            errorMessage = errorData.error || errorMessage
+          } catch (parseErr) {
+            console.error("Error parsing error response:", parseErr)
+            const errorText = await response.text()
+            console.error("Error response text:", errorText)
+          }
+          throw new Error(errorMessage)
         }
         
+        // Response is ok, so we can parse it as JSON safely
         const data = await response.json()
-        setLessonId(data.lessonId)
+        console.log("Verification success data:", data)
+        setLessonId(data.lessonId || directLessonId)
         
         toast({
           title: "Purchase Successful",
