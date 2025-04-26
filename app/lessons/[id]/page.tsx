@@ -164,7 +164,12 @@ export default async function LessonDetail({
             </div>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <p className="text-2xl font-bold">{formatPrice(lesson.price)}</p>
+            <div>
+              <p className="text-2xl font-bold">{formatPrice(lesson.price)}</p>
+              {lesson.price > 0 && (
+                <p className="text-xs text-muted-foreground -mt-1">plus processing fee</p>
+              )}
+            </div>
             
             {!user ? (
               <Button asChild className="w-full sm:w-auto">

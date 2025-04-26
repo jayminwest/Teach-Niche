@@ -40,10 +40,15 @@ export function LessonCard({ id, title, thumbnailUrl, price, isPurchased = false
         <CardTitle className="line-clamp-1 text-lg">{title}</CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0 flex justify-between items-center">
-        <p className="font-medium text-lg">
-          {/* Pass price number directly, matching formatPrice definition */}
-          {price === 0 ? "Free" : formatPrice(price)} 
-        </p>
+        <div>
+          <p className="font-medium text-lg">
+            {/* Display base price */}
+            {price === 0 ? "Free" : formatPrice(price)}
+          </p>
+          {price > 0 && (
+            <p className="text-xs text-muted-foreground">plus processing fee</p>
+          )}
+        </div>
         <p className="text-sm text-muted-foreground">{instructorName}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0">

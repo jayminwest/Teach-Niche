@@ -271,6 +271,7 @@ export async function POST(request: Request) {
     
     // Calculate the instructor payout amount
     const priceInCents = Math.round(Number(price) * 100)
+    // The displayed price already includes Stripe fees (customer pays them)
     const { platformFee, instructorAmount } = calculateFees(priceInCents)
     const instructorPayoutAmount = instructorAmount / 100 // Convert back to dollars for database
     

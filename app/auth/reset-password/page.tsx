@@ -96,6 +96,13 @@ export default function ResetPassword() {
     setLoading(true)
     setError(null)
 
+    // Validate password requirements
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long")
+      setLoading(false)
+      return
+    }
+    
     // Validate passwords match
     if (password !== confirmPassword) {
       setError("Passwords do not match")
@@ -181,6 +188,7 @@ export default function ResetPassword() {
                   required
                   className={error ? "border-destructive" : ""}
                 />
+                <p className="text-xs text-muted-foreground mt-1">Password must be at least 8 characters long</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
