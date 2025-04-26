@@ -91,9 +91,9 @@ export default async function LessonsPage() {
           <h1 className="text-3xl font-bold mb-2">All Lessons</h1>
           <p className="text-muted-foreground">Browse our collection of kendama lessons</p>
         </div>
-        <div className="mt-4 md:mt-0 flex gap-3">
-          <LessonCreationGuide />
-          <Button asChild>
+        <div className="mt-4 md:mt-0 flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <LessonCreationGuide className="w-full" />
+          <Button className="w-full" asChild>
             <Link href="/dashboard/upload">Become an Instructor</Link>
           </Button>
         </div>
@@ -117,9 +117,9 @@ export default async function LessonsPage() {
         <div className="text-center py-12">
           <h3 className="text-xl font-semibold mb-2">No lessons available yet</h3>
           <p className="text-muted-foreground mb-6">Be the first to create content on our platform!</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <LessonCreationGuide />
-            <Button asChild>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-md mx-auto">
+            <LessonCreationGuide className="w-full" />
+            <Button className="w-full" asChild>
               <Link href="/dashboard/upload">Become an Instructor</Link>
             </Button>
           </div>
