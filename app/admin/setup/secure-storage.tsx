@@ -11,10 +11,26 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { createClient } from "@/lib/supabase/client"
 import { Progress } from "@/components/ui/progress"
 
+interface MonitorDetail {
+  lessonId: string;
+  title: string;
+  status: 'accessible' | 'fixed-with-fallback' | 'inaccessible' | 'error-checking' | 'error';
+  videoPath: string;
+  error?: any; // Keep error as any for now, as it can be diverse
+}
+
+interface MonitorResultsState {
+  totalLessons: number;
+  accessibleLessons: number;
+  inaccessibleLessons: number;
+  fixedLessons: number;
+  details: MonitorDetail[];
+}
+
 export default function SecureStorageSetup() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
-  const [monitorResults, setMonitorResults] = useState<any>(null)
+  const [monitorResults, setMonitorResults] = useState<MonitorResultsState | null>(null)
   const [isMonitoring, setIsMonitoring] = useState(false)
   const [progress, setProgress] = useState(0)
   const { toast } = useToast()
