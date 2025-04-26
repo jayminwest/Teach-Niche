@@ -26,6 +26,10 @@ export { stripe }
 export const PLATFORM_FEE_PERCENTAGE = 15
 export const INSTRUCTOR_PERCENTAGE = 100 - PLATFORM_FEE_PERCENTAGE
 
+// Standard Stripe processing fee in the US
+export const STRIPE_PERCENTAGE_FEE = 2.9
+export const STRIPE_FIXED_FEE_CENTS = 30
+
 // Helper function to calculate fee amounts
 export function calculateFees(amount: number) {
   const platformFee = Math.round((amount * PLATFORM_FEE_PERCENTAGE) / 100)
@@ -35,6 +39,15 @@ export function calculateFees(amount: number) {
     platformFee,
     instructorAmount,
   }
+}
+
+// Calculate price with Stripe fees included
+// This allows us to pass the Stripe fees to the customer
+export function calculatePriceWithStripeFees(basePrice: number): number {
+  // Formula: (base_price + fixed_fee) / (1 - percentage_fee/100)
+  const priceWithFees = (basePrice + STRIPE_FIXED_FEE_CENTS) / (1 - STRIPE_PERCENTAGE_FEE / 100)
+  // Round to 2 decimal places and convert to cents
+  return Math.round(priceWithFees)
 }
 
 // Safe function to check if Stripe is initialized
