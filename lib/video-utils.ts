@@ -26,12 +26,48 @@ export async function refreshVideoUrl(videoUrl: string): Promise<string> {
       
       // Create a new signed URL with error handling
       try {
+        // Use a 12-hour expiry (43200 seconds) for consistency with the API
         const { data, error } = await supabase.storage
           .from('videos')
-          .createSignedUrl(videoPath, 2592000); // 30 days
+          .createSignedUrl(videoPath, 43200); // 12 hours
         
         if (error) {
           console.error('Error refreshing video URL:', error);
+          
+          // If we get a permissions error, try to get a URL through the API instead
+          // This is important for supporting purchased videos where RLS may prevent direct signing
+          if (error.message?.includes('permission') || error.message?.includes('403')) {
+            try {
+              // Extract the lesson ID from the URL if possible
+              let lessonId = '';
+              const parts = videoPath.split('/');
+              if (parts.length > 1) {
+                lessonId = parts[0]; // First part is often the lesson ID
+              }
+              
+              if (lessonId) {
+                const response = await fetch("/api/get-video-url", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    lessonId
+                  }),
+                });
+                
+                if (response.ok) {
+                  const data = await response.json();
+                  if (data.url) {
+                    return data.url;
+                  }
+                }
+              }
+            } catch (apiError) {
+              console.error('Error getting URL from API:', apiError);
+            }
+          }
+          
           return videoUrl;
         }
         
@@ -64,20 +100,61 @@ export async function refreshVideoUrl(videoUrl: string): Promise<string> {
         const timestamp = parseInt(cacheTimestamp, 10);
         const now = Date.now();
         if (now - timestamp < 60000) { // 1 minute cache
-          console.log('Using cached signed URL for path');
           return cachedUrl;
         }
       }
       
-      console.log('Creating signed URL for path:', videoUrl);
-      
       // Create a new signed URL with error handling
       const { data, error } = await supabase.storage
         .from('videos')
-        .createSignedUrl(videoUrl, 2592000); // 30 days
+        .createSignedUrl(videoUrl, 43200); // 12 hours
       
       if (error) {
         console.error('Error creating signed URL for path:', error);
+        
+        // If we get a permissions error, try to get a URL through the API instead
+        if (error.message?.includes('permission') || error.message?.includes('403')) {
+          try {
+            // Extract the lesson ID from the URL if possible
+            let lessonId = '';
+            const parts = videoUrl.split('/');
+            if (parts.length > 1) {
+              lessonId = parts[0]; // First part is often the lesson ID
+            }
+            
+            if (lessonId) {
+              const response = await fetch("/api/get-video-url", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  lessonId
+                }),
+              });
+              
+              if (response.ok) {
+                const data = await response.json();
+                if (data.url) {
+                  // Cache the URL to prevent infinite loops
+                  try {
+                    if (typeof window !== 'undefined' && window.sessionStorage) {
+                      sessionStorage.setItem(cacheKey, data.url);
+                      sessionStorage.setItem(`${cacheKey}_timestamp`, Date.now().toString());
+                    }
+                  } catch (e) {
+                    // Ignore storage errors
+                  }
+                  
+                  return data.url;
+                }
+              }
+            }
+          } catch (apiError) {
+            console.error('Error getting URL from API:', apiError);
+          }
+        }
+        
         return videoUrl;
       }
       
@@ -96,7 +173,6 @@ export async function refreshVideoUrl(videoUrl: string): Promise<string> {
         // Ignore storage errors
       }
       
-      console.log('Created signed URL (cached for 1 hour)');
       return data.signedUrl;
     } catch (error) {
       console.error('Error creating signed URL for path:', error);

@@ -153,16 +153,110 @@ export async function POST(request: NextRequest) {
     console.log("Final path with lesson ID prefix and encoding:", finalVideoPath);
     
     try {
-      console.log("Using direct public URL approach for video:", finalVideoPath);
+      console.log("Getting video URL for:", finalVideoPath);
       
-      // Always use a direct public URL approach, but verify permissions first
-      // We've already checked above that the user has permission to access this video
-      // (either they're the instructor, they've purchased it, or it's free)
+      // First try using the RPC function which bypasses RLS
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+          'get_video_signed_url',
+          { 
+            lesson_id: lessonId,
+            user_id: session.user.id 
+          }
+        );
+        
+        if (!rpcError && rpcData) {
+          console.log("Successfully got signed URL via RPC function");
+          return NextResponse.json({ 
+            url: rpcData,
+            isSignedUrl: true,
+            method: "rpc"
+          });
+        } else {
+          console.log("RPC function unavailable or returned an error:", rpcError?.message);
+          // Continue to the fallback methods if RPC fails
+        }
+      } catch (rpcError) {
+        console.error("Error using RPC function:", rpcError);
+        // Continue to the fallback methods if RPC fails
+      }
       
-      const publicUrl = `https://fduuujxzwwrbshamtriy.supabase.co/storage/v1/object/public/videos/${finalVideoPath}`;
-      console.log("Using direct URL:", publicUrl);
+      // Fallback to direct signed URL creation
+      console.log("Trying direct signed URL creation for path:", finalVideoPath);
+      const { data, error } = await supabase.storage
+        .from('videos')
+        .createSignedUrl(finalVideoPath, 43200); // 12 hours in seconds
       
-      return NextResponse.json({ url: publicUrl });
+      if (error) {
+        console.error("Error creating signed URL:", error);
+        
+        // Check if this is an "Object not found" error or another issue
+        // This can happen during the transition period
+        const isObjectNotFoundError = error.message?.includes("Object not found");
+        const isBadRequestError = 'status' in error && typeof error.status === 'number' && error.status === 400;
+        const isRlsError = error.message?.includes("new row violates row-level security policy");
+
+        if (isObjectNotFoundError || isBadRequestError || isRlsError) {
+          console.log("Error accessing object or RLS issue, attempting fallback for user:", session.user.id);
+          
+          // Let's check if this user has actually purchased the lesson
+          // This ensures we only provide fallback access to authorized users
+          let isAuthorized = isInstructor; // Instructors are always authorized
+          
+          if (!isAuthorized) {
+            // Check purchase in database
+            const { data: purchase, error: purchaseError } = await supabase
+              .from("purchases")
+              .select("id")
+              .eq("user_id", session.user.id)
+              .eq("lesson_id", lessonId)
+              .maybeSingle();
+              
+            if (purchaseError) {
+              console.error("Error verifying purchase during fallback:", purchaseError);
+            } else {
+              isAuthorized = !!purchase || lesson.price === 0;
+              console.log(`User ${isAuthorized ? 'is' : 'is not'} authorized for this content`);
+            }
+          }
+          
+          if (isAuthorized) {
+            // During transition period, fall back to public URL if signed URL fails
+            // This ensures users don't lose access to content during the security migration
+            // This should be removed once all videos have been properly migrated
+            const publicUrl = `https://fduuujxzwwrbshamtriy.supabase.co/storage/v1/object/public/videos/${finalVideoPath}`;
+            console.log("Authorized user - using fallback public URL:", publicUrl);
+            
+            // Return public URL as a fallback
+            return NextResponse.json({ 
+              url: publicUrl,
+              isSignedUrl: false, 
+              warning: "Using public URL as fallback - this is temporary during migration",
+              method: "fallback"
+            });
+          } else {
+            // If not authorized, don't provide fallback
+            console.log("User not authorized, denying fallback access");
+            return NextResponse.json({ error: "You have not purchased this content" }, { status: 403 });
+          }
+        }
+        
+        // For other errors, return error response
+        return NextResponse.json({ error: "Failed to generate video URL" }, { status: 500 });
+      }
+      
+      if (!data || !data.signedUrl) {
+        console.error("No signed URL returned");
+        return NextResponse.json({ error: "Failed to generate video URL" }, { status: 500 });
+      }
+      
+      console.log("Successfully created signed URL (valid for 12 hours)");
+      
+      return NextResponse.json({ 
+        url: data.signedUrl,
+        isSignedUrl: true,
+        method: "direct"
+      });
     } catch (error) {
       console.error("Error creating signed URL:", error);
       return NextResponse.json({ error: "Failed to generate video URL" }, { status: 500 });

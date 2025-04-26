@@ -1,15 +1,17 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { LogOut, Menu, X } from "lucide-react"
+import type { User } from "@supabase/supabase-js"
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const pathname = usePathname()
   const supabase = createClient()
@@ -59,9 +61,16 @@ export default function Header() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6 md:gap-10">
           <Link href="/" className="flex items-center space-x-2">
+            <Image
+              src="/favicon.png"
+              alt="Teach Niche Logo"
+              width={32}
+              height={32}
+              className="h-8 w-auto"
+            />
             <span className="font-bold text-xl">
               <span className="text-primary">Teach</span>
-              <span className="text-white"> Niche</span>
+              <span className="text-foreground"> Niche</span>
             </span>
           </Link>
           <nav className="hidden md:flex gap-6">
@@ -99,7 +108,11 @@ export default function Header() {
             </>
           )}
         </div>
-        <button className="flex items-center justify-center md:hidden" onClick={toggleMenu}>
+        <button 
+          className="flex items-center justify-center md:hidden" 
+          onClick={toggleMenu}
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+        >
           {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>

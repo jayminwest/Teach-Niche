@@ -54,7 +54,6 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
               const now = Date.now();
               // Use cached URL if it's less than 30 minutes old
               if (now - timestamp < 30 * 60 * 1000) {
-                console.log("Using cached video URL");
                 setVideoUrl(cachedUrl);
                 setError(null);
                 setIsLoading(false);
@@ -69,7 +68,6 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
         
         // If it's already a signed URL, use it directly
         if (initialVideoUrl.startsWith('http') && initialVideoUrl.includes('supabase')) {
-          console.log("Using existing signed URL");
           setVideoUrl(initialVideoUrl);
           setIsLoading(false);
           isRefreshing.current = false;
@@ -91,8 +89,6 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
           if (response.ok) {
             const data = await response.json();
             if (data.url) {
-              console.log("Got URL from API");
-              
               // Cache the URL in sessionStorage
               try {
                 if (typeof window !== 'undefined' && window.sessionStorage) {
@@ -118,7 +114,6 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
         
         // Fallback to client-side refresh
         try {
-          console.log("Trying client-side refresh");
           const freshUrl = await refreshVideoUrl(initialVideoUrl);
           
           if (freshUrl) {
@@ -173,15 +168,12 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
     isHandlingError.current = true;
     errorRetryCount.current += 1;
     
-    console.log(`Video error occurred, attempt ${errorRetryCount.current}/${MAX_RETRIES}`);
-    
     try {
       setIsLoading(true);
       setError("Video playback error. Attempting to refresh...");
       
       // For error recovery, use a simpler approach - just use the lesson ID
       // This avoids issues with URL encoding/decoding
-      console.log("Using lesson ID for recovery:", lessonId);
       
       // Try to get a fresh URL from the API
       const response = await fetch("/api/get-video-url", {
@@ -351,7 +343,7 @@ export function VideoPlayer({ initialVideoUrl, lessonId, title, autoPlay = false
           <div className="text-white text-center">
             <p>{error}</p>
             <button 
-              onClick={() => handleVideoError({} as any)} 
+              onClick={() => handleVideoError({} as React.SyntheticEvent<HTMLVideoElement, Event>)} 
               className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
             >
               Retry
