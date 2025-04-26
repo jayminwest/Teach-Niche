@@ -16,7 +16,12 @@ export const metadata: Metadata = {
   description: "A platform for kendama instructors to share tutorial videos and for students to learn",
   generator: 'v0.dev',
   icons: {
-    icon: '/favicon.png',
+    icon: [
+      {
+        url: '/favicon.png',
+        href: '/favicon.png'
+      }
+    ],
     apple: '/favicon.png',
   }
 }

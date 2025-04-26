@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2, CheckCircle, XCircle } from "lucide-react"
 import ManualInstructions from "./manual-instructions"
+import RLSPoliciesSetup from "./rls-policies"
+import SecureStorageSetup from "./secure-storage"
 import Link from "next/link"
 
 export default function SetupPage() {
@@ -103,6 +105,10 @@ export default function SetupPage() {
           </Button>
         </CardFooter>
       </Card>
+
+      <RLSPoliciesSetup />
+      
+      <SecureStorageSetup />
 
       <ManualInstructions />
 
