@@ -202,6 +202,7 @@ export default function SecureStorageSetup() {
               lessonId: lesson.id,
               title: lesson.title,
               status: 'error',
+              videoPath: lesson.video_url || 'unknown', // Add videoPath here
               error: e
             });
           }
