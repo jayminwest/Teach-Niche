@@ -94,7 +94,7 @@ export default function SecureStorageSetup() {
       let accessibleLessons = 0;
       let inaccessibleLessons = 0;
       let fixedLessons = 0;
-      const details = [];
+      const details: MonitorDetail[] = [];
       
       // Fetch lessons in batches to avoid timeout
       const batchSize = 10;
