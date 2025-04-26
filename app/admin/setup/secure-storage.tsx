@@ -94,7 +94,7 @@ export default function SecureStorageSetup() {
       let accessibleLessons = 0;
       let inaccessibleLessons = 0;
       let fixedLessons = 0;
-      let details = [];
+      const details = [];
       
       // Fetch lessons in batches to avoid timeout
       const batchSize = 10;
@@ -204,11 +204,15 @@ export default function SecureStorageSetup() {
         details
       });
       
-    } catch (error) {
+    } catch (error: unknown) {
+      let errorMessage = "An error occurred while monitoring the transition.";
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "An error occurred while monitoring the transition."
+        description: errorMessage
       });
       console.error("Monitoring error:", error);
     } finally {

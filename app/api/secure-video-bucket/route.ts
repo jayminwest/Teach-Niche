@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Initialize an array to track policy operations
-    let policyOperations = []
+    const policyOperations = []
     
     // Check for and try to drop the public access policy if it exists
     const publicAccessPolicy = policies?.find(
@@ -284,10 +284,10 @@ export async function POST(request: NextRequest) {
     }
     
     // Process each lesson to ensure video paths are correctly stored
-    let pathCorrections = [];
+    const pathCorrections = [];
     
     for (const lesson of lessonData || []) {
-      let videoPath = lesson.video_url;
+      const videoPath = lesson.video_url;
       let needsUpdate = false;
       let newPath = videoPath;
       
