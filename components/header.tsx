@@ -6,10 +6,11 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { LogOut, Menu, X } from "lucide-react"
+import type { User } from "@supabase/supabase-js"
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
   const pathname = usePathname()
   const supabase = createClient()
@@ -61,7 +62,7 @@ export default function Header() {
           <Link href="/" className="flex items-center space-x-2">
             <span className="font-bold text-xl">
               <span className="text-primary">Teach</span>
-              <span className="text-white"> Niche</span>
+              <span className="text-foreground"> Niche</span>
             </span>
           </Link>
           <nav className="hidden md:flex gap-6">
@@ -99,7 +100,11 @@ export default function Header() {
             </>
           )}
         </div>
-        <button className="flex items-center justify-center md:hidden" onClick={toggleMenu}>
+        <button 
+          className="flex items-center justify-center md:hidden" 
+          onClick={toggleMenu}
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+        >
           {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>

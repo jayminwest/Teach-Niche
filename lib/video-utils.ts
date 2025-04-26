@@ -64,12 +64,9 @@ export async function refreshVideoUrl(videoUrl: string): Promise<string> {
         const timestamp = parseInt(cacheTimestamp, 10);
         const now = Date.now();
         if (now - timestamp < 60000) { // 1 minute cache
-          console.log('Using cached signed URL for path');
           return cachedUrl;
         }
       }
-      
-      console.log('Creating signed URL for path:', videoUrl);
       
       // Create a new signed URL with error handling
       const { data, error } = await supabase.storage
@@ -96,7 +93,6 @@ export async function refreshVideoUrl(videoUrl: string): Promise<string> {
         // Ignore storage errors
       }
       
-      console.log('Created signed URL (cached for 1 hour)');
       return data.signedUrl;
     } catch (error) {
       console.error('Error creating signed URL for path:', error);
