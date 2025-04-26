@@ -86,7 +86,6 @@ export default async function LessonDetail({
           // Keep the original URL if refresh fails
         }
       } else {
-        console.log("Using original video path:", lesson.video_url);
       }
     } catch (error) {
       console.error("Error processing video URL:", error);
@@ -97,30 +96,44 @@ export default async function LessonDetail({
   // Fetch instructor information separately if needed
   let instructorName = "Instructor"
   if (lesson?.instructor_id) {
-    // Try to get instructor profile first
-    const { data: instructorProfile } = await supabase
-      .from("instructor_profiles")
-      .select("*")
-      .eq("user_id", lesson.instructor_id)
-      .single()
+    // First try to get the name from the public.users table
+    const { data: userData } = await supabase
+      .from("users")
+      .select("name")
+      .eq("id", lesson.instructor_id)
+      .single();
     
-    // Use instructor profile name if available
-    if (instructorProfile?.name) {
-      instructorName = instructorProfile.name;
+    if (userData?.name) {
+      instructorName = userData.name;
     } else {
-      // Then try to get user data from auth
-      const { data: authUser } = await supabase.auth.admin.getUserById(lesson.instructor_id)
+      // Then try to get instructor profile
+      const { data: instructorProfile } = await supabase
+        .from("instructor_profiles")
+        .select("name")
+        .eq("user_id", lesson.instructor_id)
+        .single();
       
-      if (authUser?.user) {
-        // Extract name from email if available (before the @ symbol)
-        if (authUser.user.email) {
-          const emailParts = authUser.user.email.split('@');
-          instructorName = emailParts[0].charAt(0).toUpperCase() + emailParts[0].slice(1);
-        }
-        
-        // Use user metadata name if available
-        if (authUser.user.user_metadata?.full_name) {
-          instructorName = authUser.user.user_metadata.full_name;
+      if (instructorProfile?.name) {
+        instructorName = instructorProfile.name;
+      } else {
+        // Finally try to get user data from auth
+        try {
+          const { data: authUser } = await supabase.auth.admin.getUserById(lesson.instructor_id);
+          
+          if (authUser?.user) {
+            // Extract name from email if available (before the @ symbol)
+            if (authUser.user.email) {
+              const emailParts = authUser.user.email.split('@');
+              instructorName = emailParts[0].charAt(0).toUpperCase() + emailParts[0].slice(1);
+            }
+            
+            // Use user metadata name if available
+            if (authUser.user.user_metadata?.full_name) {
+              instructorName = authUser.user.user_metadata.full_name;
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching auth user:", err);
         }
       }
     }

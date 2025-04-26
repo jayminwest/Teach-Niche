@@ -1,5 +1,8 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { LessonCard } from "@/components/lesson-card"
+import { LessonCreationGuide } from "@/components/lesson-creation-guide"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
 
 export default async function LessonsPage() {
   const supabase = await createServerClient()
@@ -13,37 +16,50 @@ export default async function LessonsPage() {
     .select("*")
     .order("created_at", { ascending: false })
   
-  console.log("Lessons query result:", { rawLessons, lessonsError })
     
   // Process lessons to add instructor names
   const lessons = await Promise.all((rawLessons || []).map(async (lesson) => {
-    console.log("Processing lesson:", lesson)
     // Get instructor name
     let instructorName = "Instructor";
     if (lesson?.instructor_id) {
-      // Try to get instructor profile first
-      const { data: instructorProfile } = await supabase
-        .from("instructor_profiles")
+      // First try to get the name from the public.users table
+      const { data: userData } = await supabase
+        .from("users")
         .select("name")
-        .eq("user_id", lesson.instructor_id)
+        .eq("id", lesson.instructor_id)
         .single();
       
-      if (instructorProfile?.name) {
-        instructorName = instructorProfile.name;
+      if (userData?.name) {
+        instructorName = userData.name;
       } else {
-        // Then try to get user data from auth
-        const { data: authUser } = await supabase.auth.admin.getUserById(lesson.instructor_id);
+        // Then try to get instructor profile
+        const { data: instructorProfile } = await supabase
+          .from("instructor_profiles")
+          .select("name")
+          .eq("user_id", lesson.instructor_id)
+          .single();
         
-        if (authUser?.user) {
-          // Extract name from email if available (before the @ symbol)
-          if (authUser.user.email) {
-            const emailParts = authUser.user.email.split('@');
-            instructorName = emailParts[0].charAt(0).toUpperCase() + emailParts[0].slice(1);
-          }
-          
-          // Use user metadata name if available
-          if (authUser.user.user_metadata?.full_name) {
-            instructorName = authUser.user.user_metadata.full_name;
+        if (instructorProfile?.name) {
+          instructorName = instructorProfile.name;
+        } else {
+          // Finally try to get user data from auth
+          try {
+            const { data: authUser } = await supabase.auth.admin.getUserById(lesson.instructor_id);
+            
+            if (authUser?.user) {
+              // Extract name from email if available (before the @ symbol)
+              if (authUser.user.email) {
+                const emailParts = authUser.user.email.split('@');
+                instructorName = emailParts[0].charAt(0).toUpperCase() + emailParts[0].slice(1);
+              }
+              
+              // Use user metadata name if available
+              if (authUser.user.user_metadata?.full_name) {
+                instructorName = authUser.user.user_metadata.full_name;
+              }
+            }
+          } catch (err) {
+            console.error("Error fetching auth user:", err);
           }
         }
       }
@@ -67,13 +83,21 @@ export default async function LessonsPage() {
     purchasedLessonIds = purchasedLessons?.map((p) => p.lesson_id) || []
   }
 
-  console.log("Final processed lessons:", lessons)
-  console.log("Purchased lesson IDs:", purchasedLessonIds)
 
   return (
     <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-6">All Lessons</h1>
-      <p className="text-muted-foreground mb-8">Browse our collection of kendama lessons</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">All Lessons</h1>
+          <p className="text-muted-foreground">Browse our collection of kendama lessons</p>
+        </div>
+        <div className="mt-4 md:mt-0 flex gap-3">
+          <LessonCreationGuide />
+          <Button asChild>
+            <Link href="/dashboard/upload">Become an Instructor</Link>
+          </Button>
+        </div>
+      </div>
 
       {lessons && lessons.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -92,7 +116,13 @@ export default async function LessonsPage() {
       ) : (
         <div className="text-center py-12">
           <h3 className="text-xl font-semibold mb-2">No lessons available yet</h3>
-          <p className="text-muted-foreground">Check back soon for new lessons!</p>
+          <p className="text-muted-foreground mb-6">Be the first to create content on our platform!</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <LessonCreationGuide />
+            <Button asChild>
+              <Link href="/dashboard/upload">Become an Instructor</Link>
+            </Button>
+          </div>
         </div>
       )}
     </div>

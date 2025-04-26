@@ -140,10 +140,7 @@ export default function UploadContent() {
       return
     }
 
-    console.log("Video file selected:", file.name, file.type, file.size)
-    
     const extension = getVideoExtension(file.name)
-    console.log("File extension:", extension)
 
     if (!isValidVideoFormat(extension)) {
       toast({
@@ -184,7 +181,6 @@ export default function UploadContent() {
     // Create a preview URL
     const objectUrl = URL.createObjectURL(file)
     setPreviewUrl(objectUrl)
-    console.log("Preview URL created:", objectUrl)
 
     // Force a re-render to ensure the video preview shows up
     setTimeout(() => {
@@ -388,10 +384,6 @@ export default function UploadContent() {
         images: thumbnailUrl ? [thumbnailUrl] : undefined,
       };
       
-      // Log the exact data being sent to the API
-      console.log("Creating Stripe product with exact data:", JSON.stringify(productData));
-      
-      console.log("Creating Stripe product with data:", productData);
       
       const response = await fetch(apiUrl, {
         method: "POST",
@@ -428,8 +420,6 @@ export default function UploadContent() {
       }
 
       const responseData = await response.json();
-      console.log("Stripe product created successfully:", responseData);
-      
       const { productId, priceId } = responseData;
       
       if (!productId || !priceId) {
@@ -451,7 +441,6 @@ export default function UploadContent() {
           video_url: videoPath, // Using video_url to match database schema
         };
         
-        console.log("Creating child lesson with data:", videoData);
         
         const { data: insertedVideo, error: videoDbError } = await supabase
           .from("lessons")
@@ -463,7 +452,6 @@ export default function UploadContent() {
           throw new Error(`Failed to add video to lesson: ${videoDbError.message}`);
         }
 
-        console.log("Video added to lesson successfully:", insertedVideo);
 
         toast({
           title: "Success",
@@ -482,7 +470,6 @@ export default function UploadContent() {
           video_url: videoPath, // Using video_url to match database schema
         };
         
-        console.log("Creating lesson with data:", lessonData);
         
         const { data: insertedLesson, error: dbError } = await supabase
           .from("lessons")
@@ -494,7 +481,6 @@ export default function UploadContent() {
           throw new Error(`Failed to create lesson: ${dbError.message}`);
         }
 
-        console.log("Lesson created successfully:", insertedLesson);
 
         toast({
           title: "Success",
@@ -663,7 +649,6 @@ export default function UploadContent() {
                         src={previewUrl} 
                         className="w-full h-full object-contain" 
                         controls 
-                        onLoadedData={() => console.log("Video loaded successfully")}
                         onError={(e) => console.error("Video load error:", e)}
                       />
                     </div>
