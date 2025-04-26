@@ -149,12 +149,18 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // Define an interface for the policy object structure
+    interface Policy {
+      policy_name: string;
+      // Add other properties if known/needed
+    }
+    
     // Initialize an array to track policy operations
     const policyOperations = []
     
     // Check for and try to drop the public access policy if it exists
     const publicAccessPolicy = policies?.find(
-      p => p.policy_name === 'Allow Public Access Videos' || 
+      (p: Policy) => p.policy_name === 'Allow Public Access Videos' || 
           p.policy_name === 'public_access_videos'
     )
     
