@@ -192,7 +192,11 @@ export async function POST(request: NextRequest) {
         
         // Check if this is an "Object not found" error or another issue
         // This can happen during the transition period
-        if (error.message?.includes("Object not found") || error.status === 400 || error.message?.includes("new row violates row-level security policy")) {
+        const isObjectNotFoundError = error.message?.includes("Object not found");
+        const isBadRequestError = 'status' in error && typeof error.status === 'number' && error.status === 400;
+        const isRlsError = error.message?.includes("new row violates row-level security policy");
+
+        if (isObjectNotFoundError || isBadRequestError || isRlsError) {
           console.log("Error accessing object or RLS issue, attempting fallback for user:", session.user.id);
           
           // Let's check if this user has actually purchased the lesson
