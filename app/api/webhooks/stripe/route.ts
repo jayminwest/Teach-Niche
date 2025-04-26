@@ -55,55 +55,13 @@ export async function POST(request: NextRequest) {
         
         // Set payout status to 'pending' since we're using Connect
         const payoutStatus = 'pending_transfer'
+        const instructorId = session.metadata?.instructorId
         
-        if (lessonId) {
-          // This is a lesson purchase
-          // First check if the purchases table has a video_id column with a not-null constraint
-          const { data: columnInfo } = await supabase.rpc('column_exists', {
-            table_name: 'purchases',
-            column_name: 'video_id'
-          })
+        // Helper function to update instructor earnings - avoids duplicate code
+        const updateInstructorEarnings = async (instructorId: string, amount: number) => {
+          if (!instructorId) return
           
-          // Create purchase data with proper typing
-          const purchaseData: {
-            user_id: string;
-            lesson_id: string;
-            stripe_payment_id: string;
-            amount: number;
-            instructor_payout_amount: number;
-            platform_fee_amount: number;
-            payout_status: string;
-            stripe_product_id?: string;
-            stripe_price_id?: string;
-            video_id?: null;
-          } = {
-            user_id: userId,
-            lesson_id: lessonId,
-            stripe_payment_id: session.id,
-            amount: amount,
-            instructor_payout_amount: instructorPayoutAmount,
-            platform_fee_amount: platformFee / 100, // Convert to dollars
-            payout_status: payoutStatus,
-            stripe_product_id: session.metadata?.productId,
-            stripe_price_id: session.metadata?.priceId,
-          }
-          
-          // Only add video_id if the column exists
-          if (columnInfo) {
-            purchaseData.video_id = null
-          }
-          
-          const { error: purchaseError } = await supabase
-            .from("purchases")
-            .insert(purchaseData)
-          
-          if (purchaseError) {
-            console.error("Error recording lesson purchase:", purchaseError)
-          }
-          
-          // If there's an instructor ID, update their earnings
-          const instructorId = session.metadata?.instructorId
-          if (instructorId) {
+          try {
             // Get current earnings first
             const { data: instructorProfile } = await supabase
               .from("instructor_profiles")
@@ -112,7 +70,7 @@ export async function POST(request: NextRequest) {
               .single()
             
             const currentEarnings = instructorProfile?.total_earnings || 0
-            const newEarnings = currentEarnings + instructorPayoutAmount
+            const newEarnings = currentEarnings + amount
             
             const { error: instructorError } = await supabase
               .from("instructor_profiles")
@@ -125,14 +83,19 @@ export async function POST(request: NextRequest) {
             if (instructorError) {
               console.error("Error updating instructor earnings:", instructorError)
             }
+          } catch (error) {
+            console.error("Failed to update instructor earnings:", error)
           }
-        } else if (videoId) {
-          // This is a video purchase
-          const { error: purchaseError } = await supabase
-            .from("purchases")
-            .insert({
+        }
+        
+        // Create purchase record
+        if (lessonId) {
+          // This is a lesson purchase
+          try {
+            // Create purchase data 
+            const purchaseData = {
               user_id: userId,
-              video_id: videoId,
+              lesson_id: lessonId,
               stripe_payment_id: session.id,
               amount: amount,
               instructor_payout_amount: instructorPayoutAmount,
@@ -140,36 +103,48 @@ export async function POST(request: NextRequest) {
               payout_status: payoutStatus,
               stripe_product_id: session.metadata?.productId,
               stripe_price_id: session.metadata?.priceId,
-            })
-          
-          if (purchaseError) {
-            console.error("Error recording video purchase:", purchaseError)
-          }
-          
-          // If there's an instructor ID, update their earnings
-          const instructorId = session.metadata?.instructorId
-          if (instructorId) {
-            // Get current earnings first
-            const { data: instructorProfile } = await supabase
-              .from("instructor_profiles")
-              .select("total_earnings")
-              .eq("user_id", instructorId)
-              .single()
-            
-            const currentEarnings = instructorProfile?.total_earnings || 0
-            const newEarnings = currentEarnings + instructorPayoutAmount
-            
-            const { error: instructorError } = await supabase
-              .from("instructor_profiles")
-              .update({
-                total_earnings: newEarnings,
-                updated_at: new Date().toISOString()
-              })
-              .eq("user_id", instructorId)
-            
-            if (instructorError) {
-              console.error("Error updating instructor earnings:", instructorError)
+              is_free: amount === 0
             }
+            
+            const { error: purchaseError } = await supabase
+              .from("purchases")
+              .insert(purchaseData)
+            
+            if (purchaseError) {
+              console.error("Error recording lesson purchase:", purchaseError)
+            } else if (instructorId && amount > 0) {
+              // Only update earnings for paid purchases
+              await updateInstructorEarnings(instructorId, instructorPayoutAmount)
+            }
+          } catch (error) {
+            console.error("Error processing lesson purchase:", error)
+          }
+        } else if (videoId) {
+          // This is a video purchase
+          try {
+            const { error: purchaseError } = await supabase
+              .from("purchases")
+              .insert({
+                user_id: userId,
+                video_id: videoId,
+                stripe_payment_id: session.id,
+                amount: amount,
+                instructor_payout_amount: instructorPayoutAmount,
+                platform_fee_amount: platformFee / 100, // Convert to dollars
+                payout_status: payoutStatus,
+                stripe_product_id: session.metadata?.productId,
+                stripe_price_id: session.metadata?.priceId,
+                is_free: amount === 0
+              })
+            
+            if (purchaseError) {
+              console.error("Error recording video purchase:", purchaseError)
+            } else if (instructorId && amount > 0) {
+              // Only update earnings for paid purchases
+              await updateInstructorEarnings(instructorId, instructorPayoutAmount)
+            }
+          } catch (error) {
+            console.error("Error processing video purchase:", error)
           }
         }
         
