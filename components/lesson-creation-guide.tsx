@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { X, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -20,7 +19,6 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 type GuideStep = {
   title: string
   description: string
-  image: string
   tips: string[]
 }
 
@@ -28,7 +26,6 @@ const guideSteps: GuideStep[] = [
   {
     title: "Choose Your Lesson Topic",
     description: "Focus on one specific trick or concept. Think about what beginners or intermediate players struggle with most.",
-    image: "/placeholder.svg?text=Choose+Topic&width=480&height=270",
     tips: [
       "Beginner fundamentals like Lighthouse, Lunar, Airplane, or J-Stick",
       "Common sticking points like getting consistent Lunars or smooth Juggles",
@@ -39,7 +36,6 @@ const guideSteps: GuideStep[] = [
   {
     title: "Plan Your Lesson Structure",
     description: "A little planning goes a long way! Outline the key steps, identify common mistakes, and think about practice drills.",
-    image: "/placeholder.svg?text=Plan+Lesson&width=480&height=270",
     tips: [
       "Write down the 3-5 main steps to land the trick",
       "Identify what usually goes wrong for learners",
@@ -50,7 +46,6 @@ const guideSteps: GuideStep[] = [
   {
     title: "Film Your Content",
     description: "You don't need professional equipment! Your smartphone is perfect, just focus on good lighting, clear audio, and stable shots.",
-    image: "/placeholder.svg?text=Film+Content&width=480&height=270",
     tips: [
       "Film in a bright area with the kendama clearly visible",
       "Record in a quiet place and speak clearly",
@@ -61,7 +56,6 @@ const guideSteps: GuideStep[] = [
   {
     title: "Create Engaging Content",
     description: "Follow best practices to make your lesson clear and helpful for students of all levels.",
-    image: "/placeholder.svg?text=Create+Content&width=480&height=270",
     tips: [
       "Show the full trick at normal speed first, then break it down",
       "Use slow-motion for tricky parts (most phones have this feature)",
@@ -72,7 +66,6 @@ const guideSteps: GuideStep[] = [
   {
     title: "Set Up Stripe Connect",
     description: "Before creating paid lessons, you'll need to set up Stripe Connect to receive payments directly to your bank account.",
-    image: "/placeholder.svg?text=Stripe+Setup&width=480&height=270",
     tips: [
       "Go to Dashboard > Stripe Connect to begin the setup process",
       "Have your banking information ready for direct deposits",
@@ -83,7 +76,6 @@ const guideSteps: GuideStep[] = [
   {
     title: "Price Your Lesson",
     description: "Most individual trick lessons sell well in the $3-$10 range. Consider the length, complexity, and demand for the trick.",
-    image: "/placeholder.svg?text=Price+Lesson&width=480&height=270",
     tips: [
       "A detailed breakdown of a complex trick might be worth more",
       "Consider what you would pay for similar content",
@@ -94,7 +86,6 @@ const guideSteps: GuideStep[] = [
   {
     title: "Upload & Publish",
     description: "Use our simple upload form to publish your lesson. Add a compelling thumbnail to attract students.",
-    image: "/placeholder.svg?text=Upload+Publish&width=480&height=270",
     tips: [
       "Fill in all details (title, description, price) completely",
       "Upload your video file (supports MP4, MOV, AVI, WEBM)",
@@ -105,7 +96,6 @@ const guideSteps: GuideStep[] = [
   {
     title: "Share & Promote",
     description: "Share your lesson on social media and with your community to attract students and build your reputation.",
-    image: "/placeholder.svg?text=Share+Promote&width=480&height=270",
     tips: [
       "Share on Instagram, TikTok, and kendama forums",
       "Create short previews to generate interest",
@@ -169,7 +159,7 @@ export function LessonCreationGuide({
           </Card>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-4xl p-4 sm:p-6">
+      <DialogContent className="sm:max-w-2xl p-4 sm:p-6">
         <div className="absolute right-4 top-4 z-10">
           <button
             onClick={() => setOpen(false)}
@@ -180,48 +170,37 @@ export function LessonCreationGuide({
           </button>
         </div>
         
-        <DialogHeader className="mb-4 pr-6">
-          <DialogTitle className="text-xl sm:text-2xl">How to Create Great Lessons</DialogTitle>
+        <DialogHeader className="mb-3 pr-6">
+          <DialogTitle className="text-lg sm:text-xl">How to Create Great Lessons</DialogTitle>
           <DialogDescription className="text-sm">
             Follow this guide to create high-quality kendama lessons that students will love
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeStep} onValueChange={setActiveStep} className="w-full">
-          <TabsList className="mb-4 flex flex-wrap h-auto justify-start">
+          <TabsList className="mb-3 flex flex-wrap h-auto justify-start">
             {guideSteps.map((_, index) => (
-              <TabsTrigger key={index} value={(index + 1).toString()} className="mb-1">
+              <TabsTrigger key={index} value={(index + 1).toString()} className="mb-1 text-xs sm:text-sm py-1 px-2 sm:px-3">
                 Step {index + 1}
               </TabsTrigger>
             ))}
           </TabsList>
           
           {guideSteps.map((step, index) => (
-            <TabsContent key={index} value={(index + 1).toString()} className="pt-2">
-              <ScrollArea className="h-[60vh] pr-4">
-                <div className="space-y-6">
+            <TabsContent key={index} value={(index + 1).toString()} className="pt-1">
+              <ScrollArea className="h-[40vh] pr-3">
+                <div className="space-y-4">
                   <div>
-                    <h3 className="text-xl font-semibold mb-4">{step.title}</h3>
-                    <p className="text-muted-foreground mb-4">{step.description}</p>
+                    <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
+                    <p className="text-sm text-muted-foreground mb-3">{step.description}</p>
                   </div>
-                  
-                  <div className="mx-auto max-w-xs mb-6">
-                    <div className="aspect-video relative rounded-lg overflow-hidden border">
-                      <Image 
-                        src={step.image} 
-                        alt={step.title}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
-                  
+                                  
                   <div>
-                    <h4 className="font-medium mb-3">Pro Tips:</h4>
-                    <ul className="space-y-3 pl-1">
+                    <h4 className="text-sm font-medium mb-2">Pro Tips:</h4>
+                    <ul className="space-y-2 pl-1">
                       {step.tips.map((tip, i) => (
-                        <li key={i} className="flex gap-2 items-center">
-                          <span className="text-primary text-lg leading-none">•</span>
+                        <li key={i} className="flex gap-2 items-start text-sm">
+                          <span className="text-primary text-lg leading-none mt-0.5">•</span>
                           <span>{tip}</span>
                         </li>
                       ))}
@@ -229,16 +208,16 @@ export function LessonCreationGuide({
                   </div>
                   
                   {index === guideSteps.length - 1 && (
-                    <div className="mt-8 p-4 bg-muted/30 rounded-lg border">
-                      <h4 className="font-medium mb-2">Ready to create your first lesson?</h4>
-                      <p className="text-sm text-muted-foreground mb-4">
+                    <div className="mt-5 p-3 bg-muted/30 rounded-lg border">
+                      <h4 className="text-sm font-medium mb-2">Ready to create your first lesson?</h4>
+                      <p className="text-xs text-muted-foreground mb-3">
                         If you want to charge for your lessons, you'll need to set up Stripe Connect first.
                       </p>
-                      <div className="flex gap-3">
-                        <Button size="sm" variant="outline" asChild>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button size="sm" variant="outline" asChild className="text-xs h-8">
                           <Link href="/dashboard/stripe-connect">Set Up Stripe First</Link>
                         </Button>
-                        <Button size="sm" asChild>
+                        <Button size="sm" asChild className="text-xs h-8">
                           <Link href="/dashboard/upload">Create Free Lesson</Link>
                         </Button>
                       </div>
@@ -247,32 +226,34 @@ export function LessonCreationGuide({
                 </div>
               </ScrollArea>
               
-              <div className="flex justify-between items-center mt-6 pt-4 border-t">
+              <div className="flex justify-between items-center mt-4 pt-3 border-t">
                 <div className="flex gap-2">
                   {index > 0 && (
                     <Button 
                       variant="outline" 
                       onClick={goToPrevStep}
-                      className="flex items-center"
+                      className="flex items-center h-8 text-xs"
+                      size="sm"
                     >
-                      <ChevronLeft className="mr-1 h-4 w-4" />
+                      <ChevronLeft className="mr-1 h-3 w-3" />
                       Previous
                     </Button>
                   )}
                   {index < guideSteps.length - 1 && (
                     <Button 
                       onClick={goToNextStep}
-                      className="flex items-center"
+                      className="flex items-center h-8 text-xs"
+                      size="sm"
                     >
                       Next
-                      <ChevronRight className="ml-1 h-4 w-4" />
+                      <ChevronRight className="ml-1 h-3 w-3" />
                     </Button>
                   )}
                 </div>
                 
                 {index === guideSteps.length - 1 && (
                   <div className="w-full flex justify-end">
-                    <Button size="sm" asChild>
+                    <Button size="sm" asChild className="h-8 text-xs">
                       <Link href="/dashboard/upload">Get Started →</Link>
                     </Button>
                   </div>
