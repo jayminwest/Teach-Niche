@@ -88,6 +88,7 @@ export default function Header() {
           </nav>
         </div>
         <div className="hidden md:flex gap-4">
+          {loading && <div className="text-sm text-muted-foreground">Loading...</div>}
           {!loading && (
             <>
               {user ? (
@@ -134,6 +135,7 @@ export default function Header() {
               ))}
             </nav>
             <div className="flex flex-col space-y-4 pt-4 border-t">
+              {loading && <div className="text-sm text-muted-foreground">Loading...</div>}
               {!loading && (
                 <>
                   {user ? (

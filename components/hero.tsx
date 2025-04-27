@@ -15,8 +15,8 @@ export function Hero() {
           fill
           className="w-full h-full object-cover filter grayscale brightness-[0.4]"
           priority
-          sizes="100vw"
-          quality={85}
+          sizes="(max-width: 640px) 640px, (max-width: 1024px) 1024px, 1350px"
+          quality={80}
         />
       </div>
       <div className="container mx-auto relative z-10 h-full">
