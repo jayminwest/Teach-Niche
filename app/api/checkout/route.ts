@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 
 import { cookies } from "next/headers"
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
-import { stripe, calculateFees } from "@/lib/stripe"
+import { stripe, calculateFees, calculatePriceWithStripeFees } from "@/lib/stripe"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
@@ -73,16 +73,34 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate the price in cents and the platform fee
+    // The platformFee now includes the Stripe fees for the platform's portion
     const priceInCents = Math.round(lesson.price * 100)
     const { platformFee, instructorAmount } = calculateFees(priceInCents)
     const instructorPayoutAmount = instructorAmount / 100 // Convert back to dollars for database
 
+    // Calculate price with fees
+    const priceWithFees = calculatePriceWithStripeFees(priceInCents) / 100;
+    const priceWithFeesInCents = Math.round(priceWithFees * 100);
+    
+    // Create a product for this specific checkout session
+    const checkoutProduct = await stripe.products.create({
+      name: lesson.title || "Lesson",
+      description: `${lesson.title || "Lesson"} (includes processing fees)`,
+    });
+    
+    // Create a price for the checkout product that includes fees
+    const checkoutPrice = await stripe.prices.create({
+      product: checkoutProduct.id,
+      unit_amount: priceWithFeesInCents,
+      currency: 'usd',
+    });
+    
     // Create a Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
         {
-          price: lesson.stripe_price_id,
+          price: checkoutPrice.id,
           quantity: 1,
         },
       ],
@@ -94,7 +112,9 @@ export async function POST(request: NextRequest) {
         userId: userSession.user.id,
         stripeProductId: lesson.stripe_product_id,
         stripePriceId: lesson.stripe_price_id,
-        instructorPayoutAmount: instructorPayoutAmount,
+        originalPrice: lesson.price.toString(),
+        instructorPayoutAmount: instructorPayoutAmount.toString(),
+        platformFee: (platformFee/100).toString(),
       },
       payment_intent_data: {
         application_fee_amount: platformFee,

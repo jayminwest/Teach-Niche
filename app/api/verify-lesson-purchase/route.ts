@@ -153,19 +153,29 @@ export async function GET(request: NextRequest) {
       column_name: 'video_id'
     })
     
-    // Calculate instructor payout if not provided in metadata
-    let instructorPayoutAmount = null
+    // Get values from metadata
+    let instructorPayoutAmount = null;
+    let platformFeeAmount = null;
+    
     if (checkoutSession.metadata?.instructorPayoutAmount) {
-      instructorPayoutAmount = parseFloat(checkoutSession.metadata.instructorPayoutAmount) / 100
+      // If using the new format, these values are already calculated correctly
+      instructorPayoutAmount = parseFloat(checkoutSession.metadata.instructorPayoutAmount) / 100;
+      platformFeeAmount = checkoutSession.metadata?.platformFee ? 
+        parseFloat(checkoutSession.metadata.platformFee) : null;
     } else if (checkoutSession.amount_total) {
-      const amountInCents = checkoutSession.amount_total
-      const { instructorAmount } = calculateFees(amountInCents)
-      instructorPayoutAmount = instructorAmount / 100
+      // Fallback to calculating from scratch if metadata doesn't have the values
+      const amountInCents = checkoutSession.amount_total;
+      const { instructorAmount, platformFee } = calculateFees(amountInCents);
+      instructorPayoutAmount = instructorAmount / 100;
+      platformFeeAmount = platformFee / 100;
     }
     
-    // Calculate platform fee (now includes Stripe fees for platform's portion)
-    const amountInCents = checkoutSession.amount_total || 0
-    const { platformFee } = calculateFees(amountInCents)
+    // If platformFeeAmount is still null, calculate it
+    if (platformFeeAmount === null && checkoutSession.amount_total) {
+      const amountInCents = checkoutSession.amount_total;
+      const { platformFee } = calculateFees(amountInCents);
+      platformFeeAmount = platformFee / 100;
+    }
     
     // Define the purchase data with proper typing
     interface PurchaseData {
@@ -190,7 +200,7 @@ export async function GET(request: NextRequest) {
       stripe_product_id: checkoutSession.metadata?.productId || null,
       stripe_price_id: checkoutSession.metadata?.priceId || null,
       instructor_payout_amount: instructorPayoutAmount,
-      platform_fee_amount: platformFee / 100, // Convert to dollars
+      platform_fee_amount: platformFeeAmount, // Already in dollars
       payout_status: 'pending_transfer', // Set initial status
       is_free: false
     }
