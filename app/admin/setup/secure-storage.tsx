@@ -10,6 +10,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { createClient } from "@/lib/supabase/client"
 import { Progress } from "@/components/ui/progress"
+import type { Lesson } from "@/types/supabase"
+
+interface ValidLesson {
+  id: string;
+  title: string;
+  video_url?: string;
+  instructor_id: string;
+  price: number;
+}
 
 interface MonitorDetail {
   lessonId: string;
@@ -138,11 +147,30 @@ export default function SecureStorageSetup() {
           break; // No more lessons to process
         }
         
+        // Check if we have a valid response
+        if (!lessons || 'error' in lessons) {
+          throw new Error(`Error fetching lessons: ${JSON.stringify(lessons)}`);
+        }
+        
         // Process each lesson in the batch
-        for (const lesson of lessons) {
+        // Cast to ValidLesson[] to fix TypeScript errors
+        const validLessons = lessons as ValidLesson[];
+        
+        for (const lesson of validLessons) {
           try {
             // Test video access
-            const videoPath = lesson.video_url;
+            const videoPath = lesson.video_url || '';
+            if (!videoPath) {
+              // Skip lessons without video URLs
+              details.push({
+                lessonId: lesson.id || 'unknown',
+                title: lesson.title || 'Untitled Lesson',
+                status: 'error',
+                videoPath: 'missing',
+                error: 'No video URL found for this lesson'
+              });
+              continue;
+            }
             
             // Try to get a signed URL
             const { data: signedUrlData, error: signedUrlError } = await supabase.storage
@@ -202,7 +230,7 @@ export default function SecureStorageSetup() {
               lessonId: lesson.id,
               title: lesson.title,
               status: 'error',
-              videoPath: lesson.video_url || 'unknown', // Add videoPath here
+              videoPath: lesson?.video_url || 'unknown', // Add videoPath here
               error: e
             });
           }

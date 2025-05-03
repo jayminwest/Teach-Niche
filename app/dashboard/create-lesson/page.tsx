@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import type { Database } from "@/types/supabase"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -105,7 +106,7 @@ export default function CreateLesson() {
           price: Number.parseFloat(price),
           instructor_id: user.id,
           thumbnail_url: thumbnailUrl,
-        })
+        } as Database["public"]["Tables"]["lessons"]["Insert"])
         .select()
 
       if (dbError) throw dbError

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { CheckCircle } from "lucide-react" // Add this import for the success icon
 
@@ -17,6 +18,7 @@ export default function SignUp() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
   const router = useRouter()
   const { toast } = useToast()
   const supabase = createClient()
@@ -26,16 +28,22 @@ export default function SignUp() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signUp({
+      // Validate the origin for the redirect URL
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      
+      console.log("Signing up with redirect URL:", redirectUrl);
+      
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          emailRedirectTo: redirectUrl,
         },
       })
 
       if (error) {
-        throw error
+        console.error("Sign-up error:", error);
+        throw error;
       }
 
       // Enhanced toast message
@@ -45,14 +53,41 @@ export default function SignUp() {
         duration: 3000,
       })
       
+      // In case of user creation issues, show a helpful message
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Account Already Exists",
+          description: "An account with this email already exists. Please sign in instead.",
+        });
+        router.push("/auth/sign-in");
+        return;
+      }
+      
       // Redirect to dashboard or home page directly since they'll be logged in
       router.push("/")
     } catch (error: any) {
+      console.error("Sign-up process error:", error);
+      
+      let errorMessage = "Failed to sign up. Please try again.";
+      
+      // Handle specific error cases
+      if (error.message?.includes("email")) {
+        errorMessage = "Please provide a valid email address.";
+      } else if (error.message?.includes("password")) {
+        errorMessage = "Password must be at least 8 characters long.";
+      } else if (error.message?.includes("already")) {
+        errorMessage = "An account with this email already exists. Please sign in instead.";
+      }
+      
+      // Set error state for display in the UI
+      setAuthError(errorMessage);
+      
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to sign up. Please try again.",
-      })
+        description: errorMessage,
+      });
     } finally {
       setLoading(false)
     }
@@ -68,6 +103,12 @@ export default function SignUp() {
         </CardHeader>
         <form onSubmit={handleSignUp}>
           <CardContent className="space-y-4">
+            {/* Display auth error if present */}
+            {authError && (
+              <Alert variant="destructive" className="mb-4 border-red-500 bg-red-50 text-red-900 dark:bg-red-900/20 dark:text-red-200">
+                <AlertDescription className="font-medium">{authError}</AlertDescription>
+              </Alert>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -77,6 +118,7 @@ export default function SignUp() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className={authError ? "border-destructive" : ""}
               />
             </div>
             <div className="space-y-2">
@@ -87,6 +129,7 @@ export default function SignUp() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                className={authError ? "border-destructive" : ""}
               />
               <p className="text-xs text-muted-foreground">Password must be at least 8 characters long</p>
             </div>

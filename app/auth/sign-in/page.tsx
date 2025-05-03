@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
@@ -21,8 +19,22 @@ export default function SignIn() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirectedFrom") || "/"
+  const error = searchParams.get("error")
+  const errorDescription = searchParams.get("error_description")
   const { toast } = useToast()
   const supabase = createClient()
+  
+  // Show error toast if redirected with error
+  useEffect(() => {
+    if (error) {
+      setAuthError(errorDescription || "An error occurred during authentication")
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: errorDescription || "An error occurred during authentication",
+      })
+    }
+  }, [error, errorDescription, toast])
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault()

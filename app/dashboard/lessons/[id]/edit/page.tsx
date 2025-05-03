@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import type { Database } from "@/types/supabase"
 
 import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
@@ -45,7 +46,11 @@ export default function EditLesson() {
         }
 
         // Fetch the lesson
-        const { data: lesson, error } = await supabase.from("lessons").select("*").eq("id", lessonId).single()
+        const { data: lesson, error } = await supabase
+          .from("lessons")
+          .select("*")
+          .eq("id", lessonId as string)
+          .single()
 
         if (error || !lesson) {
           toast({
@@ -166,8 +171,8 @@ export default function EditLesson() {
           price: Number.parseFloat(price),
           thumbnail_url: thumbnailUrl,
           updated_at: new Date().toISOString(),
-        })
-        .eq("id", lessonId)
+        } as Database["public"]["Tables"]["lessons"]["Update"])
+        .eq("id", lessonId as string)
 
       if (dbError) throw dbError
 

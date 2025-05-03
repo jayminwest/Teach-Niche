@@ -32,11 +32,30 @@ export const STRIPE_FIXED_FEE_CENTS = 30
 
 // Helper function to calculate fee amounts
 export function calculateFees(amount: number) {
-  const platformFee = Math.round((amount * PLATFORM_FEE_PERCENTAGE) / 100)
-  const instructorAmount = amount - platformFee
-
+  // First calculate the Stripe fee for the whole transaction
+  const stripeFeePercentage = Math.round((amount * STRIPE_PERCENTAGE_FEE) / 100);
+  const totalStripeFee = stripeFeePercentage + STRIPE_FIXED_FEE_CENTS;
+  
+  // Calculate how much remains after Stripe takes their fee
+  const amountAfterStripeFee = amount - totalStripeFee;
+  
+  // Calculate the platform's share of the remaining amount
+  // The platform gets 15% of the base price (before Stripe fees)
+  const basePrice = Math.round(amount / (1 + STRIPE_PERCENTAGE_FEE/100) - STRIPE_FIXED_FEE_CENTS);
+  const basePlatformFee = Math.round((basePrice * PLATFORM_FEE_PERCENTAGE) / 100);
+  
+  // Calculate the platform's proportion of the total amount and apply to Stripe fees
+  const platformProportion = basePlatformFee / basePrice;
+  const platformShareOfStripeFee = Math.round(totalStripeFee * platformProportion);
+  
+  // The platform fee includes both the base fee and the platform's share of Stripe fees
+  const platformFeeWithStripeCosts = basePlatformFee + platformShareOfStripeFee;
+  
+  // The instructor gets the remainder (automatically accounts for rounding errors)
+  const instructorAmount = amount - platformFeeWithStripeCosts;
+  
   return {
-    platformFee,
+    platformFee: platformFeeWithStripeCosts,
     instructorAmount,
   }
 }
