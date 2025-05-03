@@ -97,10 +97,8 @@ export default async function UsersPage() {
                   {user.created_at && format(new Date(user.created_at), 'MMM d, yyyy')}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/admin/users/edit?id=${user.id}`}>
-                      Edit
-                    </Link>
+                  <Button variant="ghost" size="sm" disabled>
+                    View
                   </Button>
                 </TableCell>
               </TableRow>

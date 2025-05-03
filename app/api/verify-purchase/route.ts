@@ -6,7 +6,8 @@ import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createServerClient()
+    // Await the supabase client
+    const supabase = await createServerClient()
     
     // Get the current user
     const {
@@ -86,7 +87,7 @@ export async function GET(request: NextRequest) {
       instructorPayoutAmount = instructorAmount / 100
     }
     
-    // Calculate platform fee
+    // Calculate platform fee (now includes Stripe fees for platform's portion)
     const amountInCents = checkoutSession.amount_total || 0
     const { platformFee } = calculateFees(amountInCents)
     

@@ -108,6 +108,36 @@ Detailed setup instructions are available in `ai_docs/stripe_test_setup.md` and 
 - `pnpm lint`: Run ESLint
 - `pnpm typecheck`: Run TypeScript type checker
 
+## TypeScript and Supabase Types
+
+This project uses TypeScript for type safety, with database types generated from Supabase. Due to the Next.js 15 and Supabase integration, there are a few important notes about type handling:
+
+1. **Awaiting Supabase Client**: In Next.js 15, the Supabase client from `createServerClient()` returns a Promise that must be awaited before use:
+   ```typescript
+   const supabase = await createServerClient()
+   ```
+
+2. **Database Types**: When working with database operations, use type assertions with the proper Database types:
+   ```typescript
+   .update({
+     field1: value1,
+     field2: value2,
+   } as Database["public"]["Tables"]["table_name"]["Update"])
+   ```
+
+3. **Type Guards**: When working with Supabase query results, use type guards to handle potential `null` or error return values:
+   ```typescript
+   const { data, error } = await supabase.from("table").select("*")
+   if (error || !data) {
+     // Handle error
+     return
+   }
+   // Now TypeScript knows data is not null
+   const item = data[0]
+   ```
+
+4. **Error Handling**: For routes that use Supabase, always handle potential errors and provide appropriate HTTP status responses.
+
 ## Contributing
 
 1. Fork the repository

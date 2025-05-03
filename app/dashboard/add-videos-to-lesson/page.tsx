@@ -1,5 +1,6 @@
 "use client"
 
+import type { Database } from "@/types/supabase"
 import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -43,7 +44,7 @@ export default function AddVideosToLesson() {
         const { data: userLessons, error: lessonsError } = await supabase
           .from("lessons")
           .select("*")
-          .eq("instructor_id", user.id)
+          .eq("instructor_id", user.id as string)
           .is("parent_lesson_id", null)
           .order("title", { ascending: true })
 
@@ -115,7 +116,7 @@ export default function AddVideosToLesson() {
         video_url: videoToAdd.video_url,
         thumbnail_url: videoToAdd.thumbnail_url,
         parent_lesson_id: selectedLessonId
-      })
+      } as Database["public"]["Tables"]["lessons"]["Insert"])
 
       if (error) throw error
 

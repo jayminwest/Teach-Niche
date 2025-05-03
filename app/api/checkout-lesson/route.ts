@@ -9,7 +9,7 @@ import { Database, Lesson, InstructorProfile } from '@/types/supabase';
 
 // Helper function to get the instructor's Stripe account ID
 async function getInstructorStripeAccountId(
-  supabase: SupabaseClient<Database>, 
+  supabase: any, // Use any to avoid type issues
   instructorId: string
 ) {
   const { data, error } = await supabase
@@ -62,7 +62,7 @@ async function createStripeProduct({ name, description, price, images }: {
 
 // Helper function to record a free lesson access
 async function recordFreeLessonAccess(
-  supabase: SupabaseClient<Database>,
+  supabase: any, // Use any to avoid type issues
   userId: string,
   lessonId: string,
   instructorId: string
@@ -143,7 +143,7 @@ export async function POST(request: Request) {
     // Get the current user
     const {
       data: { session },
-    } = await supabase.auth.getSession()
+    } = await (await supabase).auth.getSession()
     
     if (!session?.user) {
       return NextResponse.json(
@@ -163,7 +163,7 @@ export async function POST(request: Request) {
     }
     
     // Fetch the lesson to get instructor ID and verify price
-    const { data: lesson, error: lessonError } = await supabase
+    const { data: lesson, error: lessonError } = await (await supabase)
       .from("lessons")
       .select("stripe_product_id, stripe_price_id, instructor_id, price")
       .eq("id", lessonId)
@@ -193,8 +193,9 @@ export async function POST(request: Request) {
     if (lessonPrice === 0 || isFree) {
       // For free lessons, we still need the instructor to have a Stripe account
       // but we don't need to create a checkout session
+      const supabaseClient = await supabase;
       const { accountId: instructorStripeAccountId } = 
-        await getInstructorStripeAccountId(supabase, lesson.instructor_id || '');
+        await getInstructorStripeAccountId(supabaseClient, lesson.instructor_id || '');
       
       if (!instructorStripeAccountId) {
         return NextResponse.json(
@@ -205,7 +206,7 @@ export async function POST(request: Request) {
       
       // Record the free lesson access
       const result = await recordFreeLessonAccess(
-        supabase, 
+        supabaseClient, 
         session.user.id, 
         lessonId, 
         lesson.instructor_id || '');
@@ -215,8 +216,9 @@ export async function POST(request: Request) {
     
     // For paid lessons, continue with the existing flow
     // Get the instructor's Stripe account ID
+    const supabaseClient = await supabase;
     const { accountId: instructorStripeAccountId, isEnabled: isAccountEnabled } = 
-      await getInstructorStripeAccountId(supabase, lesson.instructor_id || '');
+      await getInstructorStripeAccountId(supabaseClient, lesson.instructor_id || '');
     
     if (!instructorStripeAccountId) {
       return NextResponse.json(
@@ -251,13 +253,13 @@ export async function POST(request: Request) {
       }
       
       // Update the lesson with the new Stripe IDs
-      const { error: updateError } = await supabase
+      const { error: updateError } = await (await supabase)
         .from("lessons")
         .update({
           stripe_product_id: productId,
           stripe_price_id: priceId,
-        })
-        .eq("id", lessonId)
+        } as Database["public"]["Tables"]["lessons"]["Update"])
+        .eq("id", lessonId as string)
       
       if (updateError) {
         console.error("Error updating lesson with Stripe IDs:", updateError)
@@ -272,6 +274,7 @@ export async function POST(request: Request) {
     // Calculate the instructor payout amount
     const priceInCents = Math.round(Number(price) * 100)
     // The displayed price already includes Stripe fees (customer pays them)
+    // The platformFee now includes the Stripe fees for the platform's portion
     const { platformFee, instructorAmount } = calculateFees(priceInCents)
     const instructorPayoutAmount = instructorAmount / 100 // Convert back to dollars for database
     

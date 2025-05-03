@@ -9,7 +9,7 @@ import { Database } from '@/types/supabase';
 
 // Helper function to get the instructor's Stripe account ID
 async function getInstructorStripeAccountId(
-  supabase: SupabaseClient<Database>, 
+  supabase: SupabaseClient<Database, "public">, 
   instructorId: string
 ) {
   const { data, error } = await supabase
@@ -30,7 +30,8 @@ async function getInstructorStripeAccountId(
 
 export async function POST(request: Request) {
   try {
-    const supabase = createServerClient()
+    // Since createServerClient returns a Promise<SupabaseClient>, we need to await it
+    const supabase = await createServerClient()
     
     // Get the current user
     const {
@@ -102,6 +103,7 @@ export async function POST(request: Request) {
     
     // Calculate the instructor payout amount
     const priceInCents = Math.round(price * 100)
+    // The platformFee now includes the Stripe fees for the platform's portion
     const { platformFee, instructorAmount } = calculateFees(priceInCents)
     
     // Get the base URL for redirects - prioritize the explicit APP_URL
