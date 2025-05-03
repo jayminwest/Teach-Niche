@@ -8,6 +8,18 @@ import Header from "@/components/header"
 import Footer from "@/components/footer"
 import { Analytics } from "@vercel/analytics/react"
 import { ClarityAnalytics } from "@/components/clarity-analytics"
+import { validateEnv, logEnvironment } from "@/lib/env-utils"
+
+// Validate environment variables on server
+const { valid, message } = validateEnv()
+if (!valid && process.env.NODE_ENV !== 'production') {
+  console.error(`❌ Environment validation failed: ${message}`)
+}
+
+// Log environment in development
+if (process.env.NODE_ENV === 'development') {
+  logEnvironment()
+}
 
 const inter = Inter({ subsets: ["latin"] })
 

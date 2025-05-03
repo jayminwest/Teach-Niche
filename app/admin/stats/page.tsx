@@ -1,16 +1,16 @@
 import { requireAdmin } from "@/lib/auth-utils"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatPrice } from "@/lib/utils"
+import { createServerClient } from "@/lib/supabase/server"
 
 export default async function StatsPage() {
   // Check if the user is an admin - this will redirect if not authorized
   await requireAdmin();
   
-  const supabase = createServerComponentClient({ cookies })
+  // Use the server client to bypass RLS
+  const supabase = await createServerClient();
   
   // Get user stats
   const { count: userCount } = await supabase
@@ -28,17 +28,53 @@ export default async function StatsPage() {
     .from("lessons")
     .select("*", { count: 'exact', head: true })
   
-  // Get purchase stats
-  const { data: purchases } = await supabase
+  // Simply query the purchases table directly
+  const { data: purchases, error: purchasesError } = await supabase
     .from("purchases")
-    .select("amount, is_free")
+    .select("id, amount, is_free");
   
-  const totalPurchases = purchases?.length || 0
-  const freePurchases = purchases?.filter(p => p.is_free).length || 0
-  const paidPurchases = totalPurchases - freePurchases
+  if (purchasesError) {
+    console.error("Admin Stats: Error fetching purchases:", purchasesError.message);
+  }
   
-  // Calculate revenue
-  const totalRevenue = purchases?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0
+  console.log(`Admin Stats: Retrieved ${purchases?.length || 0} purchases directly from database`);
+  
+  // Log some purchase details to help diagnose
+  if (purchases && purchases.length > 0) {
+    console.log(`Admin Stats: First few purchases:`, 
+      purchases.slice(0, 3).map(p => ({
+        id: p.id,
+        amount: p.amount,
+        is_free: p.is_free
+      }))
+    );
+  }
+  
+  // Calculate statistics from raw purchase data
+  const totalPurchases = purchases?.length || 0;
+  const freePurchases = purchases?.filter(p => p.is_free === true).length || 0;
+  const paidPurchases = totalPurchases - freePurchases;
+  
+  // Calculate total revenue
+  let totalRevenue = 0;
+  purchases?.forEach(p => {
+    // Skip free purchases
+    if (p.is_free === true) return;
+    
+    try {
+      if (typeof p.amount === 'string' && p.amount) {
+        const parsedAmount = parseFloat(p.amount);
+        totalRevenue += parsedAmount;
+        console.log(`Admin Stats: Parsed amount ${p.amount} as ${parsedAmount}`);
+      } else if (typeof p.amount === 'number') {
+        totalRevenue += p.amount;
+      }
+    } catch (e) {
+      console.error(`Error parsing purchase amount (${p.amount}):`, e);
+    }
+  });
+  
+  console.log(`Admin Stats: Stats from RPC - ${totalPurchases} purchases (${freePurchases} free, ${paidPurchases} paid), $${totalRevenue} revenue`);
   
   return (
     <div className="container py-8">

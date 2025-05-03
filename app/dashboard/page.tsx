@@ -27,6 +27,14 @@ export default async function Dashboard() {
     redirect("/auth/sign-in")
   }
 
+  // Determine which environment we're in based on Supabase URL
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const isDevelopment = supabaseUrl.includes('nqmtr');
+  const environmentName = isDevelopment ? 'DEVELOPMENT' : 'PRODUCTION';
+  
+  console.log(`Dashboard: Running in ${environmentName} environment`);
+  console.log(`Dashboard: Supabase URL: ${supabaseUrl}`);
+
   const user = session.user
   
   // Check if user has admin role
@@ -60,86 +68,89 @@ export default async function Dashboard() {
   // No need for child lessons, video counts, or standalone videos logic anymore
 
   
-  // Get instructor profile and use stored total earnings if available
-  // Get all purchases for the lessons created by this instructor
+  // Get instructor profile and purchases directly
   let purchases: PurchaseWithLesson[] = [];
+  let totalEarnings = 0;
+  let freeCount = 0;
+  let paidCount = 0;
   
   try {
     // Get all lessons by this instructor
-    const { data: allLessonsData, error: allLessonsError } = await supabase
+    const { data: instructorLessons, error: lessonsError } = await supabase
       .from("lessons")
       .select("id, title")
       .eq("instructor_id", user.id);
     
-    if (allLessonsError) {
-      console.error("Error fetching lesson IDs:", allLessonsError.message);
+    if (lessonsError) {
+      console.error("Dashboard: Error fetching instructor lessons:", lessonsError.message);
+    }
+    
+    const lessonIds = instructorLessons?.map(lesson => lesson.id) || [];
+    console.log(`Dashboard: Found ${lessonIds.length} lessons for instructor ${user.id}`);
+    
+    if (lessonIds.length === 0) {
+      console.log("Dashboard: No lessons found for instructor");
     } else {
-      const lessonIds = allLessonsData.map(lesson => lesson.id);
+      // Get all purchases in the system
+      const { data: allPurchases, error: purchasesError } = await supabase
+        .from("purchases")
+        .select("*");
       
-      if (lessonIds.length > 0) {
-        // Get purchases for any of the instructor's lessons
-        const { data, error } = await supabase
-          .from("purchases")
-          .select("*, lesson:lesson_id(title)")
-          .in("lesson_id", lessonIds);
+      if (purchasesError) {
+        console.error("Dashboard: Error fetching purchases:", purchasesError.message);
+      } else {
+        console.log(`Dashboard: Total purchases in system: ${allPurchases?.length || 0}`);
         
-        if (error) {
-          console.error("Error fetching purchases:", error.message);
-        } else {
-          purchases = data || [];
-        }
-        
-        // Check for older purchases that might have video_id instead of lesson_id
-        // First check if video_id column exists by making a test query
-        try {
-          const testVideoColumn = await supabase
-            .from("purchases")
-            .select("video_id")
-            .limit(1);
+        // Manually filter purchases related to this instructor's lessons
+        if (allPurchases && allPurchases.length > 0) {
+          purchases = allPurchases.filter(purchase => 
+            lessonIds.includes(purchase.lesson_id)
+          );
           
-          // If video_id column exists, get purchases by video_id
-          if (!testVideoColumn.error) {
-            // Get all videos owned by this instructor
-            const { data: videoData, error: videoError } = await supabase
-              .from("videos")
-              .select("id")
-              .eq("instructor_id", user.id);
-              
-            if (!videoError && videoData && videoData.length > 0) {
-              const videoIds = videoData.map(video => video.id);
-              
-              // Get purchases for any of the instructor's videos
-              const { data: videoPurchases, error: videoPurchaseError } = await supabase
-                .from("purchases")
-                .select("*")
-                .in("video_id", videoIds);
-              
-              if (!videoPurchaseError && videoPurchases) {
-                purchases = [...purchases, ...videoPurchases];
-              }
-            }
-          }
-        } catch (e) {
-          // Video purchases query skipped - column may not exist
+          // Calculate stats
+          freeCount = purchases.filter(p => p.is_free === true).length;
+          paidCount = purchases.length - freeCount;
+          
+          // Calculate earnings
+          totalEarnings = purchases.reduce((sum, purchase) => {
+            // Skip free purchases
+            if (purchase.is_free === true) return sum;
+            
+            // Convert string to number if needed (Supabase returns decimal as string)
+            const amount = typeof purchase.instructor_payout_amount === 'string' 
+              ? parseFloat(purchase.instructor_payout_amount) 
+              : (purchase.instructor_payout_amount || 0);
+            
+            return sum + amount;
+          }, 0);
+          
+          console.log(`Dashboard: Found ${purchases.length} purchases (${freeCount} free, ${paidCount} paid) with $${totalEarnings} earnings`);
         }
       }
     }
   } catch (error) {
-    console.error("Error fetching purchases:", error instanceof Error ? error.message : String(error));
+    console.error("Dashboard: Error processing purchases:", error instanceof Error ? error.message : String(error));
   }
 
-  // Get the instructor's profile including Stripe Connect status and earnings
+  // Get the instructor's profile including Stripe Connect status
   const { data: instructorProfile } = await supabase
     .from("instructor_profiles")
     .select("*")
     .eq("user_id", user.id)
     .single()
     
-  // Calculate earnings from purchases as fallback
-  const calculatedEarnings = purchases.reduce((sum, purchase) => sum + (purchase.instructor_payout_amount || 0), 0) || 0
-  
-  // Use the stored total_earnings if available, otherwise use calculated value
-  const totalEarnings = instructorProfile?.total_earnings || calculatedEarnings
+  // If the instructor profile has stored earnings, use that as the source of truth
+  if (instructorProfile?.total_earnings) {
+    try {
+      const profileEarnings = parseFloat(instructorProfile.total_earnings);
+      if (!isNaN(profileEarnings)) {
+        totalEarnings = profileEarnings;
+        console.log(`Dashboard: Using profile stored earnings: $${totalEarnings}`);
+      }
+    } catch (e) {
+      console.error("Dashboard: Error parsing profile earnings:", e);
+    }
+  }
   
 
   // If no profile exists, create one
@@ -156,6 +167,17 @@ export default async function Dashboard() {
 
   return (
     <div className="container py-4 sm:py-8">
+      {/* Development Environment Banner */}
+      {isDevelopment && (
+        <Alert className="mb-4 sm:mb-6 bg-green-100 dark:bg-green-900 border-green-500 text-green-900 dark:text-green-100">
+          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <AlertTitle>Development Environment</AlertTitle>
+          <AlertDescription className="text-sm">
+            Using Supabase project: <strong>{supabaseUrl.replace('https://', '')}</strong>
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {!hasStripeAccount && (
         <Alert variant="warning" className="mb-4 sm:mb-6">
           <AlertTriangle className="h-4 w-4" />
@@ -224,7 +246,7 @@ export default async function Dashboard() {
           <CardContent className="p-3 sm:p-4 pt-0">
             <div className="text-xl sm:text-2xl font-bold">{purchases?.length || 0}</div>
             <p className="text-[10px] sm:text-xs text-muted-foreground">
-              ({purchases.filter(p => p.is_free).length} free)
+              ({freeCount} free)
             </p>
           </CardContent>
         </Card>
@@ -235,7 +257,7 @@ export default async function Dashboard() {
           <CardContent className="p-3 sm:p-4 pt-0">
             <div className="text-xl sm:text-2xl font-bold">{formatPrice(totalEarnings)}</div>
             <p className="text-[10px] sm:text-xs text-muted-foreground">
-              {purchases.filter(p => !p.is_free).length} paid
+              {paidCount} paid
             </p>
           </CardContent>
         </Card>
