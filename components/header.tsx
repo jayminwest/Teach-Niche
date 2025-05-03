@@ -37,7 +37,13 @@ export default function Header() {
   }, [supabase.auth])
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
+    try {
+      await supabase.auth.signOut()
+      // Force a page reload to ensure all auth state is cleared
+      window.location.href = "/"
+    } catch (error) {
+      console.error("Error signing out:", error)
+    }
   }
 
   const navigation = [
