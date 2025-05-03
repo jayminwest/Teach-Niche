@@ -47,6 +47,9 @@ export default async function LessonDetail({
   // Await the params Promise before accessing its properties
   const resolvedParams = await params;
   const lessonId = resolvedParams.id;
+  
+  // Ensure lesson ID is a proper UUID string for database queries
+  console.log(`Original lesson ID from params: ${lessonId}`);
 
   // Note: searchParams would also need to be awaited if used directly
 
@@ -144,18 +147,110 @@ export default async function LessonDetail({
   // Check if the user has purchased this lesson
   let hasPurchased = false
   if (user) {
-    const { data: purchase, error: purchaseError } = await supabase
+    console.log(`Lesson page: checking if user ${user.id} has purchased lesson ${lessonId}`);
+    
+    // Get all purchases for this user for debugging
+    const { data: allPurchases, error: allPurchasesError } = await supabase
       .from("purchases")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("lesson_id", lessonId)
-      .maybeSingle()
-
-    if (purchaseError) {
-      console.error("Error checking purchase:", purchaseError)
+      .select("*")
+      .eq("user_id", user.id);
+      
+    if (allPurchasesError) {
+      console.error("Error fetching all purchases:", allPurchasesError);
+    } else {
+      console.log("All user purchases:", JSON.stringify(allPurchases));
+    }
+    
+    // Force conversion to UUID string format to ensure proper comparison
+    const uuidLessonId = lessonId.replace(/-/g, '').toLowerCase();
+    console.log(`DEBUG: Normalized lesson ID: ${uuidLessonId}`);
+    
+    // Enhanced purchase verification to ensure existing purchases are found
+    let purchase = null;
+    let purchaseError = null;
+    
+    try {
+      // Log for debugging
+      console.log("DEBUG: Enhanced purchase verification starting");
+      console.log(`DEBUG: User ID: ${user.id}, Lesson ID: ${lessonId}`);
+      
+      // APPROACH 1: Direct exact match with eq()
+      const result1 = await supabase
+        .from("purchases")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("lesson_id", lessonId)
+        .maybeSingle();
+        
+      console.log("Direct match result:", JSON.stringify(result1));
+      
+      if (result1.data) {
+        console.log("DEBUG: Found direct match purchase");
+        purchase = result1.data;
+      } else {
+        // APPROACH 2: Try using SQL LIKE for partial matches
+        console.log("DEBUG: Trying SQL LIKE for partial matches");
+        
+        // PostgreSQL query to match partial lesson_id
+        const { data: likeMatches } = await supabase
+          .from("purchases")
+          .select("*")
+          .eq("user_id", user.id)
+          .filter("lesson_id::text", "ilike", `%${lessonId.replace(/-/g, '')}%`);
+          
+        console.log("LIKE matches:", JSON.stringify(likeMatches));
+          
+        if (likeMatches && likeMatches.length > 0) {
+          console.log("DEBUG: Found match with SQL LIKE");
+          purchase = likeMatches[0];
+        } else {
+          // APPROACH 3: Manual comparison of all purchases
+          console.log("DEBUG: Trying manual comparison of all purchases");
+          
+          // Get ALL purchases for this user
+          const { data: allUserPurchases } = await supabase
+            .from("purchases")
+            .select("*")
+            .eq("user_id", user.id);
+            
+          console.log("DEBUG: All user purchases:", JSON.stringify(allUserPurchases));
+            
+          // Try multiple string comparison methods
+          const simplifiedLessonId = lessonId.replace(/-/g, '').toLowerCase();
+          
+          const matchingPurchase = allUserPurchases?.find(p => {
+            if (!p.lesson_id) return false;
+            
+            // Convert to string and normalize for comparison
+            const purchaseLessonId = typeof p.lesson_id === 'string' 
+              ? p.lesson_id.replace(/-/g, '').toLowerCase() 
+              : String(p.lesson_id).replace(/-/g, '').toLowerCase();
+              
+            console.log(`Comparing purchase ${p.id}: ${purchaseLessonId} with ${simplifiedLessonId}`);
+            
+            return purchaseLessonId.includes(simplifiedLessonId) || 
+                   simplifiedLessonId.includes(purchaseLessonId);
+          });
+          
+          if (matchingPurchase) {
+            console.log("DEBUG: Found match with string comparison:", matchingPurchase);
+            purchase = matchingPurchase;
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error in purchase verification:", e);
+      purchaseError = e;
     }
 
-    hasPurchased = !!purchase
+    if (purchaseError) {
+      console.error("Error checking purchase:", purchaseError);
+    } else {
+      console.log("Purchase check result:", JSON.stringify(purchase));
+    }
+
+    hasPurchased = !!purchase;
+    console.log(`Has purchased: ${hasPurchased}`);
   }
 
   // Check if the user is the instructor
@@ -242,8 +337,22 @@ export default async function LessonDetail({
             <p className="text-muted-foreground">{lesson.description || "No description provided."}</p>
           </div>
 
-          {/* Removed Lesson Videos section */}
-          
+          {/* Debug information section (only visible if there's a query param ?debug=true) */}
+          {searchParams && (await searchParams).debug === 'true' && (
+            <div className="mt-8 p-4 border rounded-lg">
+              <h3 className="text-xl font-semibold">Debug Information</h3>
+              <div className="mt-2 bg-gray-100 p-3 rounded-md overflow-auto">
+                <p><strong>User ID:</strong> {user?.id || 'Not logged in'}</p>
+                <p><strong>Lesson ID:</strong> {lessonId}</p>
+                <p><strong>Has Purchased:</strong> {hasPurchased ? 'Yes' : 'No'}</p>
+                <p><strong>Is Instructor:</strong> {isInstructor ? 'Yes' : 'No'}</p>
+                <details>
+                  <summary className="cursor-pointer">Lesson Data</summary>
+                  <pre className="text-xs mt-2 overflow-auto">{JSON.stringify(lesson, null, 2)}</pre>
+                </details>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
