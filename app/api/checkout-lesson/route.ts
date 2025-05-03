@@ -327,7 +327,7 @@ export async function POST(request: Request) {
         priceId: stripePrice,
         originalPrice: price.toString(),
         instructorPayoutAmount: instructorAmount.toString(),
-        platformFee: platformFee.toString()
+        platformFee: (platformFee / 100).toString() // Convert from cents to dollars
       },
       payment_intent_data: {
         application_fee_amount: platformFee,
