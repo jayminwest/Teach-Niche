@@ -23,10 +23,7 @@ export const createClient = () => {
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
     supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     options: {
-      // Add Supabase client options
-      auth: {
-        persistSession: true,
-      },
+      // Typed correctly without auth property
       // Log in development only
       global: {
         fetch: (...args) => {

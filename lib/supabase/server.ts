@@ -14,9 +14,9 @@ export const createServerClient = cache(() => {
       console.error("Supabase environment variables missing for server client");
     }
     
-    const cookieStore = await cookies()
+    // Create the client with proper cookies function for Next.js
     const client = createServerComponentClient<Database>({ 
-      cookies: () => cookieStore 
+      cookies
     })
     
     // In development mode, log the connection info (but only once)
