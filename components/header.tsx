@@ -38,11 +38,36 @@ export default function Header() {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut()
-      // Force a page reload to ensure all auth state is cleared
-      window.location.href = "/"
+      // Use fetch API to call server-side signout
+      const response = await fetch('/api/auth/signout', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        // Force a page reload to ensure all auth state is cleared
+        window.location.href = "/"
+      } else {
+        console.error("Error signing out via API:", await response.text());
+        
+        // Fallback to client-side signout if server-side fails
+        await supabase.auth.signOut();
+        window.location.href = "/";
+      }
     } catch (error) {
-      console.error("Error signing out:", error)
+      console.error("Error signing out:", error);
+      
+      // Final fallback
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+        window.location.href = "/";
+      } catch (e) {
+        console.error("Final signout attempt failed:", e);
+        // Force reload anyway
+        window.location.href = "/";
+      }
     }
   }
 

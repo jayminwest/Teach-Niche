@@ -28,11 +28,62 @@ export default async function Library() {
     // Get the user from the session
     const user = data.session.user;
 
-    // Fetch the user's purchased lessons directly from the user_purchased_lessons view
-    const { data: purchasedLessons } = await supabase
+    // Fetch the user's purchased lessons with multiple fallback methods
+    let purchasedLessons;
+    
+    // Try 1: Use the view (most efficient)
+    const { data: viewLessons, error: viewError } = await supabase
       .from("user_purchased_lessons")
       .select("*")
       .eq("user_id", user.id);
+      
+    if (viewLessons && viewLessons.length > 0) {
+      purchasedLessons = viewLessons;
+    } else {
+      console.log("No lessons found via view or view error:", viewError);
+      
+      // Try 2: Check purchases table directly
+      const { data: purchases, error: purchasesError } = await supabase
+        .from("purchases")
+        .select("lesson_id, created_at as purchase_date")
+        .eq("user_id", user.id);
+        
+      if (purchases && purchases.length > 0) {
+        // Get the lesson details using the lesson_ids
+        const lessonIds = purchases.map(p => p.lesson_id);
+        const { data: lessons } = await supabase
+          .from("lessons")
+          .select("id, title, description, thumbnail_url, instructor_id, price")
+          .in("id", lessonIds);
+          
+        // Combine the purchase and lesson data
+        if (lessons) {
+          purchasedLessons = purchases.map(purchase => {
+            const lesson = lessons.find(l => l.id === purchase.lesson_id);
+            return {
+              user_id: user.id,
+              lesson_id: purchase.lesson_id,
+              title: lesson?.title || "Untitled Lesson",
+              description: lesson?.description || "",
+              thumbnail_url: lesson?.thumbnail_url || null,
+              purchase_date: purchase.purchase_date,
+              instructor_id: lesson?.instructor_id || null,
+              price: lesson?.price || 0
+            };
+          });
+        }
+      } else {
+        console.log("No purchases found or error:", purchasesError);
+        
+        // Try 3: Get lessons where user is instructor
+        const { data: instructorLessons } = await supabase
+          .from("lessons")
+          .select("id as lesson_id, title, description, thumbnail_url, instructor_id, price, created_at as purchase_date")
+          .eq("instructor_id", user.id);
+          
+        purchasedLessons = instructorLessons;
+      }
+    }
 
     if (!purchasedLessons || purchasedLessons.length === 0) {
       return (

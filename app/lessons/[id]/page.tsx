@@ -169,41 +169,61 @@ export default async function LessonDetail({
       
       if (result1.data) {
         purchase = result1.data;
+        if (isDev) console.log("DEBUG: Found purchase via direct match");
       } else {
-        // APPROACH 2: Try using SQL LIKE for partial matches
-        const { data: likeMatches } = await supabase
-          .from("purchases")
-          .select("id")
-          .eq("user_id", user.id)
-          .filter("lesson_id::text", "ilike", `%${lessonId.replace(/-/g, '')}%`);
-          
-        if (likeMatches && likeMatches.length > 0) {
-          purchase = likeMatches[0];
-        } else {
-          // APPROACH 3: Manual comparison of all purchases
-          const { data: allUserPurchases } = await supabase
+        // Try a more reliable Supabase function to check purchase
+        try {
+          // First attempt: Use a simple, direct query with .contains()
+          const { data: simpleMatches, error: simpleMatchError } = await supabase
             .from("purchases")
-            .select("id, lesson_id")
-            .eq("user_id", user.id);
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("lesson_id", lessonId);
             
-          // Try multiple string comparison methods
-          const simplifiedLessonId = lessonId.replace(/-/g, '').toLowerCase();
-          
-          const matchingPurchase = allUserPurchases?.find(p => {
-            if (!p.lesson_id) return false;
-            
-            // Convert to string and normalize for comparison
-            const purchaseLessonId = typeof p.lesson_id === 'string' 
-              ? p.lesson_id.replace(/-/g, '').toLowerCase() 
-              : String(p.lesson_id).replace(/-/g, '').toLowerCase();
-            
-            return purchaseLessonId.includes(simplifiedLessonId) || 
-                   simplifiedLessonId.includes(purchaseLessonId);
-          });
-          
-          if (matchingPurchase) {
-            purchase = matchingPurchase;
+          if (simpleMatchError) {
+            if (isDev) console.log("DEBUG: Error with simple match:", simpleMatchError);
           }
+          
+          if (simpleMatches && simpleMatches.length > 0) {
+            purchase = simpleMatches[0];
+            if (isDev) console.log("DEBUG: Found purchase via simple match");
+          } else {
+            if (isDev) console.log("DEBUG: No purchase found via simple match, trying view query");
+            
+            // Second attempt: Query the view designed for this purpose
+            const { data: viewMatches } = await supabase
+              .from("user_purchased_lessons")
+              .select("*")
+              .eq("user_id", user.id)
+              .eq("lesson_id", lessonId);
+              
+            if (viewMatches && viewMatches.length > 0) {
+              purchase = { id: viewMatches[0].lesson_id }; // Create a simple object with lesson ID
+              if (isDev) console.log("DEBUG: Found purchase via view match");
+            } else {
+              if (isDev) console.log("DEBUG: No purchase found via view match");
+              
+              // Last attempt: Check RPC function if available
+              try {
+                const { data: rpcResult } = await supabase.rpc(
+                  'check_lesson_access',
+                  { 
+                    lesson_id: lessonId,
+                    user_id: user.id
+                  }
+                );
+                
+                if (rpcResult === true) {
+                  purchase = { id: 'rpc-verified' }; // Create a placeholder for RPC verification
+                  if (isDev) console.log("DEBUG: Access verified via RPC function");
+                }
+              } catch (rpcError) {
+                if (isDev) console.log("DEBUG: RPC function not available or error:", rpcError);
+              }
+            }
+          }
+        } catch (queryError) {
+          if (isDev) console.error("Error in purchase verification queries:", queryError);
         }
       }
     } catch (e) {
