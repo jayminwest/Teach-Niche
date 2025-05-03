@@ -130,13 +130,24 @@ export async function GET(request: NextRequest) {
     }
     
     // Check if this purchase has already been recorded
-    const { data: existingPurchase } = await supabase
+    // First check for exact match on stripe_payment_id
+    const { data: exactPurchase } = await supabase
       .from("purchases")
       .select("id")
       .eq("user_id", session.user.id)
       .eq("lesson_id", lessonIdFromSession)
       .eq("stripe_payment_id", checkoutSession.id)
       .maybeSingle()
+    
+    // Then check if the user has already purchased this lesson by any means
+    const { data: anyPurchase } = await supabase
+      .from("purchases")
+      .select("id")
+      .eq("user_id", session.user.id)
+      .eq("lesson_id", lessonIdFromSession)
+      .maybeSingle()
+      
+    const existingPurchase = exactPurchase || anyPurchase
     
     if (existingPurchase) {
       // Purchase already recorded, return success

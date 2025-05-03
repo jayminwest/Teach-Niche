@@ -74,13 +74,47 @@ export default async function LessonsPage() {
   // If user is logged in, fetch their purchased lessons
   let purchasedLessonIds: string[] = []
   if (user) {
-    const { data: purchasedLessons } = await supabase
+    // Debug output to server console
+    console.log("User is logged in:", user.id);
+    
+    // Let's simplify our approach to fetching purchased lessons
+    const { data: purchasedLessons, error: purchaseError } = await supabase
       .from("purchases")
-      .select("lesson_id")
+      .select("*")  // Select all fields for debugging
       .eq("user_id", user.id)
-      .not("lesson_id", "is", null)
-
-    purchasedLessonIds = purchasedLessons?.map((p) => p.lesson_id) || []
+      
+    if (purchaseError) {
+      console.error("Error fetching purchased lessons:", purchaseError);
+    } else {
+      console.log("Raw purchase data:", JSON.stringify(purchasedLessons));
+    }
+    
+    // Extract lesson_ids and normalize for consistent comparison
+    purchasedLessonIds = (purchasedLessons || [])
+      .filter(p => p.lesson_id) // Only include records with a lesson_id
+      .map(p => {
+        let lessonId;
+        
+        // Extract the ID based on data type
+        if (typeof p.lesson_id === 'string') {
+          lessonId = p.lesson_id;
+        } else if (typeof p.lesson_id === 'object' && p.lesson_id !== null) {
+          lessonId = p.lesson_id.id || String(p.lesson_id);
+        } else {
+          lessonId = String(p.lesson_id);
+        }
+        
+        // Normalize the ID - remove hyphens and convert to lowercase
+        const normalizedId = lessonId.replace(/-/g, '').toLowerCase();
+        
+        console.log(`Extracted lesson_id: ${lessonId} from purchase ${p.id}, normalized: ${normalizedId}`);
+        return {
+          original: lessonId,
+          normalized: normalizedId
+        };
+      });
+      
+    console.log("Purchased lessons:", purchasedLessonIds);
   }
 
 
@@ -108,7 +142,15 @@ export default async function LessonsPage() {
               title={lesson.title}
               thumbnailUrl={lesson.thumbnail_url || "/placeholder.svg?height=200&width=300"}
               price={lesson.price}
-              isPurchased={purchasedLessonIds.includes(lesson.id)}
+              isPurchased={purchasedLessonIds.some(item => {
+                // Compare both original and normalized IDs for maximum compatibility
+                const lessonIdStr = lesson.id.toString();
+                const normalizedLessonId = lessonIdStr.replace(/-/g, '').toLowerCase();
+                return item.original === lessonIdStr || 
+                       item.normalized === normalizedLessonId ||
+                       item.normalized.includes(normalizedLessonId) ||
+                       normalizedLessonId.includes(item.normalized);
+              })}
               instructorName={lesson.instructorName}
             />
           ))}
