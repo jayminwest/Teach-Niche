@@ -42,7 +42,7 @@ export function validateEnv(): { valid: boolean; missing: string[]; message: str
   )
 
   const valid = missing.length === 0
-  let message = valid
+  const message = valid
     ? 'All required environment variables are set'
     : `Missing required environment variables: ${missing.join(', ')}`
 
@@ -125,7 +125,7 @@ export function logEnvironment(): void {
   }
 }
 
-export default {
+const envUtils = {
   validateEnv,
   getEnv,
   isProduction,
@@ -133,4 +133,6 @@ export default {
   getEnvironment,
   getEnvDescription,
   logEnvironment,
-}
+};
+
+export default envUtils;
