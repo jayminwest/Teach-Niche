@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic"
 
 import { createServerClient } from "@/lib/supabase/server"
-import { stripe, calculateFees } from "@/lib/stripe"
+import { stripe, calculateFees, calculatePriceWithStripeFees } from "@/lib/stripe"
 import { NextResponse } from "next/server"
 
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -111,12 +111,29 @@ export async function POST(request: Request) {
                    (process.env.NODE_ENV === "production" ? "https://teach-niche.com" : 
                    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'));
     
+    // Calculate price with fees
+    const priceWithFees = calculatePriceWithStripeFees(priceInCents) / 100;
+    const priceWithFeesInCents = Math.round(priceWithFees * 100);
+    
+    // Create a product for this specific checkout session
+    const checkoutProduct = await stripe.products.create({
+      name: title,
+      description: `${title} (includes processing fees)`,
+    });
+    
+    // Create a price for the checkout product that includes fees
+    const checkoutPrice = await stripe.prices.create({
+      product: checkoutProduct.id,
+      unit_amount: priceWithFeesInCents,
+      currency: 'usd',
+    });
+    
     // Create a Stripe Checkout Session with Connect
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: [
         {
-          price: video.stripe_price_id,
+          price: checkoutPrice.id,
           quantity: 1,
         },
       ],
@@ -129,7 +146,9 @@ export async function POST(request: Request) {
         instructorId: video.instructor_id,
         productId: video.stripe_product_id,
         priceId: video.stripe_price_id,
-        instructorPayoutAmount: instructorAmount
+        originalPrice: price.toString(),
+        instructorPayoutAmount: instructorAmount.toString(),
+        platformFee: platformFee.toString()
       },
       payment_intent_data: {
         application_fee_amount: platformFee,

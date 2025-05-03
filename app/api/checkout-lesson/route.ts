@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic"
 
 import { createServerClient } from "@/lib/supabase/server"
-import { stripe, calculateFees } from "@/lib/stripe"
+import { stripe, calculateFees, calculatePriceWithStripeFees } from "@/lib/stripe"
 import { NextResponse } from "next/server"
 
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -289,10 +289,30 @@ export async function POST(request: Request) {
     const instructorId = lesson.instructor_id || '';
     
     // Create a Stripe Checkout Session with Connect using properly typed parameters
+    // Note: We'll create a new line item with the calculated total price (including fees)
+    // This ensures the customer sees the correct total price in the Stripe checkout
+    
+    // First, create a new price that includes the Stripe fees
+    const priceWithFees = calculatePriceWithStripeFees(Number(price) * 100) / 100;
+    const priceWithFeesInCents = Math.round(priceWithFees * 100);
+    
+    // Create a product for this specific checkout session
+    const checkoutProduct = await stripe.products.create({
+      name: title,
+      description: `${title} (includes processing fees)`,
+    });
+    
+    // Create a price for the checkout product that includes fees
+    const checkoutPrice = await stripe.prices.create({
+      product: checkoutProduct.id,
+      unit_amount: priceWithFeesInCents,
+      currency: 'usd',
+    });
+    
     const params: any = {
       line_items: [
         {
-          price: stripePrice,
+          price: checkoutPrice.id,
           quantity: 1,
         },
       ],
@@ -305,7 +325,9 @@ export async function POST(request: Request) {
         instructorId: instructorId,
         productId: stripeProductId,
         priceId: stripePrice,
-        instructorPayoutAmount: instructorAmount.toString()
+        originalPrice: price.toString(),
+        instructorPayoutAmount: instructorAmount.toString(),
+        platformFee: platformFee.toString()
       },
       payment_intent_data: {
         application_fee_amount: platformFee,
