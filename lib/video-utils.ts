@@ -1,4 +1,4 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@/lib/supabase/client";
 
 /**
  * Refreshes a video URL if it's expired or creates a signed URL if given a path
@@ -6,7 +6,7 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
  * @returns A fresh signed URL or the original URL if it's still valid
  */
 export async function refreshVideoUrl(videoUrl: string): Promise<string> {
-  const supabase = createClientComponentClient();
+  const supabase = createClient();
   
   // If no URL provided, return as is
   if (!videoUrl) {

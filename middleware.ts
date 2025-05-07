@@ -44,13 +44,14 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
+     * Only run middleware on protected routes that require authentication:
+     * - /dashboard/* (user dashboard)
+     * - /library/* (user library)
+     * 
+     * Exclude static assets and API webhook routes
      */
-    "/((?!_next/static|_next/image|favicon.ico|public|api/webhooks).*)",
+    "/dashboard/:path*",
+    "/library/:path*",
   ],
 }
 

@@ -4,10 +4,17 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:dev": "NODE_ENV=development next dev",
+    "dev:prod": "NODE_ENV=production next dev",
     "build": "next build",
+    "build:dev": "NODE_ENV=development next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "setup:stripe": "stripe listen --forward-to localhost:3000/api/webhooks/stripe",
+    "setup:env": "cp .env.development.example .env.development",
+    "check-env": "node -r dotenv/config scripts/check-env.js dotenv_config_path=.env.development",
+    "use-dev-env": "./scripts/use-development-env.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

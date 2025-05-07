@@ -35,25 +35,37 @@ A platform for kendama instructors to share tutorial videos and for students to 
 - Node.js 18+ and pnpm
 - Supabase account and CLI
 - Stripe account (with Connect capability)
+- Stripe CLI for webhook testing
 
 ### Environment Setup
 
-Create a `.env.local` file in the root directory:
+The project uses separate environments for development and production:
+
+1. Create a development environment by copying the example file:
+
+```bash
+pnpm setup:env
+# Or manually: cp .env.development.example .env.development
+```
+
+2. Fill in your development environment values in `.env.development`:
 
 ```
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+# Supabase Development Environment
+NEXT_PUBLIC_SUPABASE_URL=your_dev_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_dev_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_dev_service_role_key
 
-# Stripe
-STRIPE_SECRET_KEY=your_stripe_secret_key
-STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+# Stripe Test Environment (Always use TEST MODE keys)
+STRIPE_SECRET_KEY=sk_test_your_test_key
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_test_key
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
 
-# App
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+# Other settings
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
+
+See `docs/environment-setup-guide.md` for complete environment setup details.
 
 ### Installation and Setup
 
@@ -68,12 +80,18 @@ cd TeachNicheV0
 pnpm install
 ```
 
-3. Run the development server:
+3. Set up Stripe webhook forwarding in a separate terminal:
+```bash
+pnpm setup:stripe
+# Or manually: stripe listen --forward-to localhost:3000/api/webhooks/stripe
+```
+
+4. Run the development server:
 ```bash
 pnpm dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Supabase Setup
 
@@ -102,11 +120,15 @@ Detailed setup instructions are available in `ai_docs/stripe_test_setup.md` and 
 
 ## Commands
 
-- `pnpm dev`: Run development server
+- `pnpm dev`: Run development server with development environment
+- `pnpm dev:prod`: Run development server with production environment
 - `pnpm build`: Build production version
+- `pnpm build:dev`: Build with development environment
 - `pnpm start`: Start production server
 - `pnpm lint`: Run ESLint
 - `pnpm typecheck`: Run TypeScript type checker
+- `pnpm setup:stripe`: Start Stripe webhook forwarding
+- `pnpm setup:env`: Create development environment file from template
 
 ## TypeScript and Supabase Types
 
