@@ -169,7 +169,7 @@ export default function EditLesson() {
           title,
           description,
           price: Number.parseFloat(price),
-          thumbnail_url: thumbnailUrl,
+          thumbnail_url: thumbnailUrl, // This will be null if the image was removed
           updated_at: new Date().toISOString(),
         } as Database["public"]["Tables"]["lessons"]["Update"])
         .eq("id", lessonId as string)
@@ -267,7 +267,7 @@ export default function EditLesson() {
             <div className="space-y-2">
               <Label htmlFor="thumbnail">Thumbnail Image</Label>
               <div className="border rounded-md p-4">
-                {thumbnailPreview || currentThumbnail ? (
+                {(thumbnailPreview || currentThumbnail) ? (
                   <div className="space-y-4">
                     <div className="aspect-video bg-muted rounded-md overflow-hidden">
                       <div className="relative w-full h-full">
@@ -280,16 +280,34 @@ export default function EditLesson() {
                         />
                       </div>
                     </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setThumbnailFile(null)
-                        setThumbnailPreview(null)
-                      }}
-                    >
-                      Change Image
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        asChild
+                      >
+                        <label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="sr-only"
+                            onChange={handleThumbnailChange}
+                          />
+                          Choose New Image
+                        </label>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setThumbnailFile(null);
+                          setThumbnailPreview(null);
+                          setCurrentThumbnail(null);
+                        }}
+                      >
+                        Remove Image
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-4">
