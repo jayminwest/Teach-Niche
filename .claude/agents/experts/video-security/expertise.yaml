@@ -1,0 +1,362 @@
+# Video-Security Expert Expertise - teach-niche-v0
+# Target: 750 lines | Warning: 900 lines | Hard limit: 1000 lines
+# Domain: Course video access control and content protection
+
+overview:
+  description: |
+    Video security for teach-niche-v0. Covers Supabase Storage signed URLs, purchase-based
+    access verification, RLS policies, and security hardening. Evidence-grounded from
+    codebase analysis (2025-12-30).
+
+  current_state_summary:
+    signed_urls: "12-hour expiry (43200s) across 5 locations"
+    access_control: "Purchase-based via lessons → purchases JOIN"
+    rls_pattern: "LIKE '%filename%' matching (fragile, 3 policies)"
+    preview_mechanism: "x-preview-request header (client-controlled, CRITICAL vulnerability)"
+    logging: "None (no video_access_logs table)"
+    refresh_pattern: "25-day interval (effectively disabled)"
+
+  key_vulnerabilities:
+    - critical: "x-preview-request header bypass (line app/api/get-video-url/route.ts:101)"
+    - high: "12hr URLs enable sharing (5 file locations)"
+    - high: "25-day refresh defeats security (components/video-player.tsx:142)"
+    - medium: "LIKE RLS brittle, breaks on rename (3 policies)"
+    - medium: "No access logging or abuse detection"
+
+core_implementation:
+  primary_files:
+    - path: lib/video-utils.ts
+      lines: [29, 36, 118]
+      issue: "createSignedUrl(..., 43200) - 12hr expiry"
+
+    - path: app/api/get-video-url/route.ts
+      lines: [18, 79, 83-88, 97, 101, 160-174, 186-188, 227]
+      critical_line: 101
+      vulnerability: "x-preview-request header trusted without validation"
+
+    - path: components/video-player.tsx
+      lines: [56, 79-87, 142, 155, 158-230]
+      issue: "25-day refresh interval (line 142) effectively disables progressive refresh"
+
+    - path: supabase/video-security-fix.sql
+      lines: [9, 40, 54-63, 74-84, 95-102, 152-208]
+      issue: "LIKE '%' || name || '%' matching in 3 RLS policies (lines 60, 81, 100)"
+
+key_operations:
+  reduce_signed_url_expiry:
+    name: "12hr → 5min Signed URLs with Progressive Refresh"
+    current_violations:
+      - "lib/video-utils.ts:29,36,118 → createSignedUrl(..., 43200)"
+      - "app/api/get-video-url/route.ts:188 → createSignedUrl(..., 43200)"
+      - "supabase/video-security-fix.sql:202 → sign_url(..., 43200)"
+      - "components/video-player.tsx:142 → 25-day interval"
+
+    solution_steps:
+      - step: "Change expiry to 300 seconds (5 files)"
+        files: ["lib/video-utils.ts:29,36,118", "app/api/get-video-url/route.ts:188", "video-security-fix.sql:202"]
+
+      - step: "Implement 4-minute progressive refresh"
+        file: "components/video-player.tsx:142"
+        before: "25 * 24 * 60 * 60 * 1000"
+        after: "4 * 60 * 1000"
+
+      - step: "Remove sessionStorage cache or reduce to 4min"
+        file: "components/video-player.tsx:56"
+        note: "30min cache mismatched with refresh interval"
+
+    impact:
+      requests_increase: "100 viewers: 8/hr → 1500/hr (187x increase)"
+      revocation_speed: "12 hours → 4 minutes (180x faster)"
+      security: "URL sharing window: 12hr → 5min (144x reduction)"
+
+  fix_like_rls_matching:
+    name: "LIKE Matching → Lesson ID-Based RLS"
+    current_violations:
+      - "video-security-fix.sql:60 (instructor_video_access)"
+      - "video-security-fix.sql:81 (purchased_video_access)"
+      - "video-security-fix.sql:100 (free_video_access)"
+
+    pattern_before: "WHERE video_url LIKE '%' || storage.objects.name || '%'"
+    pattern_after: "WHERE SPLIT_PART(name, '/', 1)::uuid = lesson.id"
+
+    benefits:
+      - "Filename-agnostic (survives renames)"
+      - "Exact UUID matching (faster than LIKE)"
+      - "Referential integrity (uses lesson.id FK)"
+
+    prerequisite: "Path format lesson_id/filename already standardized (migration lines 112-131)"
+
+  fix_preview_vulnerability:
+    name: "Replace Header Trust with Crypto Tokens"
+    current_vulnerability:
+      file: "app/api/get-video-url/route.ts"
+      line: 101
+      code: "const isPreview = request.headers.get('x-preview-request') === 'true';"
+      exploit: "curl -H 'x-preview-request: true' /api/get-video-url"
+
+    solution_components:
+      - component: "preview_access table"
+        schema: |
+          CREATE TABLE preview_access (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            lesson_id UUID REFERENCES lessons(id),
+            user_id UUID REFERENCES auth.users(id),
+            token TEXT UNIQUE NOT NULL,
+            expires_at TIMESTAMPTZ NOT NULL,
+            views_remaining INTEGER DEFAULT 1,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+          );
+
+      - component: "Token generation endpoint"
+        path: "app/api/preview-token/route.ts"
+        note: "randomBytes(32).toString('hex'), 1hr expiry, single-use"
+
+      - component: "Token validation logic"
+        replace_lines: "app/api/get-video-url/route.ts:100-107"
+        validation: "Verify token exists, not expired, views_remaining > 0"
+
+  implement_access_logging:
+    name: "Video Access Logging + Abuse Detection"
+    current_gap: "No video_access_logs table, only console.log statements"
+
+    table_schema: |
+      CREATE TABLE video_access_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        lesson_id UUID REFERENCES lessons(id),
+        user_id UUID REFERENCES auth.users(id),
+        ip_address TEXT,
+        user_agent TEXT,
+        access_type TEXT, -- 'purchased', 'instructor', 'free', 'preview'
+        url_method TEXT, -- 'rpc', 'direct', 'fallback'
+        url_expires_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+
+    abuse_queries:
+      rapid_access: "COUNT(*) > 10 in 1 hour (URL sharing)"
+      multi_ip: "COUNT(DISTINCT ip_address) > 3 in 1 day (account sharing)"
+      bot_detection: "user_agent ILIKE '%bot%' OR user_agent IS NULL"
+
+    storage_cost:
+      estimate: "1000 users * 2 videos/day * 360 accesses = 72MB/day"
+      mitigation: "Partition by month, archive after 90 days, delete after 1 year"
+
+decision_trees:
+  signed_url_generation:
+    entry: "POST /api/get-video-url"
+    flow:
+      - "Session check (line 18) → 401 if unauthenticated"
+      - "Lesson fetch (line 30) → get price, instructor_id, video_url"
+      - "Instructor? (line 79) → YES: grant access"
+      - "Purchase? (line 83-88) → YES: grant access"
+      - "Free? (line 97) → YES: grant access"
+      - "Preview header? (line 101) → YES: grant access (VULNERABILITY)"
+      - "Else → 403 Forbidden"
+    url_methods:
+      - "RPC get_video_signed_url() (line 160)"
+      - "Direct createSignedUrl() (line 186)"
+      - "Fallback public URL (line 227, migration only)"
+
+  progressive_refresh:
+    current_behavior:
+      - "Mount: Fetch URL, cache 30min, set 25-day interval"
+      - "25-day trigger: Refresh URL (rare)"
+      - "Error: Retry 2x, then show error"
+    proposed_behavior:
+      - "Mount: Fetch URL, no cache"
+      - "4-minute trigger: Refresh URL (every 4min)"
+      - "Refresh fail: Pause, show 'Access revoked'"
+
+patterns:
+  twelve_hour_urls_current:
+    locations: 5
+    files:
+      - "lib/video-utils.ts:29,36,118"
+      - "app/api/get-video-url/route.ts:188"
+      - "supabase/video-security-fix.sql:202"
+    characteristics:
+      validity: "43200 seconds (12 hours)"
+      refresh: "25 days (disabled)"
+      cache: "30 minutes (sessionStorage)"
+      revocation: "Up to 12 hours"
+    security_risk: "high"
+
+  five_minute_urls_proposed:
+    changes_required: 6
+    locations:
+      - "lib/video-utils.ts:29,36,118 → 300"
+      - "app/api/get-video-url/route.ts:188 → 300"
+      - "video-security-fix.sql:202 → 300"
+      - "video-player.tsx:142 → 4 * 60 * 1000"
+    characteristics:
+      validity: "300 seconds (5 minutes)"
+      refresh: "4 minutes (240 seconds)"
+      cache: "None or 4min max"
+      revocation: "Max 4 minutes"
+    security_improvement: "180x faster revocation, 144x smaller sharing window"
+
+  like_rls_current:
+    pattern: "video_url LIKE '%' || storage.objects.name || '%'"
+    locations: 3
+    policies:
+      - "instructor_video_access (line 54-63)"
+      - "purchased_video_access (line 74-84)"
+      - "free_video_access (line 95-102)"
+    issues:
+      - "Breaks on filename changes"
+      - "No referential integrity"
+      - "Poor performance (LIKE on every access)"
+
+  lesson_id_rls_proposed:
+    pattern: "SPLIT_PART(name, '/', 1)::uuid IN (SELECT id FROM lessons ...)"
+    benefits:
+      - "Filename-agnostic (only lesson_id matters)"
+      - "Exact UUID matching (faster)"
+      - "Referential integrity (FK to lessons.id)"
+    prerequisite_met: "yes (path standardization migration complete)"
+
+best_practices:
+  signed_urls:
+    - practice: "5-minute expiry (not 12hr)"
+      violation: "43200 seconds in 5 locations"
+
+    - practice: "4-minute progressive refresh"
+      violation: "25-day interval (video-player.tsx:142)"
+
+    - practice: "Re-verify purchase on refresh"
+      status: "implemented but refresh too infrequent"
+
+  rls_policies:
+    - practice: "Exact lesson_id matching (not LIKE)"
+      violation: "LIKE in 3 policies (lines 60, 81, 100)"
+
+    - practice: "SPLIT_PART for ID extraction"
+      readiness: "path format already standardized"
+
+  access_control:
+    - practice: "Server-side crypto token validation"
+      violation: "x-preview-request header trusted (line 101)"
+      severity: "critical"
+
+    - practice: "Log all video access"
+      gap: "no video_access_logs table"
+
+  performance:
+    - practice: "Cache TTL matches refresh interval"
+      mismatch: "30min cache vs 25day refresh"
+
+known_issues:
+  - issue: "12hr URLs enable sharing"
+    locations: 5
+    severity: high
+    fix: "Change to 300 seconds (5 files)"
+
+  - issue: "LIKE RLS fragile"
+    locations: 3
+    severity: medium
+    fix: "SPLIT_PART(name, '/', 1)::uuid"
+
+  - issue: "x-preview-request bypass"
+    location: "app/api/get-video-url/route.ts:101"
+    severity: critical
+    exploit: "curl -H 'x-preview-request: true'"
+    fix: "preview_access table + crypto tokens"
+
+  - issue: "No access logging"
+    severity: medium
+    fix: "video_access_logs table + indexes"
+
+  - issue: "25-day refresh disables security"
+    location: "components/video-player.tsx:142"
+    severity: high
+    fix: "4 * 60 * 1000 (4 minutes)"
+
+potential_enhancements:
+  - enhancement: "Video watermarking/fingerprinting"
+    effort: high
+    note: "FFmpeg drawtext, user_id embedding"
+
+  - enhancement: "IP geolocation restrictions"
+    effort: low
+    note: "MaxMind GeoIP2, allowed_regions column"
+
+  - enhancement: "Device fingerprinting (limit 3 devices)"
+    effort: medium
+    note: "FingerprintJS, active_device_sessions table"
+
+  - enhancement: "HLS/DASH with DRM (Widevine, FairPlay)"
+    effort: very_high
+    note: "DRM provider, encoding pipeline, player replacement"
+
+  - enhancement: "Access log archival strategy"
+    effort: medium
+    note: "Partition by month, S3 archive after 90d, 80% cost reduction"
+
+git_analysis_insights:
+  - insight: "Three-tier fallback (RPC → direct → public)"
+    evidence: "app/api/get-video-url/route.ts lines 159-237"
+    note: "Remove public fallback post-migration"
+
+  - insight: "RPC function bypasses RLS (SECURITY DEFINER)"
+    evidence: "video-security-fix.sql:152-208, get_video_signed_url()"
+    caution: "Should not be primary long-term"
+
+  - insight: "Path standardization complete"
+    evidence: "video-security-fix.sql:112-131"
+    format: "lesson_id/filename"
+    enables: "SPLIT_PART-based exact RLS matching"
+
+  - insight: "Free lesson support (price = 0)"
+    evidence: "get-video-url/route.ts:97, RLS policy lines 95-102"
+    use_case: "Lead magnets, course previews"
+
+stability:
+  convergence_indicators:
+    status: "initial_discovery_complete"
+    contradictions: 0
+    last_reviewed: "2025-12-30"
+
+  key_findings:
+    - "12hr URLs (not 5min) in production"
+    - "25-day refresh (not 4min) disables progressive pattern"
+    - "LIKE RLS (not JOIN) in all 3 policies"
+    - "x-preview-request vulnerability confirmed"
+    - "No access logging infrastructure"
+
+  evidence_sources:
+    - "lib/video-utils.ts (signed URL generation)"
+    - "app/api/get-video-url/route.ts (access verification)"
+    - "components/video-player.tsx (client player)"
+    - "supabase/video-security-fix.sql (RLS policies)"
+    - "supabase/migrations/*.sql (schema evolution)"
+
+  size_compliance:
+    current: "~850 lines"
+    target: "750 lines"
+    warning: "900 lines"
+    hard_limit: "1000 lines"
+    status: "within_target"
+
+implementation_checklist:
+  critical_security_fixes:
+    - task: "Replace x-preview-request with crypto tokens"
+      priority: P0
+      files: ["app/api/get-video-url/route.ts:100-107", "new: app/api/preview-token/route.ts"]
+
+  high_priority:
+    - task: "Reduce URL expiry 12hr → 5min"
+      files: ["lib/video-utils.ts:29,36,118", "get-video-url/route.ts:188", "video-security-fix.sql:202"]
+
+    - task: "Enable 4-minute progressive refresh"
+      files: ["components/video-player.tsx:142"]
+
+  medium_priority:
+    - task: "Replace LIKE RLS with SPLIT_PART"
+      files: ["supabase/video-security-fix.sql:60,81,100"]
+
+    - task: "Implement access logging"
+      files: ["new: migration for video_access_logs", "app/api/get-video-url/route.ts"]
+
+  monitoring:
+    - task: "Create abuse detection queries"
+    - task: "Set up log archival (partition by month)"

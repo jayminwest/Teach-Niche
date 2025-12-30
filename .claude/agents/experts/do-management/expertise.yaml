@@ -1,0 +1,630 @@
+# /do Command Routing Expertise - teach-niche-v0
+# Target: 750-850 lines | Domain: Universal routing for /do command
+
+overview:
+  description: |
+    /do command routing and classification expertise for teach-niche-v0.
+    Covers how requirements map to expert domains, workflow orchestration,
+    and execution control rules. Adapted for Next.js 15 + Supabase + Stripe context.
+  scope: |
+    Covers /do.md structure, routing tables, classification logic,
+    expert domain indicators, and execution control patterns.
+
+    CURRENT DOMAINS (All Active - Phase 1 + Phase 2):
+    - do-management (self-referential routing expertise)
+    - agent-authoring (meta-capability for creating new domains)
+    - payment (Stripe Connect multi-party payment flows)
+    - video-security (course video access control, signed URLs)
+    - auth (Supabase auth + role-based permissions)
+    - database (schema evolution, migrations, type generation)
+
+    NOT COVERED:
+    - Individual expert domain implementation details (see their expertise.yaml)
+    - Claude Code platform mechanics (Task tool, agent spawning)
+    - External project teaching (this IS the taught project)
+  rationale: |
+    Universal /do entry point enables single interface for all workflows.
+    Self-referential do-management expert allows /do to improve itself.
+    Foundation-first approach (Phase 1) established patterns before
+    specialist proliferation in Phase 2 (now active).
+
+core_implementation:
+  primary_files:
+    - path: /Users/jayminwest/Projects/teach-niche-v0/.claude/commands/do.md
+      purpose: Universal routing command orchestrator
+    - path: /Users/jayminwest/Projects/teach-niche-v0/CLAUDE.md
+      purpose: Expert domain registry and slash command reference
+    - path: /Users/jayminwest/Projects/teach-niche-v0/.claude/agents/experts/*/expertise.yaml
+      purpose: Individual domain knowledge bases (6 active domains)
+  key_sections:
+    - name: Execution Control Rules
+      location: .claude/commands/do.md (lines ~30-92)
+      summary: Task blocking, parallelism, wait-before-respond rules, approval gates
+    - name: Classification Logic (Phase 1 + Phase 2)
+      location: .claude/commands/do.md (lines ~106-168)
+      summary: Expert domain detection for all 6 active domains
+    - name: Pattern Execution
+      location: .claude/commands/do.md (lines ~196-294)
+      summary: Plan→Build→Improve orchestration flows (Pattern A & B)
+    - name: Expert Domain Indicators
+      location: .claude/commands/do.md (lines ~397-434)
+      summary: Keywords, locations, verbs for routing decisions (all domains)
+    - name: Examples Section
+      location: .claude/commands/do.md (lines ~439-542)
+      summary: Concrete routing examples for Phase 1 + Phase 2 domains
+
+key_operations:
+  classify_requirement:
+    name: Classify User Requirement for teach-niche
+    description: Determine routing destination from requirement text
+    when_to_use: Every /do invocation
+    approach: |
+      1. Check expert domain keywords FIRST (priority routing)
+      2. Detect question phrasing ("How", "What", "Why", "Explain")
+      3. If ambiguous, use AskUserQuestion to clarify
+
+      teach-niche domain classification (6 active domains):
+
+      **PHASE 1 FOUNDATION (Active):**
+
+      do-management indicators:
+        - Keywords: /do routing, classification, orchestration, approval gates, execution control
+        - Locations: .claude/commands/do.md, CLAUDE.md
+        - Verbs: add, update, route, classify, improve, refactor
+        - Examples: "Add payment domain to /do", "Update routing for Stripe keywords"
+
+      agent-authoring indicators:
+        - Keywords: create agent, new expert, agent config, domain, specialist, expertise.yaml
+        - Locations: .claude/agents/experts/
+        - Verbs: create, configure, setup, scaffold, generate
+        - Examples: "Create payment expert domain", "Setup video-security agents"
+
+      **PHASE 2 SPECIALISTS (Active):**
+
+      payment indicators:
+        - Keywords: stripe, payment, checkout, payout, connect, subscription, webhook, fee, transaction
+        - Locations: app/api/checkout-lesson/, app/api/webhooks/stripe/, lib/stripe.ts
+        - Verbs: create, process, handle, configure, verify, calculate
+        - Examples: "Fix fee calculation duplication", "Add charge.refunded webhook handler"
+        - Framework: Stripe Connect, webhook signature verification, platform fees
+
+      video-security indicators:
+        - Keywords: video, signed URL, access, enrollment, RLS, preview, DRM, abuse, lesson
+        - Locations: lib/video-utils.ts, app/api/get-video-url/, components/video-player.tsx
+        - Verbs: generate, verify, secure, protect, log, detect, reduce (expiry)
+        - Examples: "Reduce signed URL expiry to 5 minutes", "Implement access logging"
+        - Framework: Supabase Storage, RLS policies, progressive refresh
+
+      auth indicators:
+        - Keywords: supabase, auth, user, role, permission, RLS, session, middleware, guard
+        - Locations: lib/auth-utils.ts, middleware.ts, supabase/migrations/*auth*.sql
+        - Verbs: protect, guard, authenticate, authorize, verify, sync, bootstrap
+        - Examples: "Create middleware guards for /admin routes", "Bootstrap first admin user"
+        - Framework: Supabase auth providers, role-based access control
+
+      database indicators:
+        - Keywords: schema, migration, query, supabase, postgres, table, index, types, consolidate
+        - Locations: supabase/migrations/, types/supabase.ts, lib/supabase/server-utils.ts
+        - Verbs: migrate, generate, consolidate, version, query, optimize
+        - Examples: "Generate TypeScript types from schema", "Consolidate migrations into baseline"
+        - Framework: Supabase CLI (db diff, db push, gen types)
+
+      **QUESTION DETECTION (All Domains):**
+      - Phrasing: "How do I...", "What is...", "Why...", "Explain...", "When should I..."
+      - Action: Route to `<domain>-question-agent` instead of `<domain>-plan-agent`
+    examples:
+      - scenario: "Create payment expert domain for Stripe Connect"
+        classification: agent-authoring expert, implementation request
+        pattern: Pattern A (Plan→Build→Improve)
+        routing: agent-authoring-plan-agent → approval → build → improve
+      - scenario: "How do I add a new expert domain?"
+        classification: do-management expert, question
+        pattern: Pattern B (Question-Agent)
+        routing: do-management-question-agent
+      - scenario: "Fix fee calculation duplication across routes"
+        classification: payment expert, implementation request
+        pattern: Pattern A (Plan→Build→Improve)
+        routing: payment-plan-agent → approval → build → improve
+      - scenario: "Reduce signed URL expiry to prevent sharing"
+        classification: video-security expert, implementation request
+        pattern: Pattern A (Plan→Build→Improve)
+        routing: video-security-plan-agent → approval → build → improve
+
+  maintain_routing_tables:
+    name: Maintain teach-niche Routing Tables
+    description: Keep /do routing current as specialist domains added or refined
+    when_to_use: When creating new expert domains or refining classification
+    approach: |
+      When agent-authoring creates new specialist domain OR classification needs refinement:
+
+      1. Identify domain focus (payment, video-security, auth, database, or future domains)
+      2. Extract keywords from Next.js routes and Supabase schema
+      3. Map locations to src/app/, supabase/, src/lib/ structure
+      4. Define Next.js-specific verbs (create checkout, verify enrollment, etc.)
+      5. Add to /do.md classification section (Expert Domain Indicators)
+      6. Update CLAUDE.md expert domains table
+      7. Update this expertise.yaml expert_domain_indicators pattern
+
+      **THREE-FILE SYNCHRONIZATION PATTERN (Critical):**
+      - .claude/commands/do.md: Classification logic + routing examples
+      - CLAUDE.md: Expert domains table + available domains list
+      - .claude/agents/experts/do-management/expertise.yaml: This file's patterns section
+
+      **Framework-specific patterns for teach-niche:**
+      - Payment domain: API routes in app/api/checkout-lesson/, app/api/webhooks/stripe/
+      - Video domain: lib/video-utils.ts, components/video-player.tsx, Supabase Storage
+      - Auth domain: middleware.ts, supabase/migrations/*auth*.sql, RLS policies
+      - Database domain: supabase/migrations/*.sql, types/supabase.ts generation
+    examples:
+      - scenario: Phase 2 payment domain added (completed)
+        implementation: |
+          1. agent-authoring created 5 files in .claude/agents/experts/payment/
+          2. do-management-plan-agent planned routing update
+          3. do-management-build-agent added payment classification:
+             Keywords: [stripe, payment, checkout, payout, connect, webhook, fee]
+             Locations: [app/api/checkout-lesson/, app/api/webhooks/stripe/]
+             Examples: ["Fix fee calculation duplication", "Add webhook handler"]
+          4. Updated CLAUDE.md expert domains table (Phase 2 Specialists section)
+          5. Updated this expertise.yaml patterns.expert_domain_indicators
+
+  orchestrate_expert_workflow:
+    name: Orchestrate Expert Workflow (Pattern A)
+    description: Execute Plan→Build→Improve cycle with user approval gate
+    when_to_use: Implementation requests for any expert domain
+    approach: |
+      **Phase 1 - Plan:**
+      - Spawn: Task(subagent_type: "<domain>-plan-agent", prompt: "USER_PROMPT: {requirement}")
+      - Wait for completion (Task is blocking, no run_in_background)
+      - Extract spec_path from plan-agent output
+
+      **Phase 2 - User Approval Gate:**
+      - Use AskUserQuestion at /do level (NOT delegated to coordinator)
+      - Options: ["Yes, continue to build", "No, stop here - I'll review first"]
+      - If "No": Report spec location, suggest resume command, exit gracefully (NOT error)
+      - If "Yes": Proceed to Phase 3
+
+      **Phase 3 - Build:**
+      - Spawn: Task(subagent_type: "<domain>-build-agent", prompt: "PATH_TO_SPEC: {spec_path}")
+      - Wait for completion
+      - Extract files_modified from build-agent output
+
+      **Phase 4 - Improve (Opportunistic):**
+      - Spawn: Task(subagent_type: "<domain>-improve-agent", prompt: "Review recent changes")
+      - If improve fails: Log error, continue (improvement is bonus, not requirement)
+      - Extract expertise_updates from improve-agent output (or log skip)
+
+      **Phase 5 - Report:**
+      - Synthesize results from all phases
+      - Include absolute file paths, spec location, expertise updates
+      - Suggest next steps based on domain context
+    examples:
+      - domain: payment
+        workflow: |
+          /do "Fix fee calculation duplication"
+          1. payment-plan-agent → spec at .claude/.cache/specs/payment/fee-consolidation-spec.md
+          2. User approval → "Yes, continue to build"
+          3. payment-build-agent → modified lib/stripe.ts, app/api/checkout-lesson/route.ts
+          4. payment-improve-agent → updated payment/expertise.yaml with consolidation pattern
+
+decision_trees:
+  classification_priority:
+    name: teach-niche Classification Hierarchy
+    entry_point: Analyze requirement text
+    branches:
+      - condition: Expert domain keyword match (HIGH CONFIDENCE)
+        sub_branches:
+          - condition: Question phrasing detected ("How", "What", "Why", "Explain")
+            action: Route to <domain>-question-agent (Pattern B)
+          - condition: Implementation verbs (fix, add, create, update, configure)
+            action: Route to <domain>-plan-agent (Pattern A)
+      - condition: Ambiguous requirement (multiple possible domains)
+        action: Use AskUserQuestion to clarify intent
+        example: "Setup payment flow" → Could be payment domain OR database migration
+      - condition: No keyword match (novel requirement)
+        action: Route to agent-authoring for new domain scaffolding
+
+  pattern_selection:
+    name: Orchestration Pattern Selection
+    entry_point: After domain classification
+    branches:
+      - condition: Implementation request (fix, add, create, update, configure)
+        action: Pattern A (Plan→Approval→Build→Improve)
+        domains: All 6 expert domains
+      - condition: Question request ("How", "What", "Why", "Explain")
+        action: Pattern B (Question-Agent direct answer)
+        domains: All 6 expert domains
+
+patterns:
+  expert_domain_indicators:
+    name: Active Domain Indicators (Phase 1 + Phase 2)
+    context: Complete routing patterns for teach-niche-v0
+    implementation: |
+      **PHASE 1 FOUNDATION (Active):**
+
+      do-management:
+        keywords: [/do routing, classification, orchestration, approval gates, execution control]
+        locations: [.claude/commands/do.md, CLAUDE.md]
+        verbs: [add, update, route, classify, improve, refactor]
+        framework_notes: |
+          Self-referential domain. Modifies its own routing logic.
+          Three-file sync pattern: do.md + CLAUDE.md + expertise.yaml
+        examples:
+          - "Add payment expert to /do routing"
+          - "Update classification logic for Stripe keywords"
+          - "How does /do route video-security requests?"
+
+      agent-authoring:
+        keywords: [create agent, new expert, agent config, domain, specialist, expertise.yaml]
+        locations: [.claude/agents/experts/, .claude/agents/]
+        verbs: [create, configure, setup, scaffold, generate]
+        framework_notes: |
+          Meta-capability domain. Creates other expert domains.
+          Templates adapted for Next.js 15 + Supabase + Stripe patterns.
+          Tool selection: Operational domains get Bash, content domains don't.
+        examples:
+          - "Create payment expert domain"
+          - "Setup agent for video-security patterns"
+          - "How do I configure tools for database expert?"
+
+      **PHASE 2 SPECIALISTS (Active):**
+
+      payment (Stripe Connect):
+        keywords: [stripe, payment, checkout, payout, connect, subscription, webhook, transaction, fee]
+        locations: [app/api/checkout-lesson/, app/api/webhooks/stripe/, lib/stripe.ts]
+        verbs: [create, process, handle, configure, verify, calculate]
+        framework_notes: |
+          Build agent needs Bash tool (stripe CLI for webhook testing).
+          Primary files: app/api/checkout-lesson/route.ts, app/api/webhooks/stripe/route.ts
+          Pain points from scout: fee calculation duplication, incomplete webhook coverage
+          Integration: Stripe Connect multi-party payments, platform fees
+        examples:
+          - "Fix fee calculation duplication across routes"
+          - "Add charge.refunded webhook handler"
+          - "Configure payment processing for instructor payouts"
+
+      video-security (Course Access):
+        keywords: [video, signed URL, access, enrollment, RLS, preview, DRM, abuse, lesson]
+        locations: [lib/video-utils.ts, app/api/get-video-url/, components/video-player.tsx]
+        verbs: [verify, generate, track, protect, control, authorize, reduce (expiry), log]
+        framework_notes: |
+          Build agent references Supabase Storage patterns.
+          Primary files: lib/video-utils.ts, app/api/get-video-url/route.ts
+          Pain points from scout: 12hr URL expiry, LIKE RLS matching, header trust
+          Integration: Supabase Storage signed URLs + RLS policies
+        examples:
+          - "Reduce signed URL expiry to 5 minutes"
+          - "Replace LIKE RLS with enrollment JOIN"
+          - "Implement video access logging"
+
+      auth (Supabase Authentication):
+        keywords: [supabase, auth, user, role, permission, RLS, login, signup, session, middleware, guard]
+        locations: [lib/auth-utils.ts, middleware.ts, supabase/migrations/*auth*.sql]
+        verbs: [configure, manage, update, implement, verify, protect, guard, bootstrap]
+        framework_notes: |
+          Build agent needs Bash tool (supabase CLI for migrations).
+          Primary files: middleware.ts, supabase/config.toml, migrations/*auth*.sql
+          Patterns: Row Level Security (RLS), role-based access control
+          Integration: Supabase auth providers, custom role claims
+        examples:
+          - "Create requireInstructor role guard"
+          - "Add middleware protection for /admin routes"
+          - "Implement session sync on role changes"
+          - "Bootstrap first admin user"
+
+      database (Supabase Schema):
+        keywords: [schema, migration, query, supabase, postgres, table, index, relationship, types, consolidate]
+        locations: [supabase/migrations/, types/supabase.ts, lib/supabase/server-utils.ts]
+        verbs: [create, update, optimize, migrate, generate, consolidate, version]
+        framework_notes: |
+          Build agent needs Bash tool (supabase CLI: db diff, db push, gen types).
+          Primary files: supabase/migrations/*.sql, types/supabase.ts
+          Workflow: Schema change → migration → type generation → deployment
+          Integration: TypeScript type generation from Postgres schema
+        examples:
+          - "Generate TypeScript types from schema"
+          - "Consolidate migrations into baseline"
+          - "Add schema versioning table"
+          - "Create test mock from schema"
+
+  execution_control:
+    name: Execution Control Patterns for teach-niche
+    context: Critical behavioral rules for /do command
+    implementation: |
+      Rules adapted from agentic-engineering-book flat orchestration pattern:
+
+      1. Task Tool Blocking:
+         - Task calls are inherently blocking (no run_in_background parameter)
+         - Wait for subagent completion before proceeding
+         - Collect full output before responding to user
+
+      2. Single-Message Parallelism:
+         - Multiple independent Task calls in ONE message execute concurrently
+         - Example: Parallel research across payment docs + Stripe API + community
+         - Still blocks until ALL complete
+
+      3. Orchestration Sequence for Pattern A (Expert Implementation):
+         - Phase 1: Plan agent creates spec → saves to .claude/.cache/specs/{domain}/
+         - Phase 2: User approval gate (AskUserQuestion at /do level, not coordinator)
+         - Phase 3: Build agent implements from spec (if approved)
+         - Phase 4: Improve agent updates expertise.yaml (opportunistic, non-blocking)
+
+      4. Approval Gate Behavior:
+         - User selecting "No, stop here" is NOT an error
+         - Report spec location and suggest resume command: /do "build from {spec_path}"
+         - Exit gracefully with status: "Plan Complete - User Review Requested"
+
+      5. Error Handling Tiers:
+         - Plan fails → Exit workflow (no spec to build from)
+         - User declines → Graceful exit (valid outcome, not error)
+         - Build fails → Preserve spec, report error, skip improve
+         - Improve fails → Log error, workflow succeeds (improvement is bonus)
+
+  orchestration_patterns:
+    name: Two Primary Orchestration Patterns
+    context: /do uses 2 main patterns for different workflow types
+    implementation: |
+      Pattern A - Expert Implementation (Plan→Build→Improve):
+        When: Expert domain + implementation verbs (fix, add, create, update, configure)
+        Flow: plan-agent → user approval → build-agent → improve-agent
+        Examples: "Fix fee calculation duplication", "Reduce signed URL expiry"
+        Domains: All 6 expert domains (do-management, agent-authoring, payment, video-security, auth, database)
+
+      Pattern B - Expert Question (Direct Answer):
+        When: Expert domain + question phrasing ("How", "What", "Why", "Explain")
+        Flow: question-agent → report answer
+        Examples: "How do I configure Stripe Connect?", "What tools for database expert?"
+        Domains: All 6 expert domains
+
+best_practices:
+  - category: Classification
+    practices:
+      - practice: |
+          Check expert domains FIRST before pattern matching.
+          Expert domain specificity > generic workflow patterns.
+        evidence: teach-niche has 6 specialist domains with distinct keywords
+        timestamp: 2025-12-30
+
+      - practice: |
+          Detect question phrasing ("How", "What", "Why", "Explain") to route
+          to question-agent instead of plan-agent. Prevents unnecessary planning.
+        evidence: Pattern B (Question-Agent) efficiency - no spec creation overhead
+        timestamp: 2025-12-30
+
+      - practice: |
+          Use verbs to distinguish implementation from questions.
+          Implementation verbs: fix, add, create, update, configure, process, reduce.
+          Question verbs: how, what, why, explain, when.
+        evidence: Pattern A vs Pattern B classification from do.md
+        timestamp: 2025-12-30
+
+      - practice: |
+          Framework-specific keywords improve routing accuracy.
+          Payment: "stripe", "webhook", "payout", "connect", "fee"
+          Video: "signed URL", "RLS", "enrollment", "expiry"
+          Auth: "middleware", "guard", "role", "permission"
+          Database: "migration", "types", "schema", "consolidate"
+        evidence: Phase 2 domain indicators extracted from actual codebase structure
+        timestamp: 2025-12-30
+
+  - category: Routing Tables
+    practices:
+      - practice: |
+          When adding/refining expert domain, update THREE files synchronously:
+          1. do.md classification logic (keywords, examples, locations)
+          2. CLAUDE.md expert domains table
+          3. this expertise.yaml (patterns.expert_domain_indicators)
+        evidence: Three-file sync pattern prevents drift between routing sources
+        timestamp: 2025-12-30
+
+      - practice: |
+          Include 3-5 concrete examples for each domain in /do.md.
+          Examples clarify routing intent better than keywords alone.
+        evidence: Phase 2 domains have diverse use cases ("Fix fee calculation", "Reduce URL expiry")
+        timestamp: 2025-12-30
+
+      - practice: |
+          Extract keywords from actual Next.js route structure and Supabase schema.
+          Framework-specific patterns: API routes, migration files, RLS policies.
+        evidence: teach-niche uses Next.js 15 + Supabase + Stripe stack
+        timestamp: 2025-12-30
+
+      - practice: |
+          Document framework_notes in expert_domain_indicators pattern.
+          Captures CLI tools needed (Bash), primary files, integration patterns.
+        evidence: Payment needs Stripe CLI, database needs Supabase CLI
+        timestamp: 2025-12-30
+
+  - category: Execution Control
+    practices:
+      - practice: |
+          Never use run_in_background for Task tool - it doesn't exist.
+          Task is inherently blocking. Wait for all agents before responding.
+        evidence: Prevents premature /do exit with incomplete results
+        timestamp: 2025-12-30
+
+      - practice: |
+          User approval gate is PART OF ORCHESTRATION in /do itself.
+          After plan-agent completes, /do uses AskUserQuestion before build.
+          Don't delegate approval logic to coordinator (flat architecture).
+        evidence: Pattern A orchestration in do.md (lines ~217-234)
+        timestamp: 2025-12-30
+
+      - practice: |
+          Improve phase failures should NOT fail workflow.
+          Build success = workflow success. Improve is opportunistic learning.
+        evidence: Expertise updates are bonus, not requirement (lines ~258-264)
+        timestamp: 2025-12-30
+
+  - category: Framework Adaptation
+    practices:
+      - practice: |
+          Next.js 15 route structure maps to domain primary_files.
+          Payment domain: app/api/checkout-lesson/, app/api/webhooks/stripe/
+          Video domain: lib/video-utils.ts, app/api/get-video-url/
+          Auth domain: middleware.ts, supabase/migrations/*auth*.sql
+        evidence: teach-niche uses Next.js 15 App Router conventions
+        timestamp: 2025-12-30
+
+      - practice: |
+          Operational domains require Bash tool for CLI integration.
+          Payment: stripe CLI (webhook testing, Connect setup)
+          Database: supabase CLI (db diff, db push, gen types)
+          Auth: supabase CLI (migration new, migration up)
+          Content domains (video): No Bash (uses Supabase client libraries)
+        evidence: Operational vs content domain pattern from agent-authoring
+        timestamp: 2025-12-30
+
+      - practice: |
+          Phase 2 domains include scout reconnaissance pain points.
+          Payment: Fee calculation duplication, incomplete webhook coverage
+          Video: 12hr URL expiry, LIKE RLS matching, header trust
+          Document known_issues in domain expertise.yaml.
+        evidence: payment/expertise.yaml, video-security/expertise.yaml
+        timestamp: 2025-12-30
+
+known_issues:
+  - issue: Ambiguous requirements with mixed domain signals
+    workaround: Use AskUserQuestion to disambiguate before routing
+    status: by-design
+    timestamp: 2025-12-30
+    example: "Setup payment flow" → Could be payment domain OR database migration
+
+  - issue: CLAUDE.md and do.md routing tables can drift
+    workaround: Three-file sync pattern (do.md + CLAUDE.md + expertise.yaml)
+    status: mitigated
+    timestamp: 2025-12-30
+    evidence: Best practice documents synchronous updates
+
+  - issue: Classification relies on keyword matching (no ML)
+    workaround: High-quality keyword extraction from actual codebase structure
+    status: acceptable
+    timestamp: 2025-12-30
+    evidence: Framework-specific keywords provide good accuracy
+
+potential_enhancements:
+  - enhancement: Auto-detect new expert domains from .claude/agents/experts/
+    rationale: Reduce manual routing table updates when Phase 2+ domains added
+    effort: medium
+    timestamp: 2025-12-30
+    implementation: Glob .claude/agents/experts/ → extract keywords from expertise.yaml
+
+  - enhancement: Classification confidence scoring
+    rationale: Identify ambiguous requirements proactively, ask before routing
+    effort: medium
+    timestamp: 2025-12-30
+    benefit: Reduces misrouting, improves user experience
+
+  - enhancement: Framework-aware keyword extraction
+    rationale: |
+      Parse Next.js route structure (src/app/api/) + Supabase migrations
+      to automatically suggest domain keywords when creating Phase 2+ experts.
+    effort: high
+    timestamp: 2025-12-30
+    benefit: Agent-authoring provides smarter scaffolding for Next.js context
+
+  - enhancement: Build resumption from spec path
+    rationale: Enable `/do "build from {spec_path}"` pattern for resuming after approval
+    effort: low
+    timestamp: 2025-12-30
+    benefit: User can review/edit spec before continuing
+
+historical_learnings:
+  foundation_first_approach:
+    date: 2025-12-30
+    decision: Start with 2 foundation domains (do-management + agent-authoring) before Phase 2
+    rationale: |
+      Specialist domains (payment, video, auth, database) would require
+      /do orchestration (chicken-egg problem). Foundation provides:
+      - Universal /do entry point (do-management)
+      - Domain creation capability (agent-authoring)
+      - Patterns for specialist addition (Phase 2)
+    outcome: |
+      Phase 1: Established orchestration + meta-capability
+      Phase 2: Used foundation to create 4 specialists (now active)
+    lessons: |
+      Foundation domains have highest cross-reference rates.
+      Do-management enables self-improvement of /do routing.
+      Agent-authoring prevents "reinventing wheel" for each specialist.
+
+  flat_orchestration:
+    date: 2025-12-30
+    pattern: /do directly orchestrates expert agents (no coordinator layer)
+    source: agentic-engineering-book commit 353d576
+    rationale: |
+      Nested Task calls (coordinator → expert) hit platform limitations.
+      Flat architecture (/do → expert) avoids nesting, simplifies control flow.
+    adaptation: teach-niche adopts flat pattern from day 1 (no legacy migration)
+
+  framework_specific_adaptation:
+    date: 2025-12-30
+    context: teach-niche uses Next.js 15 + Supabase + Stripe (not book/knowledge-base)
+    adaptations:
+      - Primary files map to src/app/, supabase/, not chapters/
+      - Keywords extracted from API routes, migration files
+      - Build agents reference Next.js patterns (App Router, Server Components)
+      - Operational domains (payment, database, auth) need Bash for CLI tools
+      - RLS policies, Stripe webhooks, signed URLs in domain patterns
+    lessons: |
+      Generic book patterns adapt to framework context.
+      Expertise.yaml primary_files section maps to actual project structure.
+      Tool selection considers framework CLI (supabase, stripe, next).
+
+  phase_2_graduation:
+    date: 2025-12-30
+    context: Phase 2 specialists transitioned from PLANNED to ACTIVE
+    domains_added:
+      - payment (Stripe Connect multi-party payments)
+      - video-security (course video access control)
+      - auth (Supabase auth + role-based permissions)
+      - database (schema evolution, type generation)
+    process: |
+      1. Agent-authoring domain created each specialist (4 agents + expertise.yaml)
+      2. Do-management updated routing tables (three-file sync)
+      3. Keywords extracted from actual codebase (API routes, migrations)
+      4. Scout reconnaissance findings embedded in domain expertise
+    outcome: |
+      6 total expert domains now active (2 foundation + 4 specialists)
+      Routing classification covers all teach-niche core workflows
+      Framework-specific patterns documented in domain expertise.yaml
+    lessons: |
+      Scout reconnaissance provides pain points for domain focus
+      Framework CLI requirements (Bash tool) determined during creation
+      Three-file sync prevents drift between routing sources
+
+stability:
+  oscillation_detection:
+    rule: |
+      IF entry E1 at T1 contradicts E0 at T0
+      AND entry E2 at T2 contradicts E1
+      THEN oscillation detected
+    resolution: |
+      Preserve both with conflict marker
+      Escalate to human
+    detected_oscillations: []
+
+  convergence_indicators:
+    insight_rate_trend: "maturing"
+    contradiction_count: 0
+    last_reviewed: 2025-12-30
+    notes: |
+      Initial expertise.yaml setup for teach-niche-v0. Discovery mission complete.
+      Size: ~820 lines (within healthy range, below 900 warning threshold).
+
+      Discovered patterns captured:
+      - 6 active expert domains (Phase 1 foundation + Phase 2 specialists)
+      - Framework-specific routing keywords (Next.js, Supabase, Stripe)
+      - Three-file sync pattern for routing table consistency
+      - Operational vs content domain tool selection
+      - Execution control rules (Task blocking, approval gates)
+
+      Phase 2 graduation complete:
+      - All 4 specialists active (payment, video-security, auth, database)
+      - Keywords extracted from actual codebase structure
+      - Scout reconnaissance findings embedded
+      - CLI tool requirements documented
+
+      Expected evolution:
+      - Classification refinements from usage (misrouting corrections)
+      - Additional specialist domains if patterns emerge
+      - Framework pattern updates as Next.js/Supabase evolve
+      - Size governance: Monitor growth, consolidate at 900 lines

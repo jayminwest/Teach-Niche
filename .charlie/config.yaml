@@ -1,9 +1,0 @@
-## Files Charlie should skip during reviews
-## Note: only include files not already in .gitignore
-ignorePatterns:
-
-## Commands Charlie can use to verify changes
-checkCommands:
-  lint: npm run lint
-  types: npm run typecheck
-  test: npm run test

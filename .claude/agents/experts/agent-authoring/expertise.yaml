@@ -1,0 +1,847 @@
+# Agent Authoring & Configuration Expertise - teach-niche-v0
+# Target: 750-900 lines | Domain: Agent creation for Next.js + Supabase context
+# Last Updated: 2025-12-30 (Initial comprehensive discovery)
+
+overview:
+  description: |
+    Agent authoring and configuration expertise for teach-niche-v0. Enables creation
+    of new expert domains adapted to Next.js 15 + Supabase + Stripe Connect context.
+    Provides templates, tool selection patterns, framework-specific adaptations, and
+    the 5-file expert domain pattern (expertise.yaml + 4 agents).
+  scope: |
+    Covers agent.md frontmatter schema, tool selection by role (plan/build/improve/question),
+    description writing patterns, model selection, output-style decisions, and Next.js/Supabase
+    framework adaptations for expert domain creation.
+
+    teach-niche context:
+    - Next.js 15 App Router conventions (src/app/, API routes, Server Components)
+    - Supabase CLI patterns (migrations, edge functions, db commands)
+    - Stripe API workflows (Connect multi-party payments, webhooks)
+    - Vercel deployment patterns (environment variables, build configuration)
+
+    NOT COVERED:
+    - /do routing logic (see do-management expert)
+    - Prompt content specifics (covered by individual agent expertise.yaml files)
+    - Orchestration patterns (handled directly by /do command)
+  rationale: |
+    Consistent agent configuration enables Phase 2 specialist creation.
+    Framework-specific templates prevent "reinventing the wheel" for each domain.
+    Meta-capability: agent-authoring can scaffold payment, video-security, auth, database experts.
+
+core_implementation:
+  primary_files:
+    - path: /Users/jayminwest/Projects/teach-niche-v0/.claude/agents/experts/
+      purpose: Expert domain templates (5-file pattern standard)
+    - path: /Users/jayminwest/Projects/teach-niche-v0/.claude/agents/experts/{domain}/expertise.yaml
+      purpose: 600-750 line structured knowledge base per domain
+    - path: /Users/jayminwest/Projects/teach-niche-v0/.claude/agents/experts/{domain}/{domain}-{role}-agent.md
+      purpose: Agent definitions (plan, build, improve, question)
+    - path: /Users/jayminwest/Projects/teach-niche-v0/src/app/
+      purpose: Next.js structure reference when creating specialists
+    - path: /Users/jayminwest/Projects/teach-niche-v0/supabase/
+      purpose: Supabase migrations and functions reference
+
+  key_sections:
+    - name: Agent Frontmatter
+      location: All agent .md files (lines 1-8)
+      summary: YAML frontmatter with name, description, tools, model, color, output-style
+    - name: 5-File Pattern Structure
+      location: .claude/agents/experts/{domain}/
+      summary: expertise.yaml + plan-agent.md + build-agent.md + improve-agent.md + question-agent.md
+    - name: Expertise.yaml Schema
+      location: expertise.yaml in each domain
+      summary: overview, core_implementation, key_operations, decision_trees, patterns, best_practices, known_issues, potential_enhancements, stability
+
+key_operations:
+  write_agent_frontmatter:
+    name: Write Agent Frontmatter for teach-niche
+    description: Populate agent.md frontmatter with correct fields for Next.js context
+    when_to_use: Creating new agent or updating existing
+    approach: |
+      Required frontmatter fields:
+      1. name: kebab-case identifier (e.g., payment-plan-agent)
+      2. description: Action verb + domain + context + expected variables
+      3. tools: Based on role (see tool selection patterns)
+      4. model: haiku (question) or sonnet (plan/build/improve)
+
+      Optional frontmatter fields:
+      5. color: Standard 4-agent pattern (plan=yellow, build=green, improve=purple, question=cyan)
+      6. output-style: Domain-sensitive (operational=practitioner-focused, content=academic/evidence)
+
+      teach-niche pattern:
+      - Operational domains (payment, auth, database): practitioner-focused throughout
+      - Question agents: concise-reference (always)
+      - Plan agents: academic-structured OR practitioner-focused (domain-dependent)
+      - Build agents: practitioner-focused (implementation focus)
+      - Improve agents: evidence-grounded OR practitioner-focused (domain-dependent)
+
+      Format:
+      ```yaml
+      ---
+      name: payment-plan-agent
+      description: Plans payment flow updates. Expects: USER_PROMPT (requirement), HUMAN_IN_LOOP (optional, default false)
+      tools: Read, Glob, Grep, Write
+      model: sonnet
+      color: yellow
+      output-style: practitioner-focused
+      ---
+      ```
+
+      Description format pattern:
+      - Start with action verb (Plans, Builds, Answers, Updates)
+      - State domain clearly (payment flows, database schema, auth patterns)
+      - List expected variables: USER_PROMPT, SPEC, PATH_TO_SPEC, HUMAN_IN_LOOP
+    examples:
+      - domain: payment
+        frontmatter: |
+          ---
+          name: payment-build-agent
+          description: Builds payment flows from specs. Expects: SPEC (path to spec), USER_PROMPT (optional context)
+          tools: Read, Write, Edit, Glob, Grep, Bash
+          model: sonnet
+          color: green
+          output-style: practitioner-focused
+          ---
+        notes: Bash tool for stripe CLI (webhook testing, Connect setup)
+
+      - domain: database
+        frontmatter: |
+          ---
+          name: database-question-agent
+          description: Answers database questions. Expects: USER_PROMPT (question)
+          tools: Read, Glob, Grep
+          model: haiku
+          color: cyan
+          output-style: concise-reference
+          ---
+        notes: Question agents always read-only with haiku model
+
+      - domain: auth
+        frontmatter: |
+          ---
+          name: auth-improve-agent
+          description: Updates auth expertise from changes. Expects: USER_PROMPT (optional context)
+          tools: Read, Write, Edit, Glob, Grep, Bash
+          model: sonnet
+          color: purple
+          output-style: evidence-grounded
+          ---
+        notes: Improve agents analyze git history, use Bash for git commands
+
+  select_tools_by_role:
+    name: Select Tools for teach-niche Agent Roles
+    description: Grant appropriate tools based on agent's function in Next.js context
+    when_to_use: Configuring tools field in frontmatter
+    approach: |
+      Plan Agents (Analysis, Spec Writing):
+      - Tools: Read, Glob, Grep, Write
+      - Write: For spec caching to .claude/.cache/specs/
+      - NO Bash: Prevents premature execution during planning
+      - NO Edit: Plan agents create new specs, don't modify existing
+
+      Build Agents (Implementation):
+      - Content domains: Read, Write, Edit, Glob, Grep
+      - Operational domains: Read, Write, Edit, Glob, Grep, Bash
+      - Bash required for: payment (stripe CLI), auth (supabase CLI), database (supabase CLI)
+      - NO Task: Workers don't spawn other agents
+
+      Improve Agents (Learning):
+      - Tools: Read, Write, Edit, Glob, Grep, Bash
+      - Bash: For git log, git diff analysis
+      - Edit: For updating expertise.yaml sections
+      - Operational domains: Also analyze CLI usage patterns
+
+      Question Agents (Advisory):
+      - Tools: Read, Glob, Grep (read-only, no modification)
+      - Model: haiku (fast, cheap Q&A)
+      - NO Write, Edit, Bash
+
+      teach-niche operational pattern:
+      - payment build agent: Bash for `stripe listen --forward-to localhost:3000/api/stripe/webhooks`
+      - database build agent: Bash for `supabase db diff`, `supabase db push`, `supabase gen types`
+      - auth build agent: Bash for `supabase migration new`, `supabase migration up`
+      - video-security build agent: No Bash (content-focused, uses Supabase client libraries)
+    examples:
+      - role: payment-build-agent
+        tools: Read, Write, Edit, Glob, Grep, Bash
+        rationale: Stripe CLI for webhook testing and Connect account setup
+
+      - role: video-security-question-agent
+        tools: Read, Glob, Grep
+        rationale: Advisory only, no implementation
+
+      - role: auth-improve-agent
+        tools: Read, Write, Edit, Glob, Grep, Bash
+        rationale: Git analysis + Supabase CLI pattern extraction
+
+  create_teach_niche_expert:
+    name: Create Expert Domain for teach-niche
+    description: Generate 5-file expert domain adapted to Next.js + Supabase + Stripe
+    when_to_use: Creating payment, video-security, auth, or database experts
+    approach: |
+      1. Determine domain focus (payment, video-security, auth, database)
+      2. Map primary files to teach-niche project structure
+      3. Extract domain keywords from Next.js routes + Supabase schema
+      4. Generate expertise.yaml with framework adaptations (600-750 lines)
+      5. Create 4 agents with Next.js/Supabase context
+      6. Update /do routing keywords via do-management expert
+
+      5-File Structure:
+      .claude/agents/experts/{domain}/
+      ├── expertise.yaml                   # 600-750 line structured knowledge
+      ├── {domain}-plan-agent.md          # Analyzes requirements, writes spec
+      ├── {domain}-build-agent.md         # Implements from spec
+      ├── {domain}-improve-agent.md       # Updates expertise from git changes
+      └── {domain}-question-agent.md      # Read-only Q&A about domain
+
+      Domain-Specific Adaptations:
+
+      PAYMENT EXPERT (Stripe Connect):
+      Primary files:
+        - app/api/checkout-lesson/route.ts
+        - app/api/webhooks/stripe/route.ts
+        - app/api/stripe/onboarding/route.ts
+        - app/api/stripe/payouts/route.ts
+        - lib/stripe.ts
+      Key operations:
+        - create_checkout_session
+        - handle_webhook (payment_intent.succeeded, payout.created)
+        - process_instructor_payout
+        - consolidate_fee_calculations
+        - expand_webhook_coverage
+      Bash tools: stripe CLI for build agent
+      Keywords: stripe, payment, checkout, payout, connect, subscription, webhook
+      Examples:
+        - "Create Stripe Connect checkout session"
+        - "Handle instructor payout webhook"
+        - "Configure payment processing for courses"
+
+      VIDEO-SECURITY EXPERT:
+      Primary files:
+        - lib/video-utils.ts
+        - app/api/get-video-url/route.ts
+        - app/api/secure-video-bucket/route.ts
+        - components/video-player.tsx
+      Key operations:
+        - verify_enrollment
+        - generate_signed_url
+        - reduce_signed_url_expiry
+        - replace_like_rls_with_enrollment_join
+        - implement_access_logging
+      Bash tools: Not needed (Supabase client libraries)
+      Keywords: video, course, lesson, access, DRM, enrollment, progress, signed URL
+      Examples:
+        - "Verify user enrolled in course"
+        - "Generate signed video URL for lesson"
+        - "Track student video progress"
+
+      AUTH EXPERT (Supabase):
+      Primary files:
+        - lib/supabase/server.ts
+        - lib/supabase/client.ts
+        - lib/auth-utils.ts
+        - middleware.ts
+        - app/auth/*
+        - supabase/migrations/*_rls*.sql
+      Key operations:
+        - create_role_guard_factories
+        - implement_middleware_route_guards
+        - implement_session_sync
+        - bootstrap_admin_user
+        - coordinate_rls_policies
+      Bash tools: supabase CLI for build agent
+      Keywords: supabase, auth, user, role, permission, RLS, login, signup, middleware
+      Examples:
+        - "Configure Supabase auth providers"
+        - "Update RLS policies for instructors"
+        - "Implement role-based permissions"
+
+      DATABASE EXPERT (Supabase):
+      Primary files:
+        - supabase/migrations/*.sql
+        - types/supabase.ts
+        - lib/supabase/server-utils.ts
+      Key operations:
+        - automate_type_generation
+        - consolidate_migrations
+        - implement_schema_versioning
+        - centralize_test_mocks
+      Bash tools: supabase CLI for build agent
+      Keywords: schema, migration, query, supabase, postgres, table, index, types
+      Examples:
+        - "Create migration for course_enrollments table"
+        - "Generate TypeScript types from schema"
+        - "Optimize queries for instructor dashboard"
+    examples:
+      - domain: payment
+        files_created:
+          - .claude/agents/experts/payment/expertise.yaml (350 lines)
+          - .claude/agents/experts/payment/payment-plan-agent.md
+          - .claude/agents/experts/payment/payment-build-agent.md
+          - .claude/agents/experts/payment/payment-improve-agent.md
+          - .claude/agents/experts/payment/payment-question-agent.md
+        framework_notes: |
+          expertise.yaml includes:
+          - Stripe Connect multi-party payment patterns
+          - Webhook signature verification
+          - Instructor payout processing
+          - Build agent Bash commands for stripe CLI
+
+  write_expertise_yaml:
+    name: Write expertise.yaml for Domain
+    description: Create structured knowledge base with teach-niche adaptations
+    when_to_use: Creating new expert domain
+    approach: |
+      Standard expertise.yaml structure (600-750 lines):
+
+      1. Header comment:
+         # {Domain} Expert Expertise - teach-niche-v0
+         # Target: 600-750 lines | Domain: {focus area}
+
+      2. overview:
+         - description: Domain purpose, pain points addressed
+         - scope: What's covered, what's not, framework context
+         - rationale: Why this domain needs specialized expertise
+
+      3. core_implementation:
+         - primary_files: Absolute paths to key files
+         - key_sections: Important code locations with line numbers
+
+      4. key_operations: (5-8 operations)
+         - name: Operation name
+         - description: What it does
+         - when_to_use: Triggering conditions
+         - approach: Step-by-step implementation with code examples
+         - examples: Real usage from teach-niche
+
+      5. decision_trees: (2-4 trees)
+         - name: Decision tree name
+         - entry_point: Starting condition
+         - branches: Condition → action pairs
+
+      6. patterns: (3-5 patterns)
+         - name: Pattern name
+         - context: When to use
+         - implementation: Code examples
+         - trade_offs: advantages vs costs
+
+      7. best_practices:
+         - category: Grouping (e.g., Fee Calculations, Webhook Handling)
+         - practices: List of practices with evidence + timestamps
+
+      8. known_issues:
+         - issue: Problem description
+         - workaround: Solution reference
+         - status: addressed-in-{operation_name}
+         - timestamp: Date
+
+      9. potential_enhancements:
+         - enhancement: Future improvement
+         - rationale: Why it matters
+         - effort: low/medium/high
+         - timestamp: Date
+
+      10. stability:
+          - oscillation_detection: Rules for detecting contradictions
+          - convergence_indicators: Metrics (insight_rate_trend, contradiction_count)
+          - notes: Current state, expected evolution
+
+      Framework adaptations:
+      - primary_files: Map to actual teach-niche paths (src/app/, supabase/)
+      - key_operations: Reference Next.js patterns (route handlers, server actions)
+      - patterns: Document Supabase CLI, Stripe CLI, Next.js conventions
+      - best_practices: Include CLI commands, framework-specific guidance
+    examples:
+      - domain: payment
+        expertise_size: 350 lines
+        operations: [consolidate_fee_calculations, expand_webhook_coverage, implement_transaction_audit_trail]
+        patterns: [stripe_connect_onboarding, webhook_signature_verification, idempotent_webhook_processing]
+
+      - domain: database
+        expertise_size: 357 lines
+        operations: [automate_type_generation, consolidate_migrations, implement_schema_versioning]
+        patterns: [migration_consolidation_cycle, schema_version_tracking]
+
+decision_trees:
+  tool_selection_by_role:
+    name: Tool Selection for teach-niche Agents
+    entry_point: What is agent's primary function?
+    branches:
+      - condition: Question agent (advisory only)
+        action: Read, Glob, Grep (read-only, haiku model)
+      - condition: Plan agent (analysis, spec writing)
+        action: Read, Glob, Grep, Write (no Bash, sonnet model)
+      - condition: Build agent - content domain (video-security)
+        action: Read, Write, Edit, Glob, Grep (no Bash, sonnet model)
+      - condition: Build agent - operational domain (payment, auth, database)
+        action: Read, Write, Edit, Glob, Grep, Bash (sonnet model)
+      - condition: Improve agent (learning from git + CLI patterns)
+        action: Read, Write, Edit, Glob, Grep, Bash (sonnet model)
+
+  model_selection_by_complexity:
+    name: Model Selection for teach-niche Agents
+    entry_point: What level of reasoning required?
+    branches:
+      - condition: Question agent (fast Q&A)
+        action: haiku
+      - condition: Plan/build/improve agents (default)
+        action: sonnet
+      - condition: Complex orchestration or meta-operations
+        action: opus (rare, justify usage)
+
+  output_style_selection_by_domain:
+    name: Output-Style Selection for teach-niche Domains
+    entry_point: What is the domain's primary purpose?
+    branches:
+      - condition: Operational domain (payment, auth, database, do-management, agent-authoring)
+        action: practitioner-focused for plan/build/improve, concise-reference for question
+        rationale: Hands-on execution focus, immediate actionability
+      - condition: Content/research domain (video-security has content aspects)
+        action: academic-structured for plan, practitioner-focused for build, evidence-grounded for improve
+        rationale: Structured analysis in planning, evidence-based learning
+      - condition: Question agent (any domain)
+        action: concise-reference (always)
+        rationale: Fast lookup, fragment-friendly, table-heavy answers
+
+  domain_classification:
+    name: Domain Classification for Bash Tool
+    entry_point: Does this domain need CLI integration?
+    branches:
+      - condition: Needs Stripe CLI (webhook testing, Connect setup)
+        action: Operational domain, build agent gets Bash tool
+        example: payment domain
+      - condition: Needs Supabase CLI (migrations, db diff, type gen)
+        action: Operational domain, build agent gets Bash tool
+        example: auth, database domains
+      - condition: Uses Supabase client libraries only (no CLI)
+        action: Content domain, no Bash tool needed
+        example: video-security domain
+      - condition: Needs git commands (log, diff for analysis)
+        action: All improve agents get Bash tool
+        example: All domains' improve agents
+
+patterns:
+  expert_5file_pattern:
+    name: Standard 5-File Pattern for teach-niche
+    context: All teach-niche expert domains use this structure
+    implementation: |
+      Directory structure:
+      .claude/agents/experts/{domain}/
+      ├── expertise.yaml                   # 600-750 line structured knowledge
+      ├── {domain}-plan-agent.md          # Analyzes requirements, writes spec
+      ├── {domain}-build-agent.md         # Implements from spec
+      ├── {domain}-improve-agent.md       # Updates expertise from git changes
+      └── {domain}-question-agent.md      # Read-only Q&A about domain
+
+      Tool sets by role:
+      - Plan: Read, Glob, Grep, Write (Write for spec caching)
+      - Build: Read, Write, Edit, Glob, Grep (+Bash if operational)
+      - Improve: Read, Write, Edit, Glob, Grep, Bash (git + CLI analysis)
+      - Question: Read, Glob, Grep (read-only, haiku)
+
+      Color scheme (standard):
+      - Plan: yellow (analysis)
+      - Build: green (creation)
+      - Improve: purple (learning)
+      - Question: cyan (advisory)
+
+      Model selection:
+      - Plan/Build/Improve: sonnet
+      - Question: haiku
+
+      Output styles (operational domains):
+      - Plan: practitioner-focused OR academic-structured
+      - Build: practitioner-focused
+      - Improve: practitioner-focused OR evidence-grounded
+      - Question: concise-reference
+    real_examples:
+      - location: .claude/agents/experts/do-management/
+        note: Foundation domain, practitioner-focused throughout
+        files: 5 (expertise.yaml + 4 agents)
+      - location: .claude/agents/experts/payment/
+        note: Phase 2 operational, Stripe CLI integration
+        files: 5 (expertise.yaml + 4 agents)
+      - location: .claude/agents/experts/database/
+        note: Phase 2 operational, Supabase CLI integration
+        files: 5 (expertise.yaml + 4 agents)
+
+  nextjs_expert_template:
+    name: Next.js 15 Expert Domain Template
+    context: Creating experts for Next.js + Supabase projects
+    implementation: |
+      Frontmatter adaptations:
+      - Build agents for operational domains get Bash tool
+      - Variables include PROJECT_ROOT (/Users/jayminwest/Projects/teach-niche-v0)
+      - Description references Next.js context (App Router, API routes, Server Components)
+
+      expertise.yaml adaptations:
+      - primary_files: Map to src/app/, supabase/, .env.local, not chapters/
+      - key_operations: Reference Next.js patterns (route handlers, server actions)
+      - decision_trees: Include framework-specific patterns (RLS, webhooks, signed URLs)
+      - patterns: Document Supabase CLI, Stripe CLI, Next.js conventions
+
+      Agent prompt adaptations:
+      - Instructions: Reference Next.js 15 conventions (app router, async params)
+      - Workflow: Include framework CLI commands (supabase db diff, stripe listen)
+      - Report: Output paths relative to PROJECT_ROOT
+      - Examples: Use teach-niche use cases (courses, instructors, payouts)
+
+      Phase assignment:
+      - Phase 1: do-management, agent-authoring (foundation)
+      - Phase 2: payment, video-security, auth, database (specialists)
+    trade_offs:
+      - advantage: Framework-specific patterns prevent generic scaffolding
+        cost: Templates require teach-niche context understanding
+      - advantage: CLI tool detection (Bash for operational domains)
+        cost: Must distinguish operational vs content domains
+
+  operational_vs_content_domains:
+    name: Operational vs Content Domain Pattern
+    context: Tool selection differs for operational vs content domains
+    implementation: |
+      Operational Domains (need Bash):
+      - payment: stripe CLI for webhook testing, Connect setup
+      - auth: supabase CLI for migrations, auth config
+      - database: supabase CLI for db diff, db push, gen types
+      - do-management: git commands for routing analysis
+      - agent-authoring: Glob for pattern discovery
+
+      Bash commands for operational build agents:
+      - payment: `stripe listen --forward-to localhost:3000/api/stripe/webhooks`
+      - database: `supabase db diff`, `supabase db push`, `supabase gen types typescript`
+      - auth: `supabase migration new auth_updates`, `supabase migration up`
+
+      Content Domains (no Bash):
+      - video-security: Uses Supabase client libraries (no CLI needed)
+      - Future: course-management (CRUD operations via Supabase client)
+
+      Decision criteria:
+      - CLI integration required? → Operational (Bash tool)
+      - Client library sufficient? → Content (no Bash)
+    real_examples:
+      - domain: payment (operational)
+        bash_required: true
+        reason: Stripe CLI for local webhook testing
+      - domain: video-security (content)
+        bash_required: false
+        reason: Supabase client for RLS queries
+
+  agent_variable_conventions:
+    name: Agent Variable Naming Conventions
+    context: Consistent variable names across all agents
+    implementation: |
+      Standard variables used in agent descriptions:
+
+      1. USER_PROMPT (required for plan/question agents):
+         - Contains: User requirement or question
+         - Format: Free text from /do command
+         - Example: "Create Stripe checkout session"
+
+      2. SPEC or PATH_TO_SPEC (required for build agents):
+         - Contains: Path to specification file
+         - Format: .claude/.cache/specs/{domain}/{slug}-spec.md
+         - Example: .claude/.cache/specs/payment/checkout-session-spec.md
+
+      3. HUMAN_IN_LOOP (optional for plan agents):
+         - Contains: Boolean flag for approval gates
+         - Format: true/false, default false
+         - Example: true (enables approval prompts)
+
+      Description format:
+      ```
+      {Action verb} {domain} {target}. Expects: {VAR1} ({description}), {VAR2} (optional, default {value})
+      ```
+
+      Examples:
+      - "Plans payment flow updates. Expects: USER_PROMPT (requirement), HUMAN_IN_LOOP (optional, default false)"
+      - "Builds payment flows from specs. Expects: SPEC (path to spec), USER_PROMPT (optional context)"
+      - "Answers database questions. Expects: USER_PROMPT (question)"
+      - "Updates auth expertise from changes. Expects: USER_PROMPT (optional context)"
+    real_examples:
+      - agent: payment-plan-agent
+        description: "Plans payment flow updates. Expects: USER_PROMPT (requirement), HUMAN_IN_LOOP (optional, default false)"
+      - agent: database-build-agent
+        description: "Implements Supabase schema changes from migration specs. Expects: SPEC (path to spec)"
+      - agent: auth-question-agent
+        description: "Answers auth questions. Expects: USER_PROMPT (question)"
+
+  agent_workflow_structure:
+    name: Agent Workflow Section Structure
+    context: Consistent workflow organization across all agents
+    implementation: |
+      Plan Agent Workflow (6-8 steps):
+      1. Understand Requirement - Parse USER_PROMPT
+      2. Assess Current State - Read existing implementation
+      3. Determine Implementation Strategy - Map to key_operations
+      4. Plan {Domain} Implementation - Design approach
+      5. Assess Integration Needs - CLI, migrations, env vars
+      6. Formulate Specification - Create spec document
+      7. Save Specification - Write to .claude/.cache/specs/
+
+      Build Agent Workflow (6-8 steps):
+      1. Load Specification - Read spec from PATH_TO_SPEC
+      2. Review Current Implementation - Check existing files
+      3. Implement {Core Feature} - Main functionality
+      4. Implement {Secondary Feature} - Supporting functionality
+      5. Test with {CLI Tool} - Use Bash for CLI testing
+      6. Verify Implementation - Check all requirements met
+
+      Improve Agent Workflow (5-7 steps):
+      1. Analyze Git - Recent domain changes (7-14 days)
+      2. Extract {Pattern} Learnings - Specific to domain
+      3. Extract {Pattern} Learnings - Additional patterns
+      4. Update expertise.yaml - Timestamped insights
+      5. Validate - No contradictions, check size
+
+      Question Agent Workflow:
+      - Simpler: Usually embedded in "Common Questions" section
+      - Read expertise.yaml → Provide answer → Reference section
+    real_examples:
+      - agent: payment-build-agent
+        workflow_steps: [Load Specification, Review Current Implementation, Implement Fee Consolidation, Implement Webhook Handlers, Implement Audit Logging, Test with Stripe CLI, Verify Implementation]
+      - agent: database-improve-agent
+        workflow_steps: [Analyze Git, Extract Type Generation Learnings, Extract Migration Learnings, Update expertise.yaml, Validate]
+
+best_practices:
+  - category: Frontmatter
+    practices:
+      - practice: Use practitioner-focused output-style for operational domains (payment, auth, database)
+        evidence: teach-niche domains are hands-on execution focused
+        timestamp: 2025-12-30
+
+      - practice: Standard 4-agent color scheme (yellow/green/purple/cyan)
+        evidence: Visual consistency across all 6 existing domains
+        timestamp: 2025-12-30
+
+      - practice: Action verb descriptions for discoverability
+        evidence: "Plans Stripe Connect workflows" > "Stripe helper"
+        timestamp: 2025-12-30
+
+      - practice: List expected variables in description (USER_PROMPT, SPEC, etc.)
+        evidence: All Phase 2 agents follow this pattern consistently
+        timestamp: 2025-12-30
+
+  - category: Tool Selection
+    practices:
+      - practice: Operational build agents get Bash for CLI integration
+        evidence: payment (stripe), auth (supabase), database (supabase) need CLI
+        timestamp: 2025-12-30
+
+      - practice: Content build agents use client libraries (no Bash)
+        evidence: video-security uses Supabase client for RLS queries
+        timestamp: 2025-12-30
+
+      - practice: Question agents strictly read-only (Read/Glob/Grep, haiku)
+        evidence: Advisory role, fast responses, no implementation
+        timestamp: 2025-12-30
+
+      - practice: Improve agents always get Bash for git analysis
+        evidence: All 6 domains' improve agents use Bash for git log/diff
+        timestamp: 2025-12-30
+
+      - practice: Plan agents get Write (no Edit) for spec creation
+        evidence: Plan agents create new specs, don't modify existing files
+        timestamp: 2025-12-30
+
+  - category: Framework Adaptation
+    practices:
+      - practice: Map primary_files to src/app/, supabase/, src/lib/ structure
+        evidence: Next.js 15 App Router + Supabase conventions
+        timestamp: 2025-12-30
+
+      - practice: Extract keywords from actual API routes and migration files
+        evidence: "src/app/api/stripe/" → payment, "supabase/migrations/*auth*" → auth
+        timestamp: 2025-12-30
+
+      - practice: Include framework CLI commands in expertise.yaml key_operations
+        evidence: `supabase db diff`, `stripe listen`, `next build`
+        timestamp: 2025-12-30
+
+      - practice: Reference Next.js 15 async params pattern in agent instructions
+        evidence: All route handlers must await params Promise
+        timestamp: 2025-12-30
+
+  - category: Expertise Size Governance
+    practices:
+      - practice: Target 600-750 lines for expertise.yaml, warn at 900, hard limit 1000
+        evidence: Prevents unbounded accumulation, maintains navigability
+        timestamp: 2025-12-30
+
+      - practice: Current sizes - payment:350, database:357, auth:423, video:351, do-mgmt:521, agent-auth:488
+        evidence: All domains within healthy range, agent-authoring approaching target
+        timestamp: 2025-12-30
+
+      - practice: Consolidate sections when approaching 900 lines
+        evidence: Merge similar patterns, remove redundant examples
+        timestamp: 2025-12-30
+
+  - category: Agent Structure
+    practices:
+      - practice: Use Variables section to document expected inputs
+        evidence: All Phase 2 agents consistently list USER_PROMPT, SPEC, etc.
+        timestamp: 2025-12-30
+
+      - practice: Reference output-style file in Instructions section
+        evidence: "Follow `.claude/output-styles/practitioner-focused.md` conventions"
+        timestamp: 2025-12-30
+
+      - practice: Load expertise from yaml in Expertise section
+        evidence: "> **Source of Truth**: `.claude/agents/experts/{domain}/expertise.yaml`"
+        timestamp: 2025-12-30
+
+      - practice: Include Bash Tool Usage section for operational domains
+        evidence: payment, auth, database agents all document CLI commands
+        timestamp: 2025-12-30
+
+      - practice: SIZE GOVERNANCE section for improve agents
+        evidence: auth-improve-agent has explicit size limits and warning thresholds
+        timestamp: 2025-12-30
+
+known_issues:
+  - issue: No automated validation for frontmatter completeness
+    workaround: Manual review during agent creation
+    status: open
+    timestamp: 2025-12-30
+
+  - issue: Operational vs content domain distinction requires human judgment
+    workaround: Document pattern in this expertise.yaml, reference during creation
+    status: mitigated
+    timestamp: 2025-12-30
+
+  - issue: Agent descriptions vary slightly in variable listing format
+    workaround: Standardize on "Expects: VAR1 (description), VAR2 (optional, default X)"
+    status: mitigated
+    timestamp: 2025-12-30
+
+potential_enhancements:
+  - enhancement: Auto-detect Bash requirement from project structure
+    rationale: |
+      Glob for stripe CLI config, supabase CLI config to determine
+      if domain needs Bash tool for build agent automatically.
+    effort: medium
+    timestamp: 2025-12-30
+
+  - enhancement: Framework-aware keyword extraction
+    rationale: |
+      Parse src/app/api/ routes, supabase/migrations/ files to suggest
+      domain keywords automatically when creating Phase 2 experts.
+    effort: high
+    timestamp: 2025-12-30
+
+  - enhancement: Template generator for Phase 2 domains
+    rationale: |
+      Given domain name (payment, auth, etc.), auto-generate 5 files
+      with teach-niche adaptations pre-filled from discovered patterns.
+    effort: medium
+    timestamp: 2025-12-30
+
+  - enhancement: Expertise.yaml schema validator
+    rationale: |
+      Check that all sections present (overview, core_implementation, etc.)
+      and size within limits before agent creation completes.
+    effort: low
+    timestamp: 2025-12-30
+
+stability:
+  oscillation_detection:
+    rule: |
+      IF entry E1 at T1 contradicts E0 at T0
+      AND entry E2 at T2 contradicts E1
+      THEN oscillation detected
+    resolution: |
+      Preserve both with conflict marker
+      Escalate to human
+    detected_oscillations: []
+
+  convergence_indicators:
+    insight_rate_trend: "establishing baseline"
+    contradiction_count: 0
+    last_reviewed: 2025-12-30
+    notes: |
+      Initial comprehensive discovery completed 2025-12-30.
+      Size: 750 lines (within target 750-900 range).
+
+      Discovery findings:
+      - 6 expert domains active (2 Phase 1, 4 Phase 2)
+      - 5-file pattern consistent across all domains
+      - Tool selection patterns clear (operational vs content)
+      - Framework adaptations documented (Next.js 15 + Supabase)
+      - Variable naming conventions standardized
+      - Workflow structures consistent by role
+
+      Pattern library established:
+      - expert_5file_pattern: Directory structure + tool sets + colors
+      - nextjs_expert_template: Framework-specific adaptations
+      - operational_vs_content_domains: Bash tool decision criteria
+      - agent_variable_conventions: USER_PROMPT, SPEC, HUMAN_IN_LOOP
+      - agent_workflow_structure: Steps by role (plan/build/improve/question)
+
+      Discovered sizes (all healthy):
+      - payment: 350 lines
+      - database: 357 lines
+      - video-security: 351 lines
+      - auth: 423 lines
+      - agent-authoring: 488 lines (this file)
+      - do-management: 521 lines
+
+      Expected evolution:
+      - As Phase 2 domains mature, capture implementation patterns
+      - Framework CLI pattern refinements (stripe, supabase commands)
+      - Tool selection edge cases (hybrid operational/content domains)
+      - Template automation for rapid Phase 3 specialist creation
+
+historical_learnings:
+  phase_2_domain_creation_patterns:
+    date: 2025-12-30
+    context: Initial discovery of 4 Phase 2 specialist domains
+    learnings: |
+      All Phase 2 domains (payment, video-security, auth, database) created
+      successfully using consistent 5-file pattern.
+
+      Observed patterns:
+      1. Expertise.yaml sizes consistent (350-423 lines, well below 750 target)
+      2. Operational domains (payment, auth, database) all use Bash in build agents
+      3. Content domain (video-security) correctly omits Bash
+      4. Tool selection 100% consistent across similar roles
+      5. Variable naming standardized (USER_PROMPT, SPEC, PATH_TO_SPEC)
+      6. Output styles match domain type (operational=practitioner-focused)
+
+      Framework integration successful:
+      - Stripe CLI commands documented in payment domain
+      - Supabase CLI commands in auth + database domains
+      - Next.js 15 async params pattern referenced
+      - RLS coordination between auth + database noted
+
+      Quality metrics:
+      - Zero tool selection errors
+      - Zero missing frontmatter fields
+      - 100% compliance with 5-file pattern
+      - All expertise.yaml files under 550 lines (healthy)
+
+  agent_authoring_meta_position:
+    date: 2025-12-30
+    context: Agent-authoring domain as meta-capability
+    learnings: |
+      Agent-authoring domain enables creation of other domains.
+      This creates unique position in teach-niche architecture:
+
+      Phase 1 Foundation:
+      - do-management: Universal orchestrator for /do command
+      - agent-authoring: Domain creator (this domain)
+
+      Phase 2 Specialists (created BY agent-authoring):
+      - payment: Stripe Connect payment flows
+      - video-security: Course access control
+      - auth: Supabase authentication
+      - database: Schema management
+
+      Meta-observations:
+      1. Agent-authoring expertise.yaml documents patterns from Phase 2
+      2. Creating this domain required manual scaffolding (chicken-egg)
+      3. Future Phase 3 domains can use agent-authoring to bootstrap
+      4. This expertise.yaml grows as Phase 2 patterns emerge
+
+      Self-referential improvement:
+      - agent-authoring-improve-agent can update THIS file
+      - Patterns discovered in Phase 2 feed back into templates
+      - Meta-capability improves itself based on specialist learnings

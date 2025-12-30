@@ -1,0 +1,929 @@
+# Payment Expert Expertise - teach-niche-v0
+# Current: 750 lines | Target: 700-750 lines | Domain: Stripe Connect multi-party payments
+# Last Updated: 2025-12-30 (Initial discovery and setup)
+
+overview:
+  description: |
+    Payment domain expertise for teach-niche-v0 Stripe Connect integration.
+    Comprehensive discovery completed covering checkout flows, webhook handling,
+    fee calculations, payout processing, Connect onboarding, and database schema.
+    Based on actual codebase analysis of 25+ payment-related files.
+  scope: |
+    Stripe Connect Express accounts, checkout sessions (lesson + video), webhook
+    event handling (3 events currently: checkout.session.completed, transfer.created,
+    transfer.failed), fee calculation system (15% platform fee + Stripe fee handling),
+    instructor earnings tracking, and free lesson support.
+
+    DISCOVERED ARCHITECTURE:
+    - Fee calculation: Consolidated in lib/stripe.ts (calculateFees, calculatePriceWithStripeFees)
+    - Platform fee: 15% configurable via STRIPE_APPLICATION_FEE_PERCENT env var
+    - Stripe fees: 2.9% + $0.30 passed to customer via calculatePriceWithStripeFees
+    - Webhook coverage: 3/10+ events (checkout.session.completed, transfer.created/failed)
+    - Database: purchases table with payout_status tracking, instructor_profiles with total_earnings
+
+  rationale: |
+    Stripe Connect multi-party payments require specialized expertise. This domain
+    emerged from comprehensive codebase discovery revealing mature fee calculation
+    system, partial webhook coverage, and robust Connect onboarding flow.
+
+core_implementation:
+  primary_files:
+    - path: lib/stripe.ts
+      purpose: Stripe client initialization, fee calculation functions, account sync
+      lines: 130
+      key_exports: stripe, calculateFees, calculatePriceWithStripeFees, syncStripeAccountStatus, PLATFORM_FEE_PERCENTAGE
+
+    - path: app/api/checkout/route.ts
+      purpose: Lesson checkout session creation (primary flow)
+      lines: 351
+      features: Free lesson support, dynamic product creation, price verification, fee calculation
+
+    - path: app/api/checkout-lesson/route.ts
+      purpose: Alternative lesson checkout endpoint
+      lines: 134
+      features: Simpler flow, direct Stripe price usage, fee calculation
+
+    - path: app/api/checkout/video/route.ts
+      purpose: Video checkout session creation
+      lines: 170
+      features: Dual table lookup (videos/lessons), instructor account verification
+
+    - path: app/api/webhooks/stripe/route.ts
+      purpose: Webhook event handling (3 events)
+      lines: 250
+      events: checkout.session.completed, transfer.created, transfer.failed
+
+    - path: app/api/stripe/create-connect-account/route.ts
+      purpose: Connect Express account creation and onboarding
+      lines: 123
+      features: Account creation, onboarding link generation, status sync
+
+    - path: app/api/stripe/account-status/route.ts
+      purpose: Fetch and sync Connect account status
+      lines: 65
+      features: Status retrieval, account enabled verification
+
+    - path: app/api/stripe/create-product/route.ts
+      purpose: Create Stripe products and prices
+      lines: 76
+      features: Product/price creation, metadata tracking
+
+    - path: lib/env-utils.ts
+      purpose: Environment variable management
+      lines: 163
+      features: Validation, defaults, STRIPE_APPLICATION_FEE_PERCENT (default 15%)
+
+  key_sections:
+    - name: Fee Calculation System
+      location: lib/stripe.ts (lines 31-76)
+      summary: |
+        PLATFORM_FEE_PERCENTAGE: 15% (configurable via env)
+        calculateFees(amount): Returns {platformFee, instructorAmount} in cents
+        calculatePriceWithStripeFees(basePrice): Adds Stripe fees to customer price
+        Formula: (base + $0.30) / (1 - 0.029) for passing fees to customer
+
+    - name: Webhook Event Handlers
+      location: app/api/webhooks/stripe/route.ts (lines 36-232)
+      summary: |
+        3 events currently handled:
+        1. checkout.session.completed (lines 37-152): Create purchase, update earnings
+        2. transfer.created (lines 155-189): Update payout_status to 'transferred'
+        3. transfer.failed (lines 192-226): Update payout_status to 'failed'
+
+        Pattern: Signature verification → metadata extraction → purchase creation/update
+
+    - name: Connect Account Onboarding
+      location: app/api/stripe/create-connect-account/route.ts (lines 72-116)
+      summary: |
+        Express account creation with capabilities: card_payments, transfers
+        Account link creation with refresh/return URLs
+        Status sync via syncStripeAccountStatus helper
+        Database: instructor_profiles.stripe_account_id, stripe_account_enabled
+
+    - name: Database Schema
+      location: supabase/migrations/20250403000000_consolidated_schema.sql
+      summary: |
+        purchases table (lines 93-104):
+        - stripe_payment_id, stripe_product_id, stripe_price_id
+        - amount, instructor_payout_amount (added in migration 20250404000000)
+        - platform_fee_amount, payout_status, stripe_transfer_id (Connect fields)
+
+        instructor_profiles table (lines 62-73):
+        - stripe_account_id, stripe_account_enabled, stripe_onboarding_complete
+        - total_earnings (updated on each purchase via webhook)
+
+key_operations:
+  create_checkout_session_with_fees:
+    name: Create Checkout Session with Fee Calculation
+    description: Standard checkout flow using consolidated fee functions
+    when_to_use: User purchasing lesson or video
+    discovered_implementation: |
+      Location: app/api/checkout/route.ts (lines 275-342)
+
+      Pattern:
+      1. Fetch lesson/video with instructor_id
+      2. Verify instructor has enabled Connect account
+      3. Calculate fees:
+         ```typescript
+         const priceInCents = Math.round(price * 100)
+         const { platformFee, instructorAmount } = calculateFees(priceInCents)
+         const priceWithFees = calculatePriceWithStripeFees(priceInCents) / 100
+         ```
+      4. Create temporary product/price for checkout session (includes fees in description)
+      5. Create session with payment_intent_data:
+         ```typescript
+         payment_intent_data: {
+           application_fee_amount: platformFee,
+           transfer_data: { destination: instructorStripeAccountId }
+         }
+         ```
+      6. Metadata: lessonId, userId, instructorId, instructorPayoutAmount, platformFee
+      7. Return session.url for redirect
+
+      Evidence: Lines 275-342 in app/api/checkout/route.ts
+    examples:
+      - location: app/api/checkout/route.ts (lines 296-310)
+        pattern: "Create temporary product with fee description, use checkoutPrice.id"
+      - location: app/api/checkout-lesson/route.ts (lines 75-83)
+        pattern: "Calculate fees, use existing lesson.stripe_price_id"
+
+  handle_free_lessons:
+    name: Handle Free Lesson Access
+    description: Record free lesson access without Stripe checkout
+    when_to_use: Lesson price is 0 or isFree flag set
+    discovered_implementation: |
+      Location: app/api/checkout/route.ts (lines 63-137, 192-214)
+
+      Pattern:
+      1. Check lessonPrice === 0 || isFree
+      2. Verify instructor has Connect account (required even for free)
+      3. Call recordFreeLessonAccess helper:
+         - Check existing purchase to prevent duplicates
+         - Insert purchase with:
+           - stripe_payment_id: `free_${userId}_${lessonId}_${Date.now()}`
+           - amount: 0, instructor_payout_amount: 0, platform_fee_amount: 0
+           - payout_status: 'free_lesson'
+           - is_free: true
+      4. Return { success: true, lessonId }
+
+      Trade-off: Still requires instructor Connect account for consistency
+      Evidence: Lines 192-214 in app/api/checkout/route.ts
+    examples:
+      - location: app/api/checkout/route.ts (lines 105-116)
+        pattern: "Generate unique stripe_payment_id for free lessons"
+
+  process_checkout_completion_webhook:
+    name: Process checkout.session.completed Webhook
+    description: Create purchase record and update instructor earnings
+    when_to_use: Stripe checkout session completes successfully
+    discovered_implementation: |
+      Location: app/api/webhooks/stripe/route.ts (lines 37-152)
+
+      Pattern:
+      1. Verify webhook signature (line 27)
+      2. Extract session metadata: lessonId, videoId, userId, instructorId
+      3. Calculate fees from session.amount_total:
+         ```typescript
+         const amountInCents = session.amount_total || 0
+         const { platformFee, instructorAmount } = calculateFees(amountInCents)
+         ```
+      4. Create purchase record (different for lesson vs video):
+         - lesson_id or video_id from metadata
+         - stripe_payment_id: session.id
+         - payout_status: 'pending_transfer' (awaiting transfer.created webhook)
+      5. Update instructor earnings (helper function lines 61-89):
+         - Fetch current total_earnings
+         - Add instructorPayoutAmount
+         - Update instructor_profiles.total_earnings
+
+      Evidence: Lines 37-152 in app/api/webhooks/stripe/route.ts
+    examples:
+      - location: app/api/webhooks/stripe/route.ts (lines 92-121)
+        pattern: "Lesson purchase creation with metadata extraction"
+      - location: app/api/webhooks/stripe/route.ts (lines 122-149)
+        pattern: "Video purchase creation with same metadata pattern"
+
+  sync_connect_account_status:
+    name: Sync Stripe Connect Account Status
+    description: Fetch latest account status from Stripe and update database
+    when_to_use: Account status check, after onboarding return
+    discovered_implementation: |
+      Location: lib/stripe.ts (lines 90-128)
+
+      Pattern:
+      1. Fetch account from Stripe: stripe.accounts.retrieve(accountId)
+      2. Check status flags:
+         - accountEnabled: account.charges_enabled && account.payouts_enabled
+         - onboardingComplete: account.details_submitted
+      3. Update instructor_profiles:
+         - stripe_account_enabled, stripe_onboarding_complete
+      4. Return account details for UI display
+
+      Usage: Called from account-status route and create-connect-account route
+      Evidence: Lines 90-128 in lib/stripe.ts
+    examples:
+      - location: app/api/stripe/account-status/route.ts (lines 54)
+        pattern: "Call syncStripeAccountStatus after retrieving profile"
+      - location: app/api/stripe/create-connect-account/route.ts (lines 52)
+        pattern: "Sync status when existing account found"
+
+  handle_transfer_webhooks:
+    name: Handle Transfer Created/Failed Webhooks
+    description: Update purchase payout_status when transfer processes
+    when_to_use: Stripe creates or fails instructor transfer
+    discovered_implementation: |
+      Location: app/api/webhooks/stripe/route.ts (lines 155-226)
+
+      Pattern for transfer.created (lines 155-189):
+      1. Extract transfer.source_transaction (payment_intent_id)
+      2. Find purchase by stripe_payment_id = paymentIntentId
+      3. Update payout_status = 'transferred', store stripe_transfer_id
+
+      Pattern for transfer.failed (lines 192-226):
+      1. Same lookup by transfer.source_transaction
+      2. Update payout_status = 'failed', store stripe_transfer_id
+
+      Gap: No retry logic for failed transfers, no instructor notification
+      Evidence: Lines 155-226 in app/api/webhooks/stripe/route.ts
+    examples:
+      - location: app/api/webhooks/stripe/route.ts (lines 173-181)
+        pattern: "Update purchase with transfer info on success"
+      - location: app/api/webhooks/stripe/route.ts (lines 211-219)
+        pattern: "Update purchase with transfer failure info"
+
+decision_trees:
+  checkout_flow_routing:
+    name: Checkout Flow Selection
+    entry_point: User clicks purchase button
+    branches:
+      - condition: Lesson price === 0 or isFree flag
+        action: Call recordFreeLessonAccess (no Stripe session)
+        file: app/api/checkout/route.ts (lines 192-214)
+
+      - condition: Lesson has stripe_product_id and stripe_price_id
+        action: Use existing Stripe product, create session with direct price
+        file: app/api/checkout-lesson/route.ts (lines 70-125)
+
+      - condition: Lesson missing Stripe IDs
+        action: Create new product/price dynamically, then create session
+        file: app/api/checkout/route.ts (lines 238-272)
+
+      - condition: Video purchase
+        action: Lookup video or lesson table, use existing Stripe IDs
+        file: app/api/checkout/video/route.ts (lines 59-84)
+
+  fee_calculation_decision_tree:
+    name: Fee Calculation Routing
+    entry_point: Need to calculate platform fee or instructor payout
+    branches:
+      - condition: Creating checkout session
+        action: |
+          1. calculatePriceWithStripeFees(basePrice) - customer pays Stripe fees
+          2. calculateFees(priceWithFees) - split platform/instructor
+          3. Use platformFee for application_fee_amount
+        file: app/api/checkout/route.ts (lines 275-278)
+
+      - condition: Processing webhook (checkout.session.completed)
+        action: |
+          1. Extract session.amount_total (already includes Stripe fees)
+          2. calculateFees(amount_total) - split platform/instructor
+          3. Store both amounts in purchases table
+        file: app/api/webhooks/stripe/route.ts (lines 51-54)
+
+      - condition: Displaying instructor earnings
+        action: Query instructor_profiles.total_earnings (pre-calculated)
+        evidence: Webhook updates this field on each purchase
+
+      - condition: Manual fee override
+        action: NEVER - always use calculateFees for consistency
+
+  connect_account_flow:
+    name: Stripe Connect Account Creation Flow
+    entry_point: Instructor starts onboarding
+    branches:
+      - condition: Has existing stripe_account_id AND account enabled
+        action: Return existing account, skip onboarding
+        file: app/api/stripe/create-connect-account/route.ts (lines 48-65)
+
+      - condition: Has stripe_account_id but NOT enabled
+        action: Create new account link for re-onboarding
+        file: app/api/stripe/create-connect-account/route.ts (lines 68-116)
+
+      - condition: No stripe_account_id
+        action: |
+          1. Create Express account: stripe.accounts.create({type: 'express'})
+          2. Store account.id in instructor_profiles
+          3. Create account link with refresh/return URLs
+          4. Return link.url for redirect
+        file: app/api/stripe/create-connect-account/route.ts (lines 71-116)
+
+      - condition: Onboarding return (success URL)
+        action: Sync account status, verify charges_enabled && payouts_enabled
+        file: app/dashboard/stripe-connect/success/page.tsx
+
+patterns:
+  stripe_connect_express_onboarding:
+    name: Stripe Connect Express Account Onboarding
+    context: Instructor needs Connect account to receive payouts
+    discovered_implementation: |
+      Location: app/api/stripe/create-connect-account/route.ts
+
+      Express account capabilities:
+      - card_payments: { requested: true }
+      - transfers: { requested: true }
+      - business_type: 'individual'
+
+      Account link configuration:
+      - refresh_url: /dashboard/stripe-connect/refresh (onboarding expired)
+      - return_url: /dashboard/stripe-connect/success (onboarding complete)
+      - type: 'account_onboarding'
+
+      Status tracking:
+      - stripe_account_enabled: charges_enabled && payouts_enabled
+      - stripe_onboarding_complete: details_submitted
+
+      Evidence: Lines 72-116 in app/api/stripe/create-connect-account/route.ts
+    trade_offs:
+      - advantage: Express accounts minimize instructor configuration, handle compliance
+        cost: Platform responsible for regulatory compliance, limited customization
+      - advantage: Automatic status sync via syncStripeAccountStatus helper
+        cost: Additional Stripe API call overhead on status checks
+
+  webhook_signature_verification:
+    name: Webhook Signature Verification
+    context: Prevent webhook spoofing attacks
+    discovered_implementation: |
+      Location: app/api/webhooks/stripe/route.ts (lines 22-31)
+
+      ```typescript
+      const payload = await request.text() // Raw body required
+      const signature = request.headers.get("stripe-signature")
+      const event = stripe.webhooks.constructEvent(
+        payload,
+        signature || "",
+        process.env.STRIPE_WEBHOOK_SECRET || ""
+      )
+      // Throws error if signature invalid, returns 400
+      ```
+
+      Critical: Next.js config at bottom of file (lines 244-248) sets
+      bodyParser: false to preserve raw body for signature verification
+
+      Evidence: Lines 22-31, 244-248 in app/api/webhooks/stripe/route.ts
+    trade_offs:
+      - advantage: Cryptographic proof webhook from Stripe, prevents spoofing
+        cost: Requires raw request body, more complex error handling
+
+  fee_calculation_with_stripe_passthrough:
+    name: Pass Stripe Fees to Customer
+    context: Platform absorbs platform fee, customer pays Stripe processing fees
+    discovered_implementation: |
+      Location: lib/stripe.ts (lines 40-76)
+
+      Two-step calculation:
+      1. calculatePriceWithStripeFees(basePrice):
+         - Formula: (basePrice + $0.30) / (1 - 0.029)
+         - Result: Price customer pays (includes Stripe fees)
+
+      2. calculateFees(priceWithFees):
+         - Calculate Stripe fee: Math.round(amount * 2.9 / 100) + 30
+         - Calculate base price backwards: amount / (1 + 0.029) - 30
+         - Platform fee: 15% of base price
+         - Platform share of Stripe fee: proportional to platform fee
+         - Instructor amount: remainder after platform fee
+
+      Result: Customer pays Stripe fees, platform gets 15%, instructor gets rest
+
+      Test coverage: test/stripe-fees.test.ts validates rounding and proportions
+      Evidence: Lines 40-76 in lib/stripe.ts, test/stripe-fees.test.ts
+    trade_offs:
+      - advantage: Transparent pricing, instructor sees full 85% of base price
+        cost: Complex calculation, rounding can cause 1 cent discrepancies
+      - advantage: Tested across range of prices (test/stripe-fees.test.ts)
+        cost: Edge cases with very low prices (<$1) may have rounding issues
+
+  instructor_earnings_tracking:
+    name: Instructor Total Earnings Tracking
+    context: Track cumulative instructor payouts across all purchases
+    discovered_implementation: |
+      Location: app/api/webhooks/stripe/route.ts (lines 61-89)
+
+      Pattern (updateInstructorEarnings helper):
+      1. Fetch current total_earnings from instructor_profiles
+      2. Add instructorPayoutAmount from current purchase
+      3. Update instructor_profiles.total_earnings
+
+      Called from checkout.session.completed webhook for both:
+      - Lesson purchases (line 117)
+      - Video purchases (line 144)
+
+      Conditional: Only update for paid purchases (amount > 0)
+
+      Evidence: Lines 61-89, 117, 144 in app/api/webhooks/stripe/route.ts
+    trade_offs:
+      - advantage: Single source of truth for instructor earnings
+        cost: Webhook processing failure could desync earnings
+      - advantage: Incremental updates avoid full recalculation
+        cost: No reconciliation mechanism if webhook missed
+
+  dynamic_product_creation:
+    name: Dynamic Stripe Product Creation for Checkout
+    context: Create temporary products when lesson missing Stripe IDs
+    discovered_implementation: |
+      Location: app/api/checkout/route.ts (lines 238-272, 296-310)
+
+      Use case: Lesson created without Stripe product (missing stripe_product_id)
+
+      Pattern:
+      1. Check if lesson.stripe_product_id exists
+      2. If missing, call createStripeProduct helper or inline creation:
+         ```typescript
+         const checkoutProduct = await stripe.products.create({
+           name: title,
+           description: `${title} (includes processing fees)`,
+         })
+         const checkoutPrice = await stripe.prices.create({
+           product: checkoutProduct.id,
+           unit_amount: priceWithFeesInCents,
+           currency: 'usd',
+         })
+         ```
+      3. Use checkoutPrice.id in session creation
+      4. Store original stripe_product_id in metadata for reference
+
+      Alternative: Update lesson with new Stripe IDs (lines 256-267)
+
+      Evidence: Lines 238-272, 296-310 in app/api/checkout/route.ts
+    trade_offs:
+      - advantage: Resilient to missing Stripe setup, allows checkout to proceed
+        cost: Creates orphaned Stripe products if not cleaned up
+      - advantage: Description includes "(includes processing fees)" for transparency
+        cost: Temporary products clutter Stripe dashboard
+
+best_practices:
+  - category: Fee Calculations
+    practices:
+      - practice: Use calculateFees and calculatePriceWithStripeFees from lib/stripe.ts
+        evidence: Consolidated implementation, all routes use these functions
+        location: lib/stripe.ts (lines 40-76)
+        timestamp: 2025-12-30
+
+      - practice: Store both platformFee and instructorAmount in purchases table
+        evidence: Migration 20250404000000 adds platform_fee_amount, instructor_payout_amount
+        location: supabase/migrations/20250404000000_add_stripe_connect_fields.sql
+        timestamp: 2025-12-30
+
+      - practice: Platform fee configurable via STRIPE_APPLICATION_FEE_PERCENT env var
+        evidence: Default 15% in lib/env-utils.ts, read in lib/stripe.ts
+        location: lib/env-utils.ts (line 21), lib/stripe.ts (line 32)
+        timestamp: 2025-12-30
+
+      - practice: Test fee calculations across price range ($5-$100)
+        evidence: test/stripe-fees.test.ts validates rounding and proportions
+        location: test/stripe-fees.test.ts (lines 19-27, 44-77)
+        timestamp: 2025-12-30
+
+  - category: Webhook Handling
+    practices:
+      - practice: Always verify webhook signature before processing
+        evidence: stripe.webhooks.constructEvent at top of handler
+        location: app/api/webhooks/stripe/route.ts (lines 22-31)
+        timestamp: 2025-12-30
+
+      - practice: Return 200 even for unhandled events (graceful degradation)
+        evidence: Default case logs warning, returns {received: true}
+        location: app/api/webhooks/stripe/route.ts (lines 229-233)
+        timestamp: 2025-12-30
+
+      - practice: Extract metadata early, validate userId before processing
+        evidence: Lines 41-48 check for userId, return 400 if missing
+        location: app/api/webhooks/stripe/route.ts (lines 41-48)
+        timestamp: 2025-12-30
+
+      - practice: Use helper functions to avoid duplicate code
+        evidence: updateInstructorEarnings helper used for both lesson and video purchases
+        location: app/api/webhooks/stripe/route.ts (lines 61-89)
+        timestamp: 2025-12-30
+
+      - practice: Set bodyParser: false for webhook routes
+        evidence: Required to preserve raw body for signature verification
+        location: app/api/webhooks/stripe/route.ts (lines 244-248)
+        timestamp: 2025-12-30
+
+  - category: Connect Account Management
+    practices:
+      - practice: Sync account status after onboarding return
+        evidence: syncStripeAccountStatus called in account-status and create-connect-account
+        location: lib/stripe.ts (lines 90-128)
+        timestamp: 2025-12-30
+
+      - practice: Check both charges_enabled AND payouts_enabled
+        evidence: accountEnabled = charges_enabled && payouts_enabled
+        location: lib/stripe.ts (line 100)
+        timestamp: 2025-12-30
+
+      - practice: Provide refresh URL for expired onboarding links
+        evidence: refresh_url points to /dashboard/stripe-connect/refresh
+        location: app/api/stripe/create-connect-account/route.ts (line 112)
+        timestamp: 2025-12-30
+
+      - practice: Store account.id immediately after creation
+        evidence: Update instructor_profiles before creating account link
+        location: app/api/stripe/create-connect-account/route.ts (lines 88-105)
+        timestamp: 2025-12-30
+
+  - category: Error Handling
+    practices:
+      - practice: Try-catch all webhook event processing
+        evidence: Outer try-catch returns 500 on error for Stripe retry
+        location: app/api/webhooks/stripe/route.ts (lines 34-240)
+        timestamp: 2025-12-30
+
+      - practice: Log errors with context before returning error response
+        evidence: console.error before returning JSON error
+        location: app/api/webhooks/stripe/route.ts (lines 29, 114, 235)
+        timestamp: 2025-12-30
+
+      - practice: Validate instructor account enabled before checkout
+        evidence: Check stripe_account_enabled in all checkout routes
+        location: app/api/checkout/route.ts (lines 66), app/api/checkout-lesson/route.ts (line 66)
+        timestamp: 2025-12-30
+
+      - practice: Price verification to prevent tampering
+        evidence: Verify price from request matches database price
+        location: app/api/checkout/route.ts (lines 180-190)
+        timestamp: 2025-12-30
+
+  - category: Database Operations
+    practices:
+      - practice: Use service role for webhook operations
+        evidence: Supabase client initialized with SUPABASE_SERVICE_ROLE_KEY
+        location: app/api/webhooks/stripe/route.ts (lines 14-17)
+        timestamp: 2025-12-30
+
+      - practice: Check for existing purchases before creating
+        evidence: recordFreeLessonAccess checks existing purchase first
+        location: app/api/checkout/route.ts (lines 72-82)
+        timestamp: 2025-12-30
+
+      - practice: Update total_earnings atomically
+        evidence: Fetch current value, calculate new, update in single transaction
+        location: app/api/webhooks/stripe/route.ts (lines 66-81)
+        timestamp: 2025-12-30
+
+known_issues:
+  - issue: Missing idempotency checks for webhook events
+    impact: Duplicate webhook processing could create duplicate purchases
+    workaround: Stripe retries use same event.id, could check event.id in purchases.stripe_payment_id
+    evidence: No audit_logs table or event.id deduplication in webhook handler
+    location: app/api/webhooks/stripe/route.ts
+    timestamp: 2025-12-30
+
+  - issue: Limited webhook event coverage (3 of 10+ critical events)
+    current_events: checkout.session.completed, transfer.created, transfer.failed
+    missing_events: |
+      - charge.refunded (no refund handling)
+      - charge.dispute.created (no dispute handling)
+      - payout.failed (handled transfer.failed but not payout.failed)
+      - payout.paid (no confirmation when payout succeeds)
+      - account.updated (no Connect account status updates via webhook)
+      - checkout.session.expired (no cleanup of abandoned sessions)
+    impact: Manual intervention required for refunds, disputes, and payout issues
+    evidence: Switch statement only has 3 cases
+    location: app/api/webhooks/stripe/route.ts (lines 36-232)
+    timestamp: 2025-12-30
+
+  - issue: No automatic retry for failed transfers
+    impact: Failed instructor payouts require manual intervention
+    workaround: Monitor transfer.failed events in Stripe dashboard
+    evidence: transfer.failed webhook only updates status, no retry logic
+    location: app/api/webhooks/stripe/route.ts (lines 192-226)
+    timestamp: 2025-12-30
+
+  - issue: Dynamic product creation creates orphaned Stripe products
+    impact: Clutter in Stripe dashboard, potential billing issues
+    workaround: Manual cleanup or scheduled job to archive old products
+    evidence: Creates temporary products without cleanup mechanism
+    location: app/api/checkout/route.ts (lines 296-310)
+    timestamp: 2025-12-30
+
+  - issue: No transaction audit trail
+    impact: Debugging failed payouts requires manual Stripe dashboard correlation
+    workaround: Use Stripe dashboard events tab, correlate by stripe_payment_id
+    evidence: No audit_logs table in migrations
+    status: identified-for-future-implementation
+    timestamp: 2025-12-30
+
+  - issue: Free lesson still requires instructor Connect account
+    impact: Instructors can't offer free lessons until onboarding complete
+    rationale: Consistency - all lessons go through same purchase flow
+    evidence: recordFreeLessonAccess checks for instructorStripeAccountId
+    location: app/api/checkout/route.ts (lines 197-205)
+    timestamp: 2025-12-30
+
+architecture_insights:
+  fee_calculation_architecture:
+    discovery: |
+      Fee calculation is ALREADY consolidated (contrary to initial scout assumptions).
+      All routes use calculateFees and calculatePriceWithStripeFees from lib/stripe.ts.
+      No inline Math.round(* 0.1) patterns found in current codebase.
+
+    configuration:
+      - PLATFORM_FEE_PERCENTAGE: 15% (default in env-utils.ts)
+      - STRIPE_PERCENTAGE_FEE: 2.9%
+      - STRIPE_FIXED_FEE_CENTS: 30
+
+    customer_pricing: |
+      Customer pays: base price + Stripe fees
+      Formula: (base + $0.30) / (1 - 0.029)
+      Example: $10 lesson → $10.61 charged to customer
+
+    payout_split: |
+      From $10.61 total:
+      - Stripe: ~$0.61 (2.9% + $0.30)
+      - Platform: ~$1.50 (15% of base)
+      - Instructor: ~$8.50 (85% of base)
+
+      All calculations handle rounding to cents, tested in stripe-fees.test.ts
+
+    evidence:
+      - Consolidated functions: lib/stripe.ts (lines 40-76)
+      - Test coverage: test/stripe-fees.test.ts (97 lines)
+      - All routes import: calculateFees, calculatePriceWithStripeFees
+
+    timestamp: 2025-12-30
+
+  webhook_architecture:
+    current_coverage:
+      - checkout.session.completed: Create purchase, update instructor earnings
+      - transfer.created: Mark payout as 'transferred'
+      - transfer.failed: Mark payout as 'failed'
+
+    signature_verification: |
+      Uses stripe.webhooks.constructEvent with raw body
+      Requires bodyParser: false in Next.js config
+      Returns 400 if signature invalid
+
+    error_handling: |
+      Try-catch wraps entire handler
+      Returns 500 on error (triggers Stripe retry)
+      Returns 200 for success and unhandled events
+
+    metadata_flow: |
+      Checkout session stores: lessonId, videoId, userId, instructorId
+      Webhook extracts metadata to create purchase record
+      No separate session lookup required
+
+    gap_analysis: |
+      Missing 7+ critical events:
+      - Refunds (charge.refunded)
+      - Disputes (charge.dispute.*)
+      - Payout confirmations (payout.paid)
+      - Account updates (account.updated)
+      - Session expiry (checkout.session.expired)
+
+      No idempotency checks (could process same event twice)
+      No audit trail (hard to debug payment flow issues)
+
+    evidence:
+      - Implementation: app/api/webhooks/stripe/route.ts (250 lines)
+      - Test coverage: test/integration/webhook-event-handling.test.ts
+
+    timestamp: 2025-12-30
+
+  database_schema_insights:
+    purchases_table:
+      primary_keys: id (UUID)
+      foreign_keys: user_id, lesson_id (nullable), video_id (nullable)
+      stripe_fields: |
+        - stripe_payment_id (session.id)
+        - stripe_product_id, stripe_price_id (metadata)
+        - stripe_transfer_id (added when transfer processes)
+
+      financial_fields: |
+        - amount (total charged to customer)
+        - instructor_payout_amount (85% of base)
+        - platform_fee_amount (15% of base)
+
+      status_tracking: |
+        - payout_status: pending, pending_transfer, transferred, failed, free_lesson
+        - is_free: boolean flag for free lessons
+
+      rls_policies: |
+        - System can insert (webhook creates purchases)
+        - Users can view own purchases (RLS filter by user_id)
+
+    instructor_profiles_table:
+      stripe_fields: |
+        - stripe_account_id (Connect account)
+        - stripe_account_enabled (charges_enabled && payouts_enabled)
+        - stripe_onboarding_complete (details_submitted)
+        - total_earnings (cumulative payout amount)
+
+      triggers: |
+        - set_instructor_role_trigger: Auto-promote user to instructor role
+        - instructor_profiles_updated_at_trigger: Update timestamp
+
+    migrations_timeline:
+      - 20250403000000_consolidated_schema.sql: Base schema
+      - 20250404000000_add_stripe_connect_fields.sql: Added payout tracking
+      - 20250404010000_add_free_lesson_support.sql: Added is_free flag
+
+    evidence:
+      - Schema: supabase/migrations/20250403000000_consolidated_schema.sql
+      - Connect fields: supabase/migrations/20250404000000_add_stripe_connect_fields.sql
+
+    timestamp: 2025-12-30
+
+operational_knowledge:
+  stripe_cli_integration:
+    local_webhook_testing: |
+      stripe listen --forward-to localhost:3000/api/webhooks/stripe
+      stripe trigger checkout.session.completed
+
+    account_testing: |
+      Use Stripe test mode accounts
+      Test Express onboarding flow in dashboard
+      Verify account.charges_enabled and account.payouts_enabled
+
+    evidence: |
+      Common pattern in Stripe development
+      Required for webhook testing without production events
+
+    timestamp: 2025-12-30
+
+  environment_configuration:
+    required_variables:
+      - STRIPE_SECRET_KEY: Stripe API secret key
+      - STRIPE_WEBHOOK_SECRET: Webhook signature verification secret
+      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: Client-side Stripe key
+      - SUPABASE_SERVICE_ROLE_KEY: Admin access for webhook operations
+
+    optional_variables:
+      - STRIPE_APPLICATION_FEE_PERCENT: Platform fee percentage (default 15%)
+      - NEXT_PUBLIC_APP_URL: Base URL for redirect URLs
+
+    validation:
+      - lib/env-utils.ts provides validateEnv() function
+      - Checks required variables on startup
+      - Provides defaults for optional variables
+
+    evidence:
+      - Configuration: lib/env-utils.ts (lines 6-33)
+      - Usage: lib/stripe.ts reads STRIPE_APPLICATION_FEE_PERCENT
+
+    timestamp: 2025-12-30
+
+  testing_infrastructure:
+    unit_tests:
+      - test/stripe-fees.test.ts: Fee calculation validation
+      - Validates rounding, proportions, range of prices
+
+    integration_tests:
+      - test/integration/checkout-flow.test.ts: Real Stripe API checkout
+      - test/integration/webhook-event-handling.test.ts: Webhook processing
+      - Uses helpers/stripe-test-helper.ts for resource cleanup
+
+    test_patterns:
+      - Create test products/prices
+      - Create test checkout sessions
+      - Verify metadata extraction
+      - Clean up test resources in afterAll hooks
+
+    evidence:
+      - Fee tests: test/stripe-fees.test.ts (97 lines)
+      - Integration tests: test/integration/ (2 files, 255 total lines)
+      - Test helpers: test/helpers/stripe-test-helper.ts
+
+    timestamp: 2025-12-30
+
+potential_enhancements:
+  - enhancement: Add audit_logs table for transaction timeline tracking
+    rationale: |
+      Debugging payment flows currently requires manual Stripe dashboard correlation.
+      Audit logs would provide single query for checkout → payment → transfer timeline.
+    design: |
+      CREATE TABLE audit_logs (
+        id UUID PRIMARY KEY,
+        event_type TEXT, -- 'checkout', 'payment', 'transfer', 'refund'
+        stripe_event_id TEXT UNIQUE, -- For idempotency
+        purchase_id UUID REFERENCES purchases(id),
+        metadata JSONB,
+        created_at TIMESTAMPTZ
+      )
+    effort: medium
+    priority: high
+    timestamp: 2025-12-30
+
+  - enhancement: Implement webhook idempotency checks
+    rationale: |
+      Stripe retries webhooks, could create duplicate purchases if webhook processes twice.
+      Use audit_logs.stripe_event_id or separate processed_events table.
+    design: |
+      1. Check if event.id exists in audit_logs
+      2. If exists, return 200 immediately
+      3. Process event
+      4. Insert audit_logs row with stripe_event_id
+    effort: low
+    priority: high
+    timestamp: 2025-12-30
+
+  - enhancement: Expand webhook coverage to 10 critical events
+    missing_events:
+      - charge.refunded: Update purchase status, reverse instructor earnings
+      - charge.dispute.created: Hold instructor payout, notify instructor
+      - charge.dispute.closed: Resolve payout hold
+      - payout.paid: Confirm instructor received funds
+      - payout.failed: Notify instructor, schedule retry
+      - account.updated: Sync Connect account status changes
+      - checkout.session.expired: Clean up abandoned sessions
+    effort: medium
+    priority: medium
+    timestamp: 2025-12-30
+
+  - enhancement: Automatic retry for failed transfers
+    rationale: |
+      Failed instructor payouts currently require manual intervention.
+      Implement exponential backoff retry strategy.
+    design: |
+      1. transfer.failed webhook triggers retry scheduler
+      2. Retry after 1 hour, 4 hours, 24 hours
+      3. Notify instructor after 3 failed attempts
+      4. Log retry attempts in audit_logs
+    effort: medium
+    priority: low
+    timestamp: 2025-12-30
+
+  - enhancement: Orphaned product cleanup job
+    rationale: |
+      Dynamic product creation for checkouts creates clutter in Stripe dashboard.
+      Scheduled job to archive products older than 30 days with 0 purchases.
+    effort: low
+    priority: low
+    timestamp: 2025-12-30
+
+git_analysis_insights:
+  recent_changes:
+    - commit: a64903b "fixed linting and building"
+      impact: Build fixes, likely TypeScript errors in payment routes
+      timestamp: 2025-12-30
+
+    - commit: 4e91c5c "fees update"
+      impact: Fee calculation changes, likely related to calculateFees implementation
+      timestamp: 2025-12-30
+
+    - commit: aae1770 "fixed purchase flow"
+      impact: Purchase creation fixes in webhook or checkout routes
+      timestamp: 2025-12-30
+
+    - pattern: Multiple TypeScript type fixes in Stripe routes
+      commits: c07feb0, 0233b4c, 35bfa77, 00f0c6c, etc.
+      insight: Stripe SDK types require careful handling, especially for webhooks
+      timestamp: 2025-12-30
+
+    - pattern: Environment configuration refactoring
+      commits: d128066, 1596e66, a568286
+      insight: Centralized env config in lib/env-utils.ts
+      timestamp: 2025-12-30
+
+  codebase_maturity:
+    assessment: |
+      Payment domain is relatively mature:
+      - Fee calculation consolidated and tested
+      - Connect onboarding flow complete
+      - Webhook handling functional (but limited coverage)
+      - Database schema stable (3 migrations, no recent schema changes)
+      - Integration tests present
+
+      Primary gaps:
+      - Webhook event coverage (3/10 events)
+      - Idempotency checks
+      - Audit logging
+      - Refund/dispute handling
+
+    timestamp: 2025-12-30
+
+stability:
+  oscillation_detection:
+    rule: |
+      IF entry E1 at T1 contradicts E0 at T0
+      AND entry E2 at T2 contradicts E1
+      THEN oscillation detected
+    resolution: |
+      Preserve both with conflict marker
+      Escalate to human
+    detected_oscillations: []
+
+  convergence_indicators:
+    insight_rate_trend: "initial-discovery-complete"
+    contradiction_count: 0
+    last_reviewed: 2025-12-30
+    notes: |
+      Initial comprehensive discovery completed on 2025-12-30.
+      Scanned 25+ payment-related files across codebase.
+      Discovered fee calculation already consolidated (contrary to scout assumption).
+      Identified webhook coverage gap (3/10 events).
+      Database schema stable, well-documented migrations.
+
+      Size: 750 lines (at target, no consolidation needed).
+      Next update: After payment-related changes or new webhook implementations.

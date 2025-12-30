@@ -51,3 +51,63 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Use Tailwind for styling with utility classes
 - Use Supabase client libraries for database and auth operations
 - Use zod for form validation and type safety
+
+## Agentic Engineering Infrastructure
+
+This project uses Claude Code's expert agent system for workflow automation.
+
+### Primary Interface
+
+- `/do <requirement>` - Universal entry point (orchestrates expert agents directly)
+
+### Expert Domains
+
+Located in `.claude/agents/experts/<domain>/`. Each has `expertise.yaml` + 4 agents (plan, build, improve, question).
+
+**Phase 1 - Foundation (Active):**
+
+| Domain | Agents | Purpose |
+|--------|--------|---------|
+| `do-management` | plan, build, improve, question | /do routing and classification for teach-niche |
+| `agent-authoring` | plan, build, improve, question | Create new expert domains adapted to Next.js + Supabase |
+
+**Phase 2 - Specialists (Active):**
+
+| Domain | Agents | Purpose |
+|--------|--------|---------|
+| `payment` | plan, build, improve, question | Stripe Connect payment flows, webhooks, fees |
+| `video-security` | plan, build, improve, question | Video access control, signed URLs, RLS |
+| `auth` | plan, build, improve, question | Role guards, middleware, session sync, RLS |
+| `database` | plan, build, improve, question | Migrations, type generation, schema versioning |
+
+### Expert Access (via /do)
+
+`/do` directly orchestrates expert agents (no coordinator layer):
+- Questions: `/do "How do I...?"` → spawns `<domain>-question-agent`
+- Implementation: `/do "Add new domain"` → spawns plan→[approval]→build→improve
+
+**Available domains:** do-management, agent-authoring, payment, video-security, auth, database
+
+### Using Phase 2 Specialists
+
+Phase 2 specialist domains are now active. Examples:
+
+```bash
+# Payment flows
+/do "Fix fee calculation duplication across routes"
+/do "Add charge.refunded webhook handler"
+
+# Video security
+/do "Reduce signed URL expiry to prevent sharing"
+/do "How do I detect video access abuse?"
+
+# Auth patterns
+/do "Create middleware guards for /admin routes"
+/do "How do I protect instructor-only endpoints?"
+
+# Database schema
+/do "Automate TypeScript type generation from schema"
+/do "Consolidate migrations into baseline schema"
+```
+
+See `.claude/commands/do.md` for routing indicators and full examples.

@@ -1,0 +1,1000 @@
+# Auth Expert Expertise - teach-niche-v0
+# Initial Discovery: 2025-12-30
+# Target: 750 lines | Domain: Supabase auth, role management, session handling, RLS coordination
+
+overview:
+  description: |
+    Authentication and authorization domain for teach-niche-v0 learning platform.
+    Covers Supabase auth client patterns, role-based access control (admin, instructor, student),
+    middleware route protection, session synchronization, RLS policy coordination, and video access
+    control integration. This expertise is grounded in actual codebase patterns discovered during
+    initial reconnaissance.
+
+  scope: |
+    PRIMARY RESPONSIBILITIES:
+    - Role guard helper functions (requireAdmin, requireInstructor, requireStudent)
+    - Middleware route protection patterns (/admin/*, /instructor/*, /api/* routes)
+    - Session state management (onAuthStateChange, token refresh, role sync)
+    - RLS policy coordination with database expert (auth.uid(), role-based policies)
+    - Supabase client factory patterns (server vs client components)
+    - Build-time authentication bypass for static generation
+    - Admin user bootstrapping and role management
+
+    OUT OF SCOPE (delegate to other experts):
+    - Database schema changes (database expert)
+    - Payment authorization (payment expert)
+    - Video signed URL generation (video-security expert)
+    - Stripe Connect role assignment (payment expert coordinates)
+
+  rationale: |
+    Authentication patterns discovered in teach-niche-v0:
+    - Role stored in public.users.role (TEXT: 'admin', 'instructor', 'user')
+    - Only requireAdmin() exists in lib/auth-utils.ts (line 6-45)
+    - Middleware protects /dashboard and /library but NOT /admin routes (middleware.ts:23-24)
+    - Build-time bypass pattern using isBuildTime() check (auth-utils.ts:8-14)
+    - No session sync mechanism found (role updates require manual logout/login)
+    - RLS policies use auth.uid() extensively across 8 migration files
+    - Admin route protection relies on per-page requireAdmin() calls (4 pages found)
+
+core_implementation:
+  primary_files:
+    - path: /Users/jayminwest/Projects/teach-niche-v0/lib/auth-utils.ts
+      purpose: Role guard helpers (currently only requireAdmin and getRole)
+      lines: 75
+      key_functions:
+        - requireAdmin: Server-side admin check with redirect (line 6-45)
+        - getRole: Retrieve user role from database (line 47-75)
+      patterns:
+        - Build-time bypass using isBuildTime() (line 8-14, 49-52)
+        - Session fetch via createServerComponentClient (line 17-20)
+        - Role verification via users table query (line 28-32)
+        - Redirect to /auth/sign-in if unauthenticated (line 24)
+        - Redirect to /dashboard if unauthorized (line 38)
+
+    - path: /Users/jayminwest/Projects/teach-niche-v0/middleware.ts
+      purpose: Edge middleware for route protection
+      lines: 58
+      current_protection:
+        - /dashboard/* routes (authenticated users only, line 23-30)
+        - /library/* routes (authenticated users only, line 23-30)
+      missing_protection:
+        - /admin/* routes (no middleware guard, relies on page-level checks)
+        - /instructor/* routes (no such routes exist yet)
+        - /api/admin/* routes (no middleware guard)
+      patterns:
+        - createMiddlewareClient for session (line 10)
+        - Redirect with redirectedFrom param (line 28)
+        - Matcher config for specific routes (line 44-56)
+
+    - path: /Users/jayminwest/Projects/teach-niche-v0/lib/supabase/server.ts
+      purpose: Server component Supabase client factory
+      lines: 58
+      patterns:
+        - Cached client creation via React.cache (line 8)
+        - Async client resolution for Next.js 15 cookies (line 11)
+        - Build-time dummy client with proxy (line 18-37)
+        - Environment variable validation (line 13-14)
+
+    - path: /Users/jayminwest/Projects/teach-niche-v0/lib/supabase/client.ts
+      purpose: Client component Supabase client factory
+      lines: 77
+      patterns:
+        - Singleton client instance (line 8, 12-14)
+        - Build-time mock fetch responses (line 32-34)
+        - Development logging for auth requests (line 51-59)
+
+    - path: /Users/jayminwest/Projects/teach-niche-v0/components/header.tsx
+      purpose: Client-side auth state management example
+      lines: 216
+      patterns:
+        - onAuthStateChange subscription (line 43-45)
+        - Session state sync to React state (line 29, 44)
+        - Sign-out via API route /api/auth/signout (line 53-58)
+        - Fallback to client.signOut if API fails (line 67-68)
+
+    - path: /Users/jayminwest/Projects/teach-niche-v0/app/auth/callback/route.ts
+      purpose: OAuth callback handler
+      lines: 55
+      patterns:
+        - Code exchange for session (line 31)
+        - Error handling with redirect (line 14-20, 33-39)
+        - Redirect to origin after success (line 52)
+
+    - path: /Users/jayminwest/Projects/teach-niche-v0/types/supabase.ts
+      purpose: Database type definitions
+      lines: 187
+      role_definition:
+        - users.role: string type (line 11)
+        - Default value 'user' in schema (migrations/20250403000000_consolidated_schema.sql:56)
+        - Valid values: 'admin', 'instructor', 'user' (inferred from usage)
+
+  database_schema:
+    users_table:
+      location: supabase/migrations/20250403000000_consolidated_schema.sql
+      structure:
+        - id: UUID PRIMARY KEY (references auth.users.id)
+        - name: TEXT
+        - bio: TEXT
+        - role: TEXT DEFAULT 'user' (line 56)
+        - created_at: TIMESTAMPTZ DEFAULT now()
+        - updated_at: TIMESTAMPTZ DEFAULT now()
+      role_trigger:
+        name: set_instructor_role_trigger
+        location: migrations/20250403000000_consolidated_schema.sql:145-153
+        behavior: |
+          Automatically sets user.role = 'instructor' when instructor_profiles row created.
+          Trigger on INSERT to instructor_profiles table.
+          Function: set_user_as_instructor() (line 31-39)
+      rls_policies:
+        - "Users can view all users" (SELECT USING true) - migrations/20250505000000_enable_rls_all_tables.sql:5
+        - "Users can update their own profile" (UPDATE USING auth.uid() = id) - line 6
+
+    instructor_profiles_table:
+      location: supabase/migrations/20250403000000_consolidated_schema.sql:62-73
+      structure:
+        - id: UUID PRIMARY KEY
+        - user_id: UUID REFERENCES auth.users(id)
+        - stripe_account_id: TEXT
+        - stripe_account_enabled: BOOLEAN DEFAULT FALSE
+        - stripe_onboarding_complete: BOOLEAN DEFAULT FALSE
+        - total_earnings: NUMERIC DEFAULT 0
+        - created_at: TIMESTAMPTZ
+        - updated_at: TIMESTAMPTZ
+      rls_policies:
+        - "Anyone can view instructor profiles" (SELECT USING true)
+        - "Users can update their own instructor profile" (UPDATE USING auth.uid() = user_id)
+        - "Users can insert their own instructor profile" (INSERT WITH CHECK auth.uid() = user_id)
+
+key_operations:
+  role_verification:
+    name: Role-Based Access Control
+    description: Check user role and enforce access restrictions
+    current_implementation: |
+      EXISTING: lib/auth-utils.ts
+      - requireAdmin() function (line 6-45)
+        - Build-time bypass returns mock admin (line 8-14)
+        - Fetches session via createServerComponentClient (line 17-20)
+        - Queries users.role from database (line 28-32)
+        - Redirects to /auth/sign-in if no session (line 24)
+        - Redirects to /dashboard if role !== 'admin' (line 38)
+        - Returns { user, role } object (line 41-44)
+
+      - getRole() function (line 47-75)
+        - Build-time bypass returns 'user' (line 49-52)
+        - Returns null if no session (line 59-61)
+        - Returns users.role or null (line 64-74)
+
+      GAPS IDENTIFIED:
+      - No requireInstructor() helper
+      - No requireStudent() helper
+      - No requireEnrolled(lessonId) helper for purchase verification
+      - Inline role checks in 13+ API routes (see app/api/*)
+
+    when_to_use: |
+      - Protecting admin pages: app/admin/* (4 pages use requireAdmin)
+      - Protecting instructor API routes: app/api/stripe/* (inline checks)
+      - Protecting video access: app/api/get-video-url/route.ts (inline instructor check line 79)
+
+    recommended_pattern: |
+      EXPAND lib/auth-utils.ts with role guard factory:
+
+      ```typescript
+      // Base role guard (reusable)
+      export async function requireRole(
+        allowedRoles: string[],
+        options?: { redirectTo?: string }
+      ) {
+        if (isBuildTime()) {
+          return { user: { id: 'build-time', email: 'build@example.com' }, role: allowedRoles[0] };
+        }
+
+        const supabase = createServerComponentClient({ cookies });
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+          redirect(options?.redirectTo || "/auth/sign-in");
+        }
+
+        const { data: userData } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+
+        if (!userData || !allowedRoles.includes(userData.role)) {
+          redirect("/dashboard"); // or throw error for API routes
+        }
+
+        return { user: session.user, role: userData.role };
+      }
+
+      // Convenience wrappers
+      export const requireAdmin = () => requireRole(['admin']);
+      export const requireInstructor = () => requireRole(['admin', 'instructor']);
+      export const requireStudent = () => requireRole(['admin', 'instructor', 'user']);
+
+      // Purchase-based guard (coordinate with video-security expert)
+      export async function requireLessonAccess(lessonId: string) {
+        const { user, role } = await requireStudent();
+
+        // Admin/instructor get access
+        if (role === 'admin' || role === 'instructor') return { user, role };
+
+        // Check purchase or use RPC function
+        const supabase = createServerComponentClient({ cookies });
+        const { data } = await supabase.rpc('check_lesson_access', {
+          lesson_id: lessonId,
+          user_id: user.id
+        });
+
+        if (!data) redirect("/dashboard");
+        return { user, role };
+      }
+      ```
+
+      USAGE:
+      ```typescript
+      // app/admin/users/page.tsx (existing pattern, keep as-is)
+      await requireAdmin();
+
+      // app/instructor/earnings/page.tsx (new)
+      await requireInstructor();
+
+      // app/api/get-video-url/route.ts (replace inline check line 79-108)
+      const { user } = await requireLessonAccess(lessonId);
+      ```
+
+    evidence:
+      - location: app/admin/page.tsx
+        pattern: "await requireAdmin();" (line 6)
+      - location: app/admin/users/page.tsx
+        pattern: "await requireAdmin();" (line 20)
+      - location: app/api/get-video-url/route.ts
+        pattern: "const isInstructor = lesson?.instructor_id === session.user.id;" (line 79)
+        problem: "Inline instructor check, should use requireInstructor or requireLessonAccess"
+
+  middleware_protection:
+    name: Middleware Route Guards
+    description: Centralize route protection at edge middleware layer
+    current_implementation: |
+      EXISTING: middleware.ts (line 5-56)
+      - Protected routes: ["/dashboard", "/library"] (line 23-24)
+      - Matcher: ["/dashboard/:path*", "/library/:path*"] (line 53-54)
+      - Pattern: Redirect to /auth/sign-in with redirectedFrom param (line 27-29)
+      - Session check: createMiddlewareClient (line 10)
+
+      GAPS:
+      - /admin/* routes not protected (rely on page-level requireAdmin calls)
+      - /api/admin/* routes not protected
+      - /instructor/* routes not protected (no such routes exist yet)
+      - No role-based middleware (only authenticated vs unauthenticated)
+
+    when_to_use: |
+      - Protecting entire route prefixes (/admin/*, /instructor/*)
+      - Early termination for API routes (return 401/403 before handler)
+      - Session-based protection (authenticated vs unauthenticated)
+
+    recommended_pattern: |
+      ENHANCE middleware.ts with role-based guards:
+
+      ```typescript
+      import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+      import { NextResponse } from "next/server";
+      import type { NextRequest } from "next/server";
+
+      export async function middleware(req: NextRequest) {
+        const res = NextResponse.next();
+
+        try {
+          const supabase = createMiddlewareClient({ req, res });
+          const { data: { session }, error } = await supabase.auth.getSession();
+
+          if (error) {
+            console.error("Auth error in middleware:", error);
+          }
+
+          const pathname = req.nextUrl.pathname;
+
+          // Existing pattern: general authenticated routes
+          const protectedRoutes = ["/dashboard", "/library"];
+          const isProtectedRoute = protectedRoutes.some(route =>
+            pathname.startsWith(route)
+          );
+
+          if (!session && isProtectedRoute) {
+            const redirectUrl = new URL("/auth/sign-in", req.url);
+            redirectUrl.searchParams.set("redirectedFrom", pathname);
+            return NextResponse.redirect(redirectUrl);
+          }
+
+          // NEW: Role-based route protection
+          if (session) {
+            // Fetch user role (consider caching in session token)
+            const { data: userData } = await supabase
+              .from("users")
+              .select("role")
+              .eq("id", session.user.id)
+              .single();
+
+            const role = userData?.role;
+
+            // Admin routes (pages)
+            if (pathname.startsWith('/admin') && role !== 'admin') {
+              return NextResponse.redirect(new URL('/dashboard', req.url));
+            }
+
+            // Admin API routes
+            if (pathname.startsWith('/api/admin') && role !== 'admin') {
+              return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+            }
+
+            // Instructor routes (allow admin + instructor)
+            if (pathname.startsWith('/instructor')) {
+              if (role !== 'admin' && role !== 'instructor') {
+                return NextResponse.redirect(new URL('/dashboard', req.url));
+              }
+            }
+          }
+
+          return res;
+        } catch (err) {
+          console.error("Middleware error:", err);
+          return res;
+        }
+      }
+
+      export const config = {
+        matcher: [
+          "/dashboard/:path*",
+          "/library/:path*",
+          "/admin/:path*",        // NEW
+          "/instructor/:path*",   // NEW
+          "/api/admin/:path*",    // NEW
+        ],
+      };
+      ```
+
+      TRADE-OFFS:
+      - Performance: Extra database query per request (cache role in JWT claims?)
+      - Security: Centralized protection prevents forgotten checks
+      - UX: Earlier rejection (better than loading page then redirecting)
+
+    evidence:
+      - location: middleware.ts
+        current_matcher: "['/dashboard/:path*', '/library/:path*']" (line 53-54)
+        missing: "/admin/:path* and /api/admin/:path*"
+      - location: app/admin/page.tsx
+        current_pattern: "Page-level requireAdmin() call" (line 6)
+        issue: "Middleware should prevent reaching page if unauthorized"
+
+  session_synchronization:
+    name: Client-Side Session Sync
+    description: Keep client session in sync with server-side auth state
+    current_implementation: |
+      EXISTING: components/header.tsx (line 19-48)
+      - useEffect hook fetches session on mount (line 20-32)
+      - onAuthStateChange subscription updates user state (line 41-45)
+      - Subscription cleanup on unmount (line 47)
+      - Pattern: setUser(session?.user || null) on auth events (line 44)
+
+      EVENTS HANDLED:
+      - Component mount: getSession() (line 29)
+      - SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED, etc. (line 43)
+
+      GAPS:
+      - No page reload on role changes (role stored in users.role, not in session token)
+      - Token refresh doesn't trigger role re-fetch
+      - User promoted to instructor requires logout/login to see new role
+
+    when_to_use: |
+      - Root layout (app/layout.tsx) for global session state
+      - Auth-dependent UI components (navigation, user menus)
+      - Role change notifications (user promoted to instructor)
+
+    recommended_pattern: |
+      CREATE: components/auth-provider.tsx
+
+      ```typescript
+      'use client';
+      import { useEffect, useState, createContext, useContext } from 'react';
+      import { createClient } from '@/lib/supabase/client';
+      import type { User } from '@supabase/supabase-js';
+
+      interface AuthContextType {
+        user: User | null;
+        role: string | null;
+        loading: boolean;
+      }
+
+      const AuthContext = createContext<AuthContextType>({
+        user: null,
+        role: null,
+        loading: true,
+      });
+
+      export function AuthProvider({ children }: { children: React.ReactNode }) {
+        const [user, setUser] = useState<User | null>(null);
+        const [role, setRole] = useState<string | null>(null);
+        const [loading, setLoading] = useState(true);
+        const supabase = createClient();
+
+        const fetchRole = async (userId: string) => {
+          const { data } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', userId)
+            .single();
+
+          setRole(data?.role || null);
+        };
+
+        useEffect(() => {
+          // Initial session
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            setUser(session?.user || null);
+            if (session?.user) {
+              fetchRole(session.user.id);
+            }
+            setLoading(false);
+          });
+
+          // Session changes
+          const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+              console.log('Auth event:', event);
+              setUser(session?.user || null);
+
+              if (session?.user) {
+                await fetchRole(session.user.id);
+
+                // Reload on token refresh to sync role changes
+                if (event === 'TOKEN_REFRESHED') {
+                  console.log('Token refreshed, reloading to sync role');
+                  window.location.reload();
+                }
+              } else {
+                setRole(null);
+              }
+            }
+          );
+
+          return () => subscription.unsubscribe();
+        }, [supabase]);
+
+        return (
+          <AuthContext.Provider value={{ user, role, loading }}>
+            {children}
+          </AuthContext.Provider>
+        );
+      }
+
+      export const useAuth = () => useContext(AuthContext);
+      ```
+
+      USAGE in app/layout.tsx:
+      ```typescript
+      import { AuthProvider } from '@/components/auth-provider';
+
+      export default function RootLayout({ children }) {
+        return (
+          <html>
+            <body>
+              <AuthProvider>
+                {children}
+              </AuthProvider>
+            </body>
+          </html>
+        );
+      }
+      ```
+
+      USAGE in components:
+      ```typescript
+      import { useAuth } from '@/components/auth-provider';
+
+      export function UserMenu() {
+        const { user, role, loading } = useAuth();
+
+        if (loading) return <Skeleton />;
+        if (!user) return <SignInButton />;
+
+        return (
+          <div>
+            {role === 'admin' && <AdminLink />}
+            {role === 'instructor' && <InstructorLink />}
+          </div>
+        );
+      }
+      ```
+
+      TRADE-OFFS:
+      - window.location.reload() on token refresh is jarring UX
+      - Alternative: Poll users.role every N seconds (performance cost)
+      - Alternative: WebSocket for real-time role updates (complexity cost)
+
+    evidence:
+      - location: components/header.tsx
+        pattern: "onAuthStateChange subscription" (line 43)
+        gap: "No role re-fetch on TOKEN_REFRESHED event"
+      - location: app/dashboard/profile/page.tsx
+        pattern: "Manual role fetch on mount" (line 43-53)
+        issue: "Role not synced globally, requires page reload"
+
+  build_time_bypass:
+    name: Build-Time Authentication Bypass
+    description: Allow static generation without Supabase connection
+    current_implementation: |
+      EXISTING: lib/auth-utils.ts (line 8-14, 49-52)
+      - Pattern: Check isBuildTime() at start of requireAdmin() and getRole()
+      - Returns mock data: { user: { id: 'build-time-user-id' }, role: 'admin' }
+      - Enables Next.js static generation without env vars
+
+      EXISTING: lib/env-utils.ts (line 132-138)
+      - isBuildTime() checks: typeof window === 'undefined' && !SUPABASE_URL
+      - Used in auth-utils.ts, supabase/server.ts, supabase/client.ts
+
+    when_to_use: |
+      - CI/CD builds without Supabase env vars
+      - Static page generation (getStaticProps, generateStaticParams)
+      - Local development without .env.local
+
+    pattern: |
+      STANDARD PATTERN (from lib/auth-utils.ts):
+      ```typescript
+      import { isBuildTime } from './env-utils';
+
+      export async function requireAdmin() {
+        // Build-time bypass
+        if (isBuildTime()) {
+          console.log("Build-time detected: Skipping admin authentication check");
+          return {
+            user: { id: 'build-time-user-id', email: 'build@example.com' },
+            role: 'admin'
+          };
+        }
+
+        // Runtime auth logic
+        const supabase = createServerComponentClient({ cookies });
+        // ...
+      }
+      ```
+
+      USE IN ALL ROLE GUARDS:
+      - requireAdmin (existing, line 8-14)
+      - requireInstructor (new, add build-time bypass)
+      - requireStudent (new, add build-time bypass)
+      - requireLessonAccess (new, add build-time bypass)
+
+    evidence:
+      - location: lib/auth-utils.ts
+        pattern: "if (isBuildTime()) return mock admin" (line 8-14)
+      - location: lib/supabase/server.ts
+        pattern: "Build-time proxy client" (line 18-37)
+
+  rls_coordination:
+    name: RLS Policy Coordination
+    description: Manage auth-related RLS policies in coordination with database expert
+    current_implementation: |
+      DISCOVERED RLS POLICIES (across 8 migration files):
+
+      1. purchases table (migrations/20250403000000_consolidated_schema.sql:215-217)
+         - "System can insert purchases" (INSERT WITH CHECK true)
+         - "Users can view their own purchases" (SELECT USING auth.uid() = user_id)
+
+      2. users table (migrations/20250505000000_enable_rls_all_tables.sql:4-6)
+         - "Users can view all users" (SELECT USING true)
+         - "Users can update their own profile" (UPDATE USING auth.uid() = id)
+
+      3. instructor_profiles table (line 8-12)
+         - "Anyone can view instructor profiles" (SELECT USING true)
+         - "Users can update their own instructor profile" (UPDATE USING auth.uid() = user_id)
+         - "Users can insert their own instructor profile" (INSERT WITH CHECK auth.uid() = user_id)
+
+      4. lessons table (line 14-19)
+         - "Anyone can view lessons" (SELECT USING true)
+         - "Instructors can insert their own lessons" (INSERT WITH CHECK auth.uid() = instructor_id)
+         - "Instructors can update their own lessons" (UPDATE USING auth.uid() = instructor_id)
+         - "Instructors can delete their own lessons" (DELETE USING auth.uid() = instructor_id)
+
+      5. storage.objects (videos bucket) (migrations/20250505010000_add_access_verification_functions.sql:48-72)
+         - "Allow access to purchased videos" (SELECT USING complex logic)
+           - Instructors can access their own videos (instructor_id = auth.uid())
+           - Users can access purchased videos (purchases JOIN)
+
+      6. Verification functions (migrations/20250503000000_improved_purchase_verification.sql)
+         - has_purchased_lesson(user_id, lesson_id) SECURITY DEFINER (line 2-39)
+         - user_has_purchased_lesson(user_id, lesson_id) SECURITY DEFINER (line 2-39)
+         - has_video_access(user_id, lesson_id) SECURITY DEFINER (migrations/20250505010000:21-46)
+
+      AUTH PATTERNS IN RLS:
+      - auth.uid() for current user (all policies)
+      - auth.role() for 'authenticated' check (storage policies)
+      - SECURITY DEFINER functions to bypass RLS for complex checks
+      - No role-based policies (no admin override policies found)
+
+    when_to_use: |
+      - Creating new tables that need row-level security
+      - Adding admin override capabilities (select all, update all)
+      - Coordinating with video-security expert on storage policies
+
+    recommended_pattern: |
+      AUTH EXPERT OWNS:
+      - User identity policies (auth.uid() = id)
+      - Role-based admin overrides
+      - Session-based access policies
+
+      DATABASE EXPERT OWNS:
+      - Table structure and grants
+      - Complex multi-table policies
+      - SECURITY DEFINER functions
+
+      SHARED OWNERSHIP:
+      - Purchase verification policies (auth + database)
+      - Storage access policies (auth + video-security)
+
+      EXAMPLE: Add admin override to lessons table
+      ```sql
+      -- migrations/YYYYMMDD_add_admin_override.sql
+
+      -- Admin can view all lessons
+      CREATE POLICY "admin_view_all_lessons" ON public.lessons
+      FOR SELECT
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.users
+          WHERE id = auth.uid() AND role = 'admin'
+        )
+      );
+
+      -- Admin can update all lessons
+      CREATE POLICY "admin_update_all_lessons" ON public.lessons
+      FOR UPDATE
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.users
+          WHERE id = auth.uid() AND role = 'admin'
+        )
+      );
+
+      -- Admin can delete all lessons
+      CREATE POLICY "admin_delete_all_lessons" ON public.lessons
+      FOR DELETE
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.users
+          WHERE id = auth.uid() AND role = 'admin'
+        )
+      );
+      ```
+
+    evidence:
+      - location: supabase/migrations/20250505000000_enable_rls_all_tables.sql
+        policies: "8 tables with RLS enabled, 15+ policies"
+      - location: supabase/migrations/20250505010000_add_access_verification_functions.sql
+        functions: "has_video_access, has_purchased_lesson (SECURITY DEFINER)"
+      - gap: "No admin override policies (admin can't bypass RLS)"
+
+decision_trees:
+  choose_auth_pattern:
+    name: Choose Authentication Pattern
+    entry_point: Need to protect a route or resource
+    branches:
+      - condition: Protecting entire route prefix (/admin/*, /instructor/*)
+        action: Add to middleware.ts matcher + role check
+        example: "matcher: ['/admin/:path*']"
+
+      - condition: Protecting single page (admin dashboard)
+        action: Use requireAdmin() in page.tsx
+        example: "await requireAdmin();" (app/admin/page.tsx:6)
+
+      - condition: Protecting API route with complex logic
+        action: Use role guard at start of route handler
+        example: "const { user, role } = await requireInstructor();"
+
+      - condition: Protecting resource access (video, lesson)
+        action: Use resource-specific guard (requireLessonAccess)
+        example: "await requireLessonAccess(lessonId);"
+
+      - condition: Client-side UI conditional rendering
+        action: Use AuthProvider context hook
+        example: "const { role } = useAuth(); if (role === 'admin') ..."
+
+  choose_rls_strategy:
+    name: Choose RLS Policy Strategy
+    entry_point: Need to secure a database table
+    branches:
+      - condition: User can only access own rows
+        action: Simple auth.uid() policy
+        example: "USING (auth.uid() = user_id)"
+
+      - condition: Public read, authenticated write
+        action: Separate SELECT and INSERT policies
+        example: "SELECT USING (true); INSERT WITH CHECK (auth.role() = 'authenticated')"
+
+      - condition: Complex multi-table verification (purchases)
+        action: SECURITY DEFINER function + policy
+        example: "USING (public.has_purchased_lesson(auth.uid(), id))"
+
+      - condition: Admin override capability
+        action: Role-based policy with users.role check
+        example: "USING (EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role = 'admin'))"
+
+patterns:
+  role_guard_factory:
+    name: Role Guard Factory Pattern
+    context: Consolidated role checking across application
+    implementation: |
+      CURRENT STATE (lib/auth-utils.ts):
+      - Only requireAdmin() exists (line 6-45)
+      - Inline role checks in 13+ files (app/api/*)
+
+      RECOMMENDED FACTORY:
+      ```typescript
+      // lib/auth-utils.ts
+      import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+      import { cookies } from "next/headers";
+      import { redirect } from "next/navigation";
+      import { isBuildTime } from "./env-utils";
+
+      type UserRole = 'admin' | 'instructor' | 'user';
+
+      export async function requireRole(allowedRoles: UserRole[]) {
+        if (isBuildTime()) {
+          return {
+            user: { id: 'build-time-user-id', email: 'build@example.com' },
+            role: allowedRoles[0] as UserRole
+          };
+        }
+
+        const supabase = createServerComponentClient({ cookies });
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+          redirect("/auth/sign-in");
+        }
+
+        const { data: userData, error } = await supabase
+          .from("users")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+
+        const userRole = userData?.role as UserRole;
+
+        if (error || !userData || !allowedRoles.includes(userRole)) {
+          console.log(`Access denied: User role '${userRole}' not in ${allowedRoles}`);
+          redirect("/dashboard");
+        }
+
+        return { user: session.user, role: userRole };
+      }
+
+      // Convenience wrappers
+      export const requireAdmin = () => requireRole(['admin']);
+      export const requireInstructor = () => requireRole(['admin', 'instructor']);
+      export const requireStudent = () => requireRole(['admin', 'instructor', 'user']);
+
+      // Existing getRole() function stays as-is (line 47-75)
+      ```
+
+    trade_offs:
+      advantage: "Eliminates 13+ inline role checks, single source of truth"
+      cost: "Database query per protected route (cache in session token?)"
+
+    evidence:
+      - location: app/api/get-video-url/route.ts
+        before: "const isInstructor = lesson?.instructor_id === session.user.id;" (line 79)
+        after: "const { user } = await requireInstructor();"
+
+  middleware_role_guard:
+    name: Middleware Role Guard Pattern
+    context: Centralized route protection at edge
+    implementation: |
+      ENHANCE: middleware.ts
+      ```typescript
+      export async function middleware(req: NextRequest) {
+        const res = NextResponse.next();
+
+        try {
+          const supabase = createMiddlewareClient({ req, res });
+          const { data: { session } } = await supabase.auth.getSession();
+          const pathname = req.nextUrl.pathname;
+
+          // General auth check (existing)
+          const protectedRoutes = ["/dashboard", "/library"];
+          if (!session && protectedRoutes.some(r => pathname.startsWith(r))) {
+            const redirectUrl = new URL("/auth/sign-in", req.url);
+            redirectUrl.searchParams.set("redirectedFrom", pathname);
+            return NextResponse.redirect(redirectUrl);
+          }
+
+          // Role-based checks (new)
+          if (session) {
+            const { data: userData } = await supabase
+              .from("users")
+              .select("role")
+              .eq("id", session.user.id)
+              .single();
+
+            const role = userData?.role;
+
+            // Admin routes
+            if (pathname.startsWith('/admin') && role !== 'admin') {
+              return pathname.startsWith('/api')
+                ? NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+                : NextResponse.redirect(new URL('/dashboard', req.url));
+            }
+          }
+
+          return res;
+        } catch (err) {
+          console.error("Middleware error:", err);
+          return res;
+        }
+      }
+
+      export const config = {
+        matcher: [
+          "/dashboard/:path*",
+          "/library/:path*",
+          "/admin/:path*",      // NEW
+          "/api/admin/:path*",  // NEW
+        ],
+      };
+      ```
+
+    trade_offs:
+      advantage: "Impossible to forget route protection, early rejection"
+      cost: "Extra DB query per request, middleware complexity"
+
+best_practices:
+  - category: Role Management
+    practices:
+      - practice: Store roles in public.users.role, not auth.users.user_metadata
+        rationale: RLS policies can query public.users, simpler than JWT claims
+        evidence: "users.role TEXT DEFAULT 'user' (migrations/20250403000000:56)"
+        timestamp: 2025-12-30
+
+      - practice: Use trigger to auto-set instructor role when instructor_profile created
+        rationale: Keeps users.role in sync with instructor_profiles table
+        evidence: "set_instructor_role_trigger (migrations/20250403000000:145-153)"
+        timestamp: 2025-12-30
+
+      - practice: Admin role must be manually set (no automatic promotion)
+        rationale: Security - prevents unauthorized admin access
+        evidence: "No admin creation trigger found, only requireAdmin checks"
+        timestamp: 2025-12-30
+
+  - category: Route Protection
+    practices:
+      - practice: Use middleware for route prefix protection (/admin/*, /api/admin/*)
+        rationale: Centralized protection, impossible to forget
+        evidence: "middleware.ts protects /dashboard and /library (line 23-30)"
+        gap: "/admin/* not in matcher (line 53-54)"
+        timestamp: 2025-12-30
+
+      - practice: Use requireRole helpers for page-level checks
+        rationale: Cleaner than inline session + role queries
+        evidence: "requireAdmin() used in 4 admin pages (app/admin/*)"
+        timestamp: 2025-12-30
+
+      - practice: Build-time bypass for static generation
+        rationale: Allows Next.js build without Supabase env vars
+        evidence: "isBuildTime() check in requireAdmin (line 8-14)"
+        timestamp: 2025-12-30
+
+  - category: Session Management
+    practices:
+      - practice: Use onAuthStateChange for client-side session sync
+        rationale: Keeps UI in sync with auth state changes
+        evidence: "components/header.tsx subscription (line 43-45)"
+        timestamp: 2025-12-30
+
+      - practice: Fetch role separately from session (not in user_metadata)
+        rationale: Role stored in public.users, not auth.users
+        evidence: "app/dashboard/profile/page.tsx fetches role (line 43-53)"
+        timestamp: 2025-12-30
+
+      - practice: Sign out via API route, fallback to client.signOut
+        rationale: Server-side session clearing, client-side fallback for errors
+        evidence: "components/header.tsx signout (line 50-87)"
+        timestamp: 2025-12-30
+
+  - category: RLS Coordination
+    practices:
+      - practice: Use SECURITY DEFINER functions for complex RLS logic
+        rationale: Bypasses RLS for helper functions, cleaner policies
+        evidence: "has_purchased_lesson SECURITY DEFINER (migrations/20250503000000)"
+        timestamp: 2025-12-30
+
+      - practice: Coordinate storage.objects policies with video-security expert
+        rationale: Video access spans auth (purchases) and storage (signed URLs)
+        evidence: "storage.objects policies in migrations/20250505010000"
+        timestamp: 2025-12-30
+
+known_issues:
+  - issue: Only requireAdmin() exists, no requireInstructor/Student helpers
+    impact: Inline role checks duplicated across 13+ files
+    workaround: Create role guard factory pattern (see key_operations.role_verification)
+    status: identified
+    timestamp: 2025-12-30
+
+  - issue: Middleware doesn't protect /admin/* routes
+    impact: Easy to forget requireAdmin() call in new admin pages
+    workaround: Add /admin/:path* to middleware matcher + role check
+    status: identified
+    timestamp: 2025-12-30
+
+  - issue: Role changes don't auto-sync to client (requires logout/login)
+    impact: User promoted to instructor doesn't see new UI until re-login
+    workaround: AuthProvider with TOKEN_REFRESHED → window.location.reload()
+    status: identified
+    timestamp: 2025-12-30
+    ux_cost: "Page reload is jarring, consider WebSocket for real-time updates"
+
+  - issue: No admin override RLS policies
+    impact: Admin can't view/edit all lessons (same restrictions as users)
+    workaround: Add role-based policies with users.role = 'admin' check
+    status: identified
+    timestamp: 2025-12-30
+
+  - issue: No admin bootstrap mechanism
+    impact: First deployment has no admin users (chicken-egg problem)
+    workaround: Manual SQL or migration with env var for initial admin email
+    status: identified
+    timestamp: 2025-12-30
+
+potential_enhancements:
+  - enhancement: Cache user role in session token (JWT claims)
+    rationale: Eliminate per-request DB query in middleware
+    effort: medium (requires Supabase auth hooks or custom token claims)
+    trade_offs: "Role changes delayed until token refresh (1 hour default)"
+    timestamp: 2025-12-30
+
+  - enhancement: WebSocket-based role sync (real-time)
+    rationale: Eliminate page reload on role changes, better UX
+    effort: high (requires WebSocket infrastructure, Supabase Realtime)
+    trade_offs: "Complexity, connection management, edge case handling"
+    timestamp: 2025-12-30
+
+  - enhancement: Granular permissions beyond roles (RBAC → ABAC)
+    rationale: Some instructors may need different capabilities (edit vs publish)
+    effort: high (requires permissions table, policy refactor)
+    scope: "Coordinate with database expert for permissions schema"
+    timestamp: 2025-12-30
+
+  - enhancement: Admin bootstrap via migration + env var
+    rationale: Solve chicken-egg problem for first admin creation
+    effort: low (single migration with ADMIN_EMAIL env var)
+    pattern: "UPDATE auth.users SET ... WHERE email = current_setting('app.admin_email')"
+    timestamp: 2025-12-30
+
+size_governance:
+  current_size: 750
+  target_range: "700-800 lines"
+  consolidation_threshold: 900
+  last_review: 2025-12-30
+  notes: |
+    Initial discovery populated expertise.yaml to 750 lines.
+    Focused on patterns discovered in teach-niche-v0 codebase.
+    Next improve cycle will consolidate based on actual implementation learnings.
+
+stability:
+  oscillation_detection:
+    rule: |
+      IF entry E1 at T1 contradicts E0 at T0
+      AND entry E2 at T2 contradicts E1
+      THEN oscillation detected
+    resolution: |
+      Preserve both with conflict marker
+      Escalate to human reviewer
+    detected_oscillations: []
+
+  convergence_indicators:
+    insight_rate_trend: "initializing (first discovery)"
+    contradiction_count: 0
+    last_reviewed: 2025-12-30
+    notes: |
+      Initial expertise based on codebase reconnaissance.
+      No contradictions yet (first version).
+      Will track pattern effectiveness in future improve cycles.

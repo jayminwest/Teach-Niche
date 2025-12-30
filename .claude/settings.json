@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/jayminwest/Projects/teach-niche-v0"]
+    }
+  },
+  "task": {
+    "model": "claude-sonnet-4-5-20250929",
+    "temperature": 1.0
+  }
+}
