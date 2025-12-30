@@ -1,6 +1,5 @@
 import { requireAdmin } from "@/lib/auth-utils"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { createServerClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
@@ -18,8 +17,8 @@ import { format } from "date-fns"
 export default async function UsersPage() {
   // Check if the user is an admin - this will redirect if not authorized
   await requireAdmin();
-  
-  const supabase = createServerComponentClient({ cookies })
+
+  const supabase = await createServerClient()
   
   // Get all users from the public.users table
   const { data: users, error } = await supabase

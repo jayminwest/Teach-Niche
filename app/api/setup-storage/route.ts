@@ -1,13 +1,11 @@
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { createRouteHandlerClient } from "@/lib/supabase/route-handler"
 import { NextResponse } from "next/server"
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await createRouteHandlerClient()
 
     // Create videos bucket if it doesn't exist
     const { data: videoBucket, error: videoError } = await supabase.storage.createBucket("videos", {
@@ -40,4 +38,3 @@ export async function GET() {
     )
   }
 }
-

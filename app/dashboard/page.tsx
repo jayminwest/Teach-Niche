@@ -1,6 +1,5 @@
 import Link from "next/link"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { createServerClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatPrice } from "@/lib/utils"
@@ -17,13 +16,13 @@ type PurchaseWithLesson = Purchase & {
 }
 
 export default async function Dashboard() {
-  const supabase = createServerComponentClient({ cookies })
+  const supabase = await createServerClient()
 
-  // Get the current user
+  // Get the current user (use getUser for security instead of getSession)
   const {
-    data: { session },
-  } = await supabase.auth.getSession()
-  if (!session) {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
     redirect("/auth/sign-in")
   }
 
@@ -35,7 +34,7 @@ export default async function Dashboard() {
   console.log(`Dashboard: Running in ${environmentName} environment`);
   console.log(`Dashboard: Supabase URL: ${supabaseUrl}`);
 
-  const user = session.user
+  // User is already available from getUser() above
   
   // Check if user has admin role
   const { data: userData } = await supabase

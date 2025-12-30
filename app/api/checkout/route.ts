@@ -1,24 +1,20 @@
 export const dynamic = "force-dynamic"
 
-import { cookies } from "next/headers"
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { createRouteHandlerClient } from "@/lib/supabase/route-handler"
 import { stripe, calculateFees, calculatePriceWithStripeFees } from "@/lib/stripe"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await createRouteHandlerClient()
 
     // Check if user is authenticated
     const {
-      data: { session: userSession },
-    } = await supabase.auth.getSession()
-    if (!userSession) {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
-
-    const user = userSession.user
 
     // Get the lesson ID from the request
     const { lessonId } = await request.json()
@@ -41,7 +37,7 @@ export async function POST(request: NextRequest) {
     const { data: existingPurchase } = await supabase
       .from("purchases")
       .select("id")
-      .eq("user_id", userSession.user.id)
+      .eq("user_id", user.id)
       .eq("lesson_id", lessonId)
       .single()
 
@@ -55,14 +51,14 @@ export async function POST(request: NextRequest) {
     if (!instructorStripeAccountId) {
       return NextResponse.json({ message: "Instructor payment account not set up" }, { status: 400 })
     }
-    
+
     // Check if the instructor's account is enabled
     const { data: instructorProfile } = await supabase
       .from("instructor_profiles")
       .select("stripe_account_enabled")
       .eq("user_id", lesson.instructor_id)
       .single()
-      
+
     if (!instructorProfile?.stripe_account_enabled) {
       return NextResponse.json({ message: "Instructor payment account is not fully enabled" }, { status: 400 })
     }
@@ -81,20 +77,20 @@ export async function POST(request: NextRequest) {
     // Calculate price with fees
     const priceWithFees = calculatePriceWithStripeFees(priceInCents) / 100;
     const priceWithFeesInCents = Math.round(priceWithFees * 100);
-    
+
     // Create a product for this specific checkout session
     const checkoutProduct = await stripe.products.create({
       name: lesson.title || "Lesson",
       description: `${lesson.title || "Lesson"} (includes processing fees)`,
     });
-    
+
     // Create a price for the checkout product that includes fees
     const checkoutPrice = await stripe.prices.create({
       product: checkoutProduct.id,
       unit_amount: priceWithFeesInCents,
       currency: 'usd',
     });
-    
+
     // Create a Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -109,7 +105,7 @@ export async function POST(request: NextRequest) {
       cancel_url: `${request.nextUrl.origin}/lessons/${lessonId}`,
       metadata: {
         lessonId: lessonId,
-        userId: userSession.user.id,
+        userId: user.id,
         stripeProductId: lesson.stripe_product_id,
         stripePriceId: lesson.stripe_price_id,
         originalPrice: lesson.price.toString(),
@@ -130,4 +126,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: error.message || "Internal server error" }, { status: 500 })
   }
 }
-

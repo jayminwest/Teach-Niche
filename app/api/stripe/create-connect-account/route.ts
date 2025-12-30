@@ -1,24 +1,20 @@
 export const dynamic = "force-dynamic"
 
-import { cookies } from "next/headers"
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { createRouteHandlerClient } from "@/lib/supabase/route-handler"
 import { stripe, syncStripeAccountStatus } from "@/lib/stripe"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await createRouteHandlerClient()
 
     // Check if user is authenticated
     const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    if (!session) {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
-
-    const user = session.user
 
     // Check if the user already has a Stripe account
     let { data: existingProfile } = await supabase
@@ -38,7 +34,7 @@ export async function POST(request: NextRequest) {
         })
         .select()
         .single()
-      
+
       // Set the existingProfile to the newly created profile
       if (newProfile) {
         existingProfile = newProfile
@@ -50,7 +46,7 @@ export async function POST(request: NextRequest) {
       try {
         // Sync the account status with Stripe
         const accountStatus = await syncStripeAccountStatus(supabase, user.id, existingProfile.stripe_account_id);
-        
+
         // If the account is enabled, return it
         if (accountStatus.accountEnabled) {
           return NextResponse.json({
@@ -120,4 +116,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: error.message || "Internal server error" }, { status: 500 })
   }
 }
-

@@ -1,11 +1,11 @@
 "use client"
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
+import { createBrowserClient } from "@supabase/ssr"
 import type { Database } from "@/types/supabase"
 import { isDevelopment } from "../env-utils"
 
 // Create a cache to store client instances
-let clientInstance: ReturnType<typeof createClientComponentClient<Database>> | null = null
+let clientInstance: ReturnType<typeof createBrowserClient<Database>> | null = null
 
 export const createClient = () => {
   // Return the cached instance if it exists
@@ -19,10 +19,10 @@ export const createClient = () => {
   }
 
   // Create a new instance if one doesn't exist
-  clientInstance = createClientComponentClient<Database>({
-    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    options: {
+  clientInstance = createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
       // Add Supabase client options
       auth: {
         persistSession: true,
@@ -42,8 +42,8 @@ export const createClient = () => {
         }
       }
     }
-  })
-  
+  )
+
   // In development mode, log the connection info
   if (isDevelopment() && process.env.NEXT_PUBLIC_SUPABASE_URL) {
     const projectRef = process.env.NEXT_PUBLIC_SUPABASE_URL.match(/https:\/\/([^.]+)/)?.[1];
@@ -51,7 +51,6 @@ export const createClient = () => {
       console.log(`🔌 Connected to Supabase project: ${projectRef}`);
     }
   }
-  
+
   return clientInstance
 }
-
