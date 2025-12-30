@@ -1,13 +1,11 @@
 export const dynamic = "force-dynamic"
 
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { createRouteHandlerClient } from "@/lib/supabase/route-handler"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await createRouteHandlerClient()
 
     // Get the bucket name from the query parameters
     const { searchParams } = new URL(request.url)
@@ -23,13 +21,13 @@ export async function GET(request: NextRequest) {
 
       if (bucketError && bucketError.message?.includes("not found")) {
         console.log(`Bucket ${bucketName} not found, creating it`);
-        
+
         if (bucketName === "videos") {
           const { error: createError } = await supabase.storage.createBucket(
             bucketName,
             { public: false, fileSizeLimit: 2147483648 } // 2GB limit
           );
-          
+
           if (createError) {
             console.error(`Error creating bucket ${bucketName}:`, createError);
             return NextResponse.json(
@@ -42,7 +40,7 @@ export async function GET(request: NextRequest) {
             bucketName,
             { public: true, fileSizeLimit: 5242880 } // 5MB limit
           );
-          
+
           if (createError) {
             console.error(`Error creating bucket ${bucketName}:`, createError);
             return NextResponse.json(
@@ -64,7 +62,7 @@ export async function GET(request: NextRequest) {
 
     if (bucketName === "videos") {
       // For videos bucket: create comprehensive security policies
-      
+
       // 1. Allow authenticated users to upload videos
       const uploadPolicy = await supabase.rpc('create_storage_policy', {
         bucket_name: bucketName,
@@ -73,21 +71,21 @@ export async function GET(request: NextRequest) {
         policy_action: "INSERT"
       });
       policies.push({ name: "authenticated_uploads_videos", result: uploadPolicy });
-      
+
       // 2. Allow instructors to access videos they've uploaded
       const instructorPolicy = await supabase.rpc('create_storage_policy', {
         bucket_name: bucketName,
         policy_name: "instructor_video_access",
         policy_definition: `(
           auth.uid() IN (
-            SELECT instructor_id FROM public.lessons 
+            SELECT instructor_id FROM public.lessons
             WHERE video_url LIKE '%' || storage.objects.name || '%'
           )
         )`,
         policy_action: "SELECT"
       });
       policies.push({ name: "instructor_video_access", result: instructorPolicy });
-      
+
       // 3. Allow users to access videos they've purchased
       const purchasePolicy = await supabase.rpc('create_storage_policy', {
         bucket_name: bucketName,
@@ -102,14 +100,14 @@ export async function GET(request: NextRequest) {
         policy_action: "SELECT"
       });
       policies.push({ name: "purchased_video_access", result: purchasePolicy });
-      
+
       // 4. Allow access to free videos (price = 0)
       const freePolicy = await supabase.rpc('create_storage_policy', {
         bucket_name: bucketName,
         policy_name: "free_video_access",
         policy_definition: `(
           EXISTS (
-            SELECT 1 FROM public.lessons 
+            SELECT 1 FROM public.lessons
             WHERE video_url LIKE '%' || storage.objects.name || '%'
             AND price = 0
           )
@@ -159,4 +157,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-

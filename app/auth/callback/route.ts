@@ -1,7 +1,5 @@
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { createRouteHandlerClient } from "@/lib/supabase/route-handler"
 import { NextResponse } from "next/server"
-import type { Database } from "@/types/supabase"
 import type { NextRequest } from "next/server"
 
 export async function GET(request: NextRequest) {
@@ -22,15 +20,10 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     try {
-      // In Next.js 15, cookies() must be awaited
-      const cookieStore = await cookies()
-      // Properly type the client
-      const supabase = createRouteHandlerClient<Database>({ 
-        cookies: () => cookieStore 
-      })
-      
+      const supabase = await createRouteHandlerClient()
+
       const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code)
-      
+
       if (sessionError) {
         console.error("Session exchange error:", sessionError)
         return NextResponse.redirect(
@@ -52,4 +45,3 @@ export async function GET(request: NextRequest) {
   // URL to redirect to after sign in process completes
   return NextResponse.redirect(requestUrl.origin)
 }
-

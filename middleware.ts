@@ -1,29 +1,45 @@
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
+import { createServerClient } from "@supabase/ssr"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 export async function middleware(req: NextRequest) {
-  const res = NextResponse.next()
+  let res = NextResponse.next({
+    request: req,
+  })
 
   try {
-    // Create middleware client
-    const supabase = createMiddlewareClient({ req, res })
+    // Create middleware client with @supabase/ssr
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return req.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              res.cookies.set(name, value, options)
+            )
+          },
+        },
+      }
+    )
 
-    // Get session (handle potential auth errors)
-    const { data, error } = await supabase.auth.getSession()
-    
+    // Use getUser() instead of getSession() for security
+    // IMPORTANT: Do not add code between createServerClient and supabase.auth.getUser()
+    const { data: { user }, error } = await supabase.auth.getUser()
+
     if (error) {
       console.error("Auth error in middleware:", error)
       // Continue without session, will handle protected routes below
     }
-    
-    const session = data?.session
 
     // If the user is not signed in and tries to access a protected route, redirect to login
     const protectedRoutes = ["/dashboard", "/library"]
     const isProtectedRoute = protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route))
 
-    if (!session && isProtectedRoute) {
+    if (!user && isProtectedRoute) {
       const redirectUrl = new URL("/auth/sign-in", req.url)
       redirectUrl.searchParams.set("redirectedFrom", req.nextUrl.pathname)
       return NextResponse.redirect(redirectUrl)
@@ -47,11 +63,10 @@ export const config = {
      * Only run middleware on protected routes that require authentication:
      * - /dashboard/* (user dashboard)
      * - /library/* (user library)
-     * 
+     *
      * Exclude static assets and API webhook routes
      */
     "/dashboard/:path*",
     "/library/:path*",
   ],
 }
-

@@ -1,24 +1,20 @@
 export const dynamic = "force-dynamic"
 
-import { cookies } from "next/headers"
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs"
+import { createRouteHandlerClient } from "@/lib/supabase/route-handler"
 import { stripe } from "@/lib/stripe"
 import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = cookies()
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const supabase = await createRouteHandlerClient()
 
     // Check if user is authenticated
     const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    if (!session) {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
-
-    const user = session.user
 
     // Get the user's Stripe account ID
     const { data: profile } = await supabase
@@ -38,7 +34,7 @@ export async function POST(request: NextRequest) {
     if (!name) {
       return NextResponse.json({ message: "Missing required field: name" }, { status: 400 })
     }
-    
+
     // Allow price to be 0 for free content
     if (price === undefined || price === null) {
       return NextResponse.json({ message: "Missing required field: price" }, { status: 400 })
