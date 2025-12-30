@@ -1,0 +1,113 @@
+name: Bug Report
+description: Report a bug or issue in teach-niche-v0
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this bug! Please provide as much detail as possible.
+
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Domain
+      description: Which domain does this bug affect?
+      options:
+        - payment (Stripe, checkout, webhooks)
+        - auth (Authentication, RLS, session)
+        - database (Migrations, schema)
+        - video (Upload, transcoding, access)
+        - api (API routes, endpoints)
+        - ui (Components, pages, UI/UX)
+        - deploy (Vercel, infrastructure)
+      multiple: false
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How critical is this bug?
+      options:
+        - priority:critical (Blocking production)
+        - priority:high (Should fix soon)
+        - priority:medium (Normal priority)
+        - priority:low (Nice to have)
+      multiple: false
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Clear description of the bug
+      placeholder: When I click "Complete Purchase", the Stripe checkout session fails...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this bug?
+      placeholder: |
+        1. Go to course checkout page
+        2. Click "Complete Purchase"
+        3. See error in console
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should happen?
+      placeholder: Stripe checkout should redirect to payment page
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happens?
+      placeholder: Error "Stripe session creation failed"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Environment details
+      placeholder: |
+        - Browser: Chrome 120
+        - OS: macOS Sonoma
+        - Deployment: Vercel production
+        - Next.js: 15.x
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Logs / Screenshots
+      description: Paste any relevant error logs or screenshots
+      placeholder: |
+        ```
+        Error: Stripe checkout session creation failed
+        at createCheckoutSession (app/api/checkout/route.ts:45)
+        ```
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        **Label Guidance:**
+        - Add **domain label** (payment, auth, database, video, api, ui, deploy)
+        - Add **priority label** (priority:critical, priority:high, priority:medium, priority:low)
+        - Add **effort label** after investigation (effort:small, effort:medium, effort:large)

@@ -1,0 +1,74 @@
+name: Enhancement
+description: Suggest an improvement to existing teach-niche-v0 functionality
+title: "[Enhancement]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an enhancement! Please describe the improvement.
+
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Domain
+      description: Which domain does this enhancement affect?
+      options:
+        - payment (Stripe, checkout, webhooks)
+        - auth (Authentication, RLS, session)
+        - database (Migrations, schema)
+        - video (Upload, transcoding, access)
+        - api (API routes, endpoints)
+        - ui (Components, pages, UI/UX)
+        - deploy (Vercel, infrastructure)
+      multiple: true
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this enhancement?
+      options:
+        - priority:high (Significant improvement needed)
+        - priority:medium (Normal improvement)
+        - priority:low (Nice to have)
+      multiple: false
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: Current Behavior
+      description: How does the feature currently work?
+      placeholder: Video upload currently requires manual thumbnail selection...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Proposed Enhancement
+      description: How should it work instead?
+      placeholder: Auto-generate thumbnail from video at 30% timestamp...
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefits
+    attributes:
+      label: Benefits
+      description: Why is this enhancement valuable?
+      placeholder: Saves instructors time, improves UX, reduces support requests...
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        **Label Guidance:**
+        - Add **domain labels** (payment, auth, database, video, api, ui, deploy)
+        - Add **priority label** (priority:high, priority:medium, priority:low)
+        - Add **effort label** after estimation (effort:small, effort:medium, effort:large)

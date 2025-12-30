@@ -1,0 +1,86 @@
+name: Feature Request
+description: Suggest a new feature for teach-niche-v0
+title: "[Feature]: "
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please provide detailed information.
+
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Domain
+      description: Which domain does this feature involve?
+      options:
+        - payment (Stripe, checkout, webhooks)
+        - auth (Authentication, RLS, session)
+        - database (Migrations, schema)
+        - video (Upload, transcoding, access)
+        - api (API routes, endpoints)
+        - ui (Components, pages, UI/UX)
+        - deploy (Vercel, infrastructure)
+      multiple: true
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature?
+      options:
+        - priority:high (Important, needed soon)
+        - priority:medium (Normal priority)
+        - priority:low (Nice to have)
+      multiple: false
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve?
+      placeholder: Currently, instructors cannot track their course earnings in real-time...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How should this feature work?
+      placeholder: Add a dashboard showing real-time Stripe payouts and earnings...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: What other solutions have you considered?
+      placeholder: Could use Stripe Dashboard directly, but want in-app experience...
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: How do we know this feature is complete?
+      placeholder: |
+        - [ ] Instructors can view earnings by course
+        - [ ] Real-time Stripe webhook updates earnings
+        - [ ] Earnings data respects RLS policies
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        **Label Guidance:**
+        - Add **domain labels** (payment, auth, database, video, api, ui, deploy)
+        - Add **priority label** (priority:high, priority:medium, priority:low)
+        - Add **effort label** after estimation (effort:small, effort:medium, effort:large)

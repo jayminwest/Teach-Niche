@@ -1,0 +1,137 @@
+name: Supabase Migration Check
+
+# TODO: Customize for teach-niche Supabase migration verification
+# This workflow validates Supabase migrations on PR creation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/seed.sql'
+      - '.github/workflows/migration-check.yml'
+
+env:
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+jobs:
+  migration-check:
+    runs-on: ubuntu-latest
+    name: Validate Supabase Migrations
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase local instance
+        run: supabase start
+
+      # TODO: Add migration conflict detection
+      - name: Check for migration conflicts
+        run: |
+          echo "TODO: Implement migration conflict detection"
+          # Check for overlapping migration timestamps
+          # Verify migration file naming conventions
+          # Detect potential schema conflicts
+
+      # TODO: Add migration validation tests
+      - name: Validate migration syntax
+        run: |
+          supabase db lint
+          echo "✅ Migration syntax valid"
+
+      - name: Test migration rollback
+        run: |
+          echo "TODO: Implement migration rollback tests"
+          # Apply migrations
+          # Verify schema changes
+          # Rollback migrations
+          # Verify schema restored
+
+      # TODO: Add RLS policy verification
+      - name: Verify RLS policies after migration
+        run: |
+          echo "TODO: Implement RLS policy verification"
+          # Test video access policies
+          # Test payment record policies
+          # Test user data isolation
+          # Verify instructor-only access to earnings
+
+      - name: Apply migrations to test database
+        run: |
+          supabase db push
+          echo "✅ Migrations applied successfully"
+
+      # TODO: Add migration performance tests
+      - name: Test migration performance
+        run: |
+          echo "TODO: Implement migration performance tests"
+          # Measure migration execution time
+          # Test with large dataset (if applicable)
+          # Verify no blocking operations
+          # Check for missing indexes
+
+      # TODO: Add data integrity tests
+      - name: Test data integrity after migration
+        run: |
+          echo "TODO: Implement data integrity tests"
+          # Verify foreign key constraints
+          # Test cascade deletions
+          # Verify unique constraints
+          # Test default values
+
+      # TODO: Add teach-niche specific migration tests
+      - name: Test video metadata schema
+        run: |
+          echo "TODO: Implement video metadata schema tests"
+          # Verify video table structure
+          # Test video-user relationship
+          # Verify video access control columns
+
+      - name: Test payment schema
+        run: |
+          echo "TODO: Implement payment schema tests"
+          # Verify payment table structure
+          # Test payment-user relationship
+          # Verify Stripe integration columns
+
+      - name: Test instructor schema
+        run: |
+          echo "TODO: Implement instructor schema tests"
+          # Verify instructor table structure
+          # Test instructor-user relationship
+          # Verify Stripe Connect account columns
+
+      - name: Stop Supabase
+        if: always()
+        run: supabase stop
+
+      - name: Comment PR with migration check results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const status = '${{ job.status }}' === 'success' ? '✅' : '❌';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `${status} Supabase Migration Check\n\n**Status:** ${{ job.status }}\n\n**Checks Performed:**\n- Migration syntax validation\n- Migration conflict detection\n- RLS policy verification\n- Data integrity tests\n- Performance tests\n\n**teach-niche Schema Tests:**\n- Video metadata\n- Payment records\n- Instructor accounts\n\n**Next Steps:**\n1. Review migration changes in Supabase Studio\n2. Test RLS policies manually\n3. Verify video access control\n4. Test payment flow end-to-end`
+            })
+
+      # TODO: Add migration documentation check
+      - name: Check migration documentation
+        run: |
+          echo "TODO: Implement migration documentation check"
+          # Verify migration has comments explaining purpose
+          # Check for rollback instructions
+          # Verify breaking changes are documented

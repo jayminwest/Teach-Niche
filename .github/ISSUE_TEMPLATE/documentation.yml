@@ -1,0 +1,53 @@
+name: Documentation
+description: Suggest documentation improvements for teach-niche-v0
+title: "[Docs]: "
+labels: ["documentation"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve our documentation!
+
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Domain
+      description: Which domain needs documentation?
+      options:
+        - payment (Stripe, checkout, webhooks)
+        - auth (Authentication, RLS, session)
+        - database (Migrations, schema)
+        - video (Upload, transcoding, access)
+        - api (API routes, endpoints)
+        - ui (Components, pages, UI/UX)
+        - deploy (Vercel, infrastructure)
+        - general (README, setup, contributing)
+      multiple: true
+    validations:
+      required: true
+
+  - type: textarea
+    id: missing
+    attributes:
+      label: Missing or Unclear Documentation
+      description: What documentation is missing or unclear?
+      placeholder: Stripe Connect onboarding flow is not documented...
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Documentation Suggestion
+      description: What documentation should be added or improved?
+      placeholder: Add step-by-step guide for Stripe Connect with screenshots...
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        **Label Guidance:**
+        - Add **domain labels** (payment, auth, database, video, api, ui, deploy)
+        - Add **priority label** if urgent (priority:high, priority:medium, priority:low)
+        - Usually **effort:small** or **effort:medium**
